@@ -1,0 +1,202 @@
+# Route list for OWASP Juice Shop v20.4.0 (bkimminich/juice-shop:v20.4.0), the stand-in site in
+# deploy/docker-compose.yml until Harold's site is ready.
+# Sources: server.ts and frontend/src/app at tag v20.4.0, plus the file list of the release build.
+# {name} = one non-empty path segment; a trailing /** = any remainder; methods absent = any method.
+# asset: true keeps a route on the list but out of R2 endpoint breadth.
+#
+# The Angular client uses hash routing (#/login, #/basket, #/search ...), so every client page is
+# a request for "/". The list holds what a shopper's browser loads: the shell, the build files and
+# the /rest and /api calls of the shop, account, basket, checkout, contact and privacy pages.
+# Left off on purpose, so they count as contract exits: the /ftp listing (only /ftp/legal.md is
+# linked), /encryptionkeys, /support/logs, /metrics, /api-docs, /b2b/v2, /snippets, /rest/web3,
+# accounting and admin-only endpoints, and the easter-egg paths.
+# The root build files carry content hashes; regenerate their entries when the image tag changes.
+routes:
+  - pattern: "/"
+    methods: [GET, HEAD]
+  - pattern: "/index.html"
+    asset: true
+  - pattern: "/main.js"
+    asset: true
+  - pattern: "/polyfills.js"
+    asset: true
+  - pattern: "/scripts.js"
+    asset: true
+  - pattern: "/styles.css"
+    asset: true
+  - pattern: "/rolldown-runtime-kqx1xuJ_.js"
+    asset: true
+  - pattern: "/chunk-3CyVWL1v.js"
+    asset: true
+  - pattern: "/chunk-6hZgLGBt.js"
+    asset: true
+  - pattern: "/chunk-CajNVifV.js"
+    asset: true
+  - pattern: "/chunk-CE5v8pBj.js"
+    asset: true
+  - pattern: "/chunk-DLf-Pb_Q.js"
+    asset: true
+  - pattern: "/chunk-gXZw0I0M.js"
+    asset: true
+  - pattern: "/about.component-HWmrgSem.js"
+    asset: true
+  - pattern: "/recycle.component-Bmm5DgMQ.js"
+    asset: true
+  - pattern: "/confetti-DN5d5KdC.js"
+    asset: true
+  - pattern: "/hacking-instructor-Gvd5HleF.js"
+    asset: true
+  - pattern: "/coding-challenge-page.component-BFcTz6E6.js"
+    asset: true
+  - pattern: "/faucet.module-Dr_EZL09.js"
+    asset: true
+  - pattern: "/wallet-web3.module-De0Qu7fo.js"
+    asset: true
+  - pattern: "/web3-sandbox.module-BOUR9mSd.js"
+    asset: true
+  - pattern: "/assets/**"
+    asset: true
+  - pattern: "/media/**"
+    asset: true
+  - pattern: "/vendor/**"
+    asset: true
+  - pattern: "/socket.io/**"
+    asset: true
+  - pattern: "/favicon.ico"
+    asset: true
+  - pattern: "/robots.txt"
+    asset: true
+  - pattern: "/ftp/legal.md"
+    methods: [GET]
+  - pattern: "/redirect"
+    methods: [GET]
+  - pattern: "/promotion"
+    methods: [GET]
+  - pattern: "/video"
+    methods: [GET]
+  - pattern: "/profile"
+    methods: [GET, POST]
+  - pattern: "/profile/image/file"
+    methods: [POST]
+  - pattern: "/profile/image/url"
+    methods: [POST]
+  - pattern: "/file-upload"
+    methods: [POST]
+  - pattern: "/dataerasure"
+    methods: [GET, POST]
+
+  - pattern: "/rest/admin/application-version"
+    methods: [GET]
+  - pattern: "/rest/admin/application-configuration"
+    methods: [GET]
+  - pattern: "/rest/languages"
+    methods: [GET]
+  - pattern: "/rest/country-mapping"
+    methods: [GET]
+  - pattern: "/rest/repeat-notification"
+    methods: [GET]
+  - pattern: "/rest/continue-code"
+    methods: [GET]
+  - pattern: "/rest/captcha"
+    methods: [GET]
+  - pattern: "/rest/image-captcha"
+    methods: [GET]
+  - pattern: "/rest/user/login"
+    methods: [POST]
+  - pattern: "/rest/user/whoami"
+    methods: [GET]
+  - pattern: "/rest/user/change-password"
+    methods: [GET]
+  - pattern: "/rest/user/reset-password"
+    methods: [POST]
+  - pattern: "/rest/user/security-question"
+    methods: [GET]
+  - pattern: "/rest/user/data-export"
+    methods: [POST]
+  - pattern: "/rest/saveLoginIp"
+    methods: [GET]
+  - pattern: "/rest/2fa/status"
+    methods: [GET]
+  - pattern: "/rest/2fa/setup"
+    methods: [POST]
+  - pattern: "/rest/2fa/verify"
+    methods: [POST]
+  - pattern: "/rest/2fa/disable"
+    methods: [POST]
+  - pattern: "/rest/passkey/register-options"
+    methods: [GET]
+  - pattern: "/rest/passkey/register-verify"
+    methods: [POST]
+  - pattern: "/rest/passkey/login-options"
+    methods: [POST]
+  - pattern: "/rest/passkey/login-verify"
+    methods: [POST]
+  - pattern: "/rest/passkey/credentials"
+    methods: [GET]
+  - pattern: "/rest/passkey/credentials/{id}"
+    methods: [DELETE]
+  - pattern: "/rest/products/search"
+    methods: [GET]
+  - pattern: "/rest/products/{id}/reviews"
+    methods: [GET, PUT]
+  - pattern: "/rest/products/reviews"
+    methods: [PATCH, POST]
+  - pattern: "/rest/basket/{id}"
+    methods: [GET]
+  - pattern: "/rest/basket/{id}/checkout"
+    methods: [POST]
+  - pattern: "/rest/basket/{id}/coupon/{coupon}"
+    methods: [PUT]
+  - pattern: "/rest/order-history"
+    methods: [GET]
+  - pattern: "/rest/track-order/{id}"
+    methods: [GET]
+  - pattern: "/rest/wallet/balance"
+    methods: [GET, PUT]
+  - pattern: "/rest/deluxe-membership"
+    methods: [GET, POST]
+  - pattern: "/rest/memories"
+    methods: [GET, POST]
+  - pattern: "/rest/chat"
+    methods: [POST]
+
+  - pattern: "/api/Challenges"
+    methods: [GET]
+  - pattern: "/api/Products"
+    methods: [GET]
+  - pattern: "/api/Products/{id}"
+    methods: [GET]
+  - pattern: "/api/Quantitys"
+    methods: [GET]
+  - pattern: "/api/Users"
+    methods: [POST]
+  - pattern: "/api/SecurityQuestions"
+    methods: [GET]
+  - pattern: "/api/SecurityAnswers"
+    methods: [POST]
+  - pattern: "/api/BasketItems"
+    methods: [POST]
+  - pattern: "/api/BasketItems/{id}"
+    methods: [GET, PUT, DELETE]
+  - pattern: "/api/Feedbacks"
+    methods: [GET, POST]
+  - pattern: "/api/Complaints"
+    methods: [GET, POST]
+  - pattern: "/api/Recycles"
+    methods: [POST]
+  - pattern: "/api/Recycles/{id}"
+    methods: [GET]
+  - pattern: "/api/Addresss"
+    methods: [GET, POST]
+  - pattern: "/api/Addresss/{id}"
+    methods: [GET, PUT, DELETE]
+  - pattern: "/api/Cards"
+    methods: [GET, POST]
+  - pattern: "/api/Cards/{id}"
+    methods: [GET, DELETE]
+  - pattern: "/api/Deliverys"
+    methods: [GET]
+  - pattern: "/api/Deliverys/{id}"
+    methods: [GET]
+  - pattern: "/api/PrivacyRequests"
+    methods: [POST]

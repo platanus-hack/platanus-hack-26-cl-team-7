@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Detection</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --text: #1c1c1a; --muted: #6b6b66; --line: #e4e4df;
+    --crit-bg: #fde8e6; --crit-text: #a3231a; --rule-bg: #ecebe6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --panel: #1e1e1c; --text: #ecece8; --muted: #9a9a94; --line: #2e2e2b;
+      --crit-bg: #4a1b17; --crit-text: #ffb4ab; --rule-bg: #2c2c29;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  h1 { font-size: 18px; margin: 0; }
+  #status { color: var(--muted); font-size: 13px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, td.time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  td.ua { max-width: 320px; overflow-wrap: anywhere; color: var(--muted); }
+  .rule { background: var(--rule-bg); border-radius: 4px; padding: 1px 6px; font-weight: 600; }
+  .crit { background: var(--crit-bg); color: var(--crit-text); border-radius: 4px; padding: 1px 6px;
+    font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+  #empty { padding: 32px 12px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Agent Detection verdicts</h1>
+  <span id="status">connecting...</span>
+</header>
+<div class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th><th>Rule</th><th>Critical</th><th>IP</th>
+        <th>User agent</th><th>Reason</th><th>Requests</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div id="empty">No verdicts yet.</div>
+</div>
+<script>
+  const POLL_MS = 1000;
+  const rows = document.getElementById("rows");
+  const empty = document.getElementById("empty");
+  const status = document.getElementById("status");
+
+  function cell(text, className) {
+    const td = document.createElement("td");
+    if (className) td.className = className;
+    td.textContent = text;
+    return td;
+  }
+
+  function badge(text, className) {
+    const td = document.createElement("td");
+    const span = document.createElement("span");
+    span.className = className;
+    span.textContent = text;
+    td.appendChild(span);
+    return td;
+  }
+
+  function row(v) {
+    const tr = document.createElement("tr");
+    const when = typeof v.ts === "number" ? new Date(v.ts * 1000).toLocaleString() : "";
+    tr.appendChild(cell(when, "time"));
+    tr.appendChild(badge(String(v.rule ?? ""), "rule"));
+    tr.appendChild(v.critical ? badge("CRITICAL", "crit") : cell(""));
+    tr.appendChild(cell(String(v.ip ?? "")));
+    tr.appendChild(cell(String(v.user_agent ?? ""), "ua"));
+    tr.appendChild(cell(String(v.reason ?? "")));
+    tr.appendChild(cell(String(v.request_count ?? ""), "num"));
+    return tr;
+  }
+
+  async function refresh() {
+    try {
+      const response = await fetch("/api/verdicts", { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const verdicts = await response.json();
+      rows.replaceChildren(...verdicts.map(row));
+      empty.hidden = verdicts.length > 0;
+      status.textContent = verdicts.length + " verdicts, updated " + new Date().toLocaleTimeString();
+    } catch (err) {
+      status.textContent = "dashboard unreachable (" + err.message + ")";
+    } finally {
+      setTimeout(refresh, POLL_MS);
+    }
+  }
+
+  refresh();
+</script>
+</body>
+</html>

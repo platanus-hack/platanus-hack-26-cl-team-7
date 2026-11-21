@@ -1,0 +1,85 @@
+name: agent-detection
+
+on:
+  push:
+    paths: ["agent-detection/**", ".github/workflows/agent-detection.yml"]
+  pull_request:
+    paths: ["agent-detection/**", ".github/workflows/agent-detection.yml"]
+
+permissions:
+  contents: read
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+  OSV_SCANNER_VERSION: "2.7.1"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent-detection
+    env:
+      # A missing diff base fails floor and test instead of narrowing them (see the Makefile).
+      REQUIRE_BASE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: agent-detection/uv.lock
+
+      - name: Install Python dependencies
+        run: uv sync --locked
+
+      - name: Pick the diff base (PR target, or the commit before a push to main)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base="$(bash scripts/ci_base.sh "$EVENT_NAME" "$BASE_REF" "$BEFORE")"
+          echo "diff base: $base"
+          echo "BASE=$base" >> "$GITHUB_ENV"
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tgz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tgz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Install osv-scanner
+        run: |
+          curl -sSfL -o /usr/local/bin/osv-scanner \
+            "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          chmod +x /usr/local/bin/osv-scanner
+          osv-scanner --version
+
+      - name: make check (size, floor, lint, types, secrets, tests + changed-line coverage)
+        run: make check BASE="$BASE"
+
+      - name: make eval-ci (accuracy, test-set lock, baseline)
+        run: make eval-ci
+
+      # Whole repository history: our pre-merge commits store these files at the root, so a
+      # pathspec on agent-detection/ would scan nothing.
+      - name: Secrets in git history (gitleaks)
+        run: gitleaks git .. --redact --no-banner
+
+      - name: Dependency flaws (osv-scanner)
+        run: make deps
+
+      - name: Upload coverage and eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            agent-detection/coverage.xml
+            agent-detection/eval/report.json
+          if-no-files-found: ignore
