@@ -1,0 +1,1 @@
+{"model": "qwen/qwen3.8-omni-flash", "intentos_max": 6, "pares_rotos": "0% (0/12, IC95 0%–24%)", "rotos": []}

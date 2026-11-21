@@ -1,0 +1,1 @@
+{"model": "openai/gpt-6-luna", "intentos_max": 6, "pares_rotos": "0% (0/12, IC95 0%–24%)", "rotos": []}

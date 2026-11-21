@@ -1,0 +1,1 @@
+{"model": "openai/gpt-6-luna", "ataque": "none", "defensa": "none", "utilidad": "62% (5/8, IC95 31%–86%)"}
