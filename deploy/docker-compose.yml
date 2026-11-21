@@ -48,7 +48,7 @@ services:
       - >-
         test -f /data/real/seed.done || {
         rm -f /data/real/real.db /data/real/real.db-wal /data/real/real.db-shm &&
-        python -m demo.seed --db /data/real/real.db --files /data/real/real-files &&
+        python -m demo.seed --db /data/real/real.db &&
         touch /data/real/seed.done; }
     volumes:
       - real-data:/data/real
@@ -60,7 +60,7 @@ services:
     depends_on:
       seed:
         condition: service_completed_successfully
-    # Writes run/canaries.json, which is /app/run in the mirror-state volume.
+    # Canaries go to the router's mirror-state volume (/app/run), never beside the twin's data.
     command:
       - sh
       - -c
@@ -68,7 +68,7 @@ services:
         test -f /data/twin/mask.done || {
         rm -f /data/twin/twin.db /data/twin/twin.db-wal /data/twin/twin.db-shm &&
         python -m demo.mask --from /data/real/real.db --to /data/twin/twin.db
-        --allow config/mask.yaml &&
+        --allow config/mask.yaml --canaries run/canaries.json &&
         touch /data/twin/mask.done; }
     volumes:
       - real-data:/data/real

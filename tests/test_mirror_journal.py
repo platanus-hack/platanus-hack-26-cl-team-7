@@ -26,7 +26,9 @@ def test_read_of_missing_file_is_empty(tmp_path: Path) -> None:
     assert Journal(tmp_path / "absent.jsonl").read() == []
 
 
-def test_read_skips_torn_and_foreign_lines(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_read_skips_torn_and_foreign_lines(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     path = tmp_path / "log.jsonl"
     path.write_text('{"n": 1}\n[1, 2]\nnot json\n\n{"n": 2}\n{"n": 3, "cut', encoding="utf-8")
     assert Journal(path).read() == [{"n": 1}, {"n": 2}]

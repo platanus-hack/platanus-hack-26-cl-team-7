@@ -8,7 +8,7 @@ different keys, so a masked person is never computed from a real one.
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 FIRST_NAMES = (
@@ -48,6 +48,7 @@ UNITS_PER_FLOOR = 8
 FLAT_SHARE = 4  # one address in four is a flat
 NAME_SUFFIX_SPAN = 100
 PHONE_SPAN = 10**8
+MAX_ATTEMPTS = 1000
 
 
 class Draw:
@@ -108,3 +109,12 @@ def address(draw: Draw) -> str:
         floor, unit = 1 + draw.number("floor", FLOORS), 1 + draw.number("unit", UNITS_PER_FLOOR)
         street += f", depto {floor}{unit:02d}"
     return f"{street}, {draw.pick('city', CITIES)}"
+
+
+def first_person(draw: Draw, rejects: Callable[[Person], bool]) -> Person:
+    """The first person drawn for this key that `rejects` lets through."""
+    for attempt in range(MAX_ATTEMPTS):
+        candidate = person(draw.child(attempt))
+        if not rejects(candidate):
+            return candidate
+    raise ValueError(f"no acceptable person in {MAX_ATTEMPTS} draws")

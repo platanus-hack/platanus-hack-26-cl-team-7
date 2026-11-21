@@ -11,7 +11,7 @@ import type { Ai } from "./ai.ts";
 import type { Bus, EncodedFrame } from "./bus.ts";
 import type { DeceptionStore } from "./deception.ts";
 import { deceptionRoutes } from "./deception-routes.ts";
-import { fail, tokenMatches } from "./http.ts";
+import { fail, requireToken } from "./http.ts";
 import type { Store } from "./store.ts";
 
 export interface AppDeps {
@@ -129,9 +129,7 @@ export function createApp({ store, bus, ai, deception, version = "0.1.0", starte
   });
 
   /** Gateways post one event or a batch of up to 500. The rules verdict comes back in the response. */
-  app.post("/events", bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => fail(c, 413, "too_large", "Body over 2 MB") }), async (c) => {
-    if (ingestToken && !tokenMatches(c.req.header("Authorization"), ingestToken))
-      return fail(c, 401, "unauthorized", "Missing or wrong ingest token");
+  app.post("/events", requireToken(ingestToken), bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => fail(c, 413, "too_large", "Body over 2 MB") }), async (c) => {
     const body = await c.req.json().catch(() => undefined);
     const parsed = IngestBody.safeParse(body);
     if (!parsed.success) {

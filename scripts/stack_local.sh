@@ -148,21 +148,33 @@ run_job() {
   fi
 }
 
+ensure_token() {
+  [[ -s "$TOKEN_FILE" ]] && return 0
+  (umask 077 && "$PY" -c 'import secrets; print(secrets.token_hex(32))' >"$TOKEN_FILE")
+}
+
+# The shops, sync and the router (canaries) need the data; Sentinel and Caddy do not.
+needs_data() {
+  local name
+  for name in "$@"; do
+    case "$name" in real | twin | sync | router) return 0 ;; esac
+  done
+  return 1
+}
+
 # A job counts as done once its marker file exists, so a job that died halfway runs again from a
 # clean slate; a new seed also redoes the mask.
-prepare() {
+prepare_data() {
   mkdir -p "$RUN/real-files" "$RUN/twin-files"
-  if [[ ! -s "$TOKEN_FILE" ]]; then
-    (umask 077 && "$PY" -c 'import secrets; print(secrets.token_hex(32))' >"$TOKEN_FILE")
-  fi
   if [[ ! -f "$RUN/seed.done" ]]; then
     rm -f "$RUN/real.db" "$RUN/real.db-wal" "$RUN/real.db-shm" "$RUN/mask.done"
-    run_job seed demo.seed --db run/real.db --files run/real-files || return 1
+    run_job seed demo.seed --db run/real.db || return 1
     touch "$RUN/seed.done"
   fi
   if [[ ! -f "$RUN/mask.done" ]]; then
     rm -f "$RUN/twin.db" "$RUN/twin.db-wal" "$RUN/twin.db-shm" "$RUN/canaries.json"
-    run_job mask demo.mask --from run/real.db --to run/twin.db --allow config/mask.yaml || return 1
+    run_job mask demo.mask --from run/real.db --to run/twin.db --allow config/mask.yaml \
+      --canaries run/canaries.json || return 1
     touch "$RUN/mask.done"
   fi
 }
@@ -231,7 +243,10 @@ start() {
   touch "$RUN/access.log"
   cd "$ROOT"
   PY="$(uv run --frozen python -c 'import sys; print(sys.executable)')"
-  prepare || exit 1
+  ensure_token
+  if needs_data "${services[@]}"; then
+    prepare_data || exit 1
+  fi
   for name in "${services[@]}"; do
     if ! start_one "$name"; then
       stop_started

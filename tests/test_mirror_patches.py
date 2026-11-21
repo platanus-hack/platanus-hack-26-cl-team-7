@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -39,7 +40,7 @@ def book(tmp_path: Path, routes: RouteTable) -> PatchBook:
     ],
 )
 def test_patch_validates_every_field(changes: dict[str, str], message: str) -> None:
-    fields = {"finding_id": FINDING, "method": "GET", "endpoint": "/search"}
+    fields: dict[str, Any] = {"finding_id": FINDING, "method": "GET", "endpoint": "/search"}
     fields |= {"signature": "sql union select", "rule": "R3"}
     with pytest.raises(ValueError, match=message):
         Patch(**(fields | changes))

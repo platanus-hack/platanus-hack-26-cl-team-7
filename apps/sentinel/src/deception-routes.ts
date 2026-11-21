@@ -3,11 +3,11 @@ import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import { DeceptionBatch, IDEMPOTENCY_KEY_REUSED, PageQuery, type DeceptionAccepted } from "@sentinel/contracts";
 import { CursorError, type DeceptionStore } from "./deception.ts";
-import { fail, tokenMatches } from "./http.ts";
+import { fail, requireToken } from "./http.ts";
 
 /**
- * A full batch is 500 actions with two 8 KB bodies each, about 8 MB of text.
- * The limit leaves room for multi-byte characters and JSON escapes.
+ * A full batch is 500 actions with two 8 KB bodies each, about 8 MB of ASCII text.
+ * Escaped non-ASCII text can be larger; the router answers a 413 by splitting the batch.
  */
 const MAX_BODY_BYTES = 16 * 1024 * 1024;
 /** A batch of 500 bad events would otherwise answer with thousands of lines. */
@@ -25,10 +25,9 @@ export function deceptionRoutes({ deception, ingestToken }: { deception: Decepti
 
   routes.post(
     "/deception/events",
+    requireToken(ingestToken),
     bodyLimit({ maxSize: MAX_BODY_BYTES, onError: (c) => fail(c, 413, "too_large", "Body over 16 MB") }),
     async (c) => {
-      if (ingestToken && !tokenMatches(c.req.header("Authorization"), ingestToken))
-        return fail(c, 401, "unauthorized", "Missing or wrong ingest token");
       const parsed = DeceptionBatch.safeParse(await c.req.json().catch(() => undefined));
       if (!parsed.success) return fail(c, 400, "invalid_request", describe(parsed.error));
       const out = deception.ingest(parsed.data);

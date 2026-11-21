@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import sqlite3
 from collections.abc import Iterator
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -22,7 +22,7 @@ from demo.catalog import CATALOGUE
 DEFAULT_DB = Path("run/real.db")
 ADMIN_ID, DEMO_ID = 1, 2
 DEMO_LOGIN = ("alice", "wonderland")  # the public demo customer login the docs name
-DEMO_NAME = "Alice Liddell"
+DEMO_NAME, DEMO_EMAIL = "Alice Liddell", "alice.liddell@gmail.com"
 HISTORY_DAYS = 420
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 MINUTES_PER_DAY = 24 * 60
@@ -62,20 +62,14 @@ def at(plan: Plan, draw: fake.Draw, label: str, earliest: datetime) -> datetime:
 
 
 def user_rows(plan: Plan) -> Iterator[tuple[object, ...]]:
-    taken: set[str] = set()
+    taken = {DEMO_LOGIN[0], DEMO_EMAIL}
     start = plan.anchor - timedelta(days=HISTORY_DAYS)
     for user_id in range(1, plan.users + 1):
         draw = fake.Draw(plan.seed, "user", user_id)
-        person = next(
-            p
-            for attempt in range(plan.users + 1)
-            if (p := fake.person(draw.child(attempt))).username not in taken
-            and p.email not in taken
-        )
+        person = fake.first_person(draw, lambda p: p.username in taken or p.email in taken)
         taken.update((person.username, person.email))
         if user_id == DEMO_ID:
-            email = f"{fake.ascii_fold(DEMO_NAME).replace('alice', 'alice.')}@gmail.com"
-            person = fake.replace(person, name=DEMO_NAME, username=DEMO_LOGIN[0], email=email)
+            person = replace(person, name=DEMO_NAME, username=DEMO_LOGIN[0], email=DEMO_EMAIL)
         role = "admin" if user_id == ADMIN_ID else "customer"
         unknown = f"{draw.number('password', PASSWORD_SPAN):016x}"  # never shown or logged
         password = DEMO_LOGIN[1] if user_id == DEMO_ID else unknown

@@ -1,4 +1,4 @@
-"""mirror.lane: the lane decision (keys, verdicts, virtual patches) and its forward_auth endpoint."""
+"""mirror.lane: the lane decision (keys, verdicts, virtual patches) and its /lane endpoint."""
 
 from __future__ import annotations
 
@@ -126,7 +126,8 @@ def test_twin_born_values_route_from_any_ip_and_link_the_new_client(lane: Harnes
     linked = lane.events[-1]
     assert isinstance(linked, TrackLinked)
     assert linked.key == TrackKey("ip_ua", f"{OTHER_IP}|{UA}")
-    for carrier in ({"authorization": "Bearer twin-session-4821"}, {"query": "t=twin-session-4821"}):
+    carriers = ({"authorization": "Bearer twin-session-4821"}, {"query": "t=twin-session-4821"})
+    for carrier in carriers:
         stranger = fwd("/", n=4, ip="192.0.2.44", user_agent="curl/8", **carrier)
         assert lane.router.decide(stranger) == Decision("mirror", track)
 

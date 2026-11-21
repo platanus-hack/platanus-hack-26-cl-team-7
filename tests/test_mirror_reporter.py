@@ -67,7 +67,9 @@ def spool(tmp_path: Path) -> Path:
 
 
 def spooled_ids(path: Path) -> list[str]:
-    return [record["eventId"] for record in Journal(path).read()]
+    """Ids kept on disk: the file a replay moved aside first, then the spool itself."""
+    files = (path.with_name(path.name + r.SENDING_SUFFIX), path)
+    return [record["eventId"] for file in files for record in Journal(file).read()]
 
 
 def wait_for(check: Callable[[], bool]) -> None:
@@ -183,7 +185,7 @@ def test_a_replay_that_fails_midway_keeps_only_the_rest(spool: Path) -> None:
     sending.close()
     sentinel = FakeSentinel(202, OSError("down"))
     SentinelReporter(sentinel, spool).close()
-    assert spooled_ids(sending.path) == ids(700, start=500)
+    assert spooled_ids(spool) == ids(700, start=500)
     again = FakeSentinel()
     SentinelReporter(again, spool).close()
     assert again.received == ids(700, start=500)
@@ -209,6 +211,20 @@ def test_emit_never_blocks_on_a_slow_sentinel(spool: Path) -> None:
     assert time.perf_counter() - started < 0.5
     release.set()
     reporter.close()
+
+
+def test_the_worker_survives_an_unexpected_error(
+    spool: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    sentinel = FakeSentinel(RuntimeError("bug"))  # not an OSError: a bug, not a network failure
+    reporter = SentinelReporter(sentinel, spool, flush_interval=0.01)
+    reporter.start()
+    reporter.emit(linked(0))
+    wait_for(lambda: sentinel.calls == 1)
+    reporter.emit(linked(1))
+    wait_for(lambda: sentinel.received == [linked(1).event_id])
+    reporter.close()
+    assert "send cycle failed" in caplog.text
 
 
 class _Ingest(BaseHTTPRequestHandler):

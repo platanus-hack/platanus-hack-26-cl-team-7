@@ -21,6 +21,9 @@ const CONTEXT_BODY_CHARS = 500;
 const BACKLOG = 20;
 const MAX_QUEUE = 100;
 const MINUTE_MS = 60_000;
+/** Thinking is always on for the model and counts against max_tokens: leave room for it. */
+const MAX_TOKENS = 16_000;
+const CALL_TIMEOUT_MS = 90_000;
 
 export interface FixOptions {
   /** null turns proposals off: findings keep `proposal: null`. */
@@ -43,9 +46,12 @@ export class FixProposer {
   private readonly client: Anthropic | null;
   private readonly deception: DeceptionStore;
   private readonly unsubscribe: () => void;
-  private readonly seen = new Set<string>();
+  /** Findings queued, running or waiting for a retry. A finding leaves the set when it is done. */
+  private readonly active = new Set<string>();
   private readonly queue: { id: string; attempt: number }[] = [];
   private readonly timers = new Set<NodeJS.Timeout>();
+  /** Set while the per-minute cap holds the queue; one timer resumes it. */
+  private capTimer = false;
   private stamps: number[] = [];
   private running = 0;
   private stopped = false;
@@ -71,8 +77,8 @@ export class FixProposer {
   }
 
   private request(finding: Finding): void {
-    if (finding.proposal || this.seen.has(finding.findingId) || this.queue.length >= MAX_QUEUE) return;
-    this.seen.add(finding.findingId);
+    if (finding.proposal || this.active.has(finding.findingId) || this.queue.length >= MAX_QUEUE) return;
+    this.active.add(finding.findingId);
     this.queue.push({ id: finding.findingId, attempt: 1 });
     this.pump();
   }
@@ -82,7 +88,12 @@ export class FixProposer {
       const now = Date.now();
       this.stamps = this.stamps.filter((t) => now - t < MINUTE_MS);
       if (this.stamps.length >= this.perMinute) {
-        this.later(MINUTE_MS - (now - this.stamps[0]!), () => this.pump());
+        if (this.capTimer) return;
+        this.capTimer = true;
+        this.later(MINUTE_MS - (now - this.stamps[0]!), () => {
+          this.capTimer = false;
+          this.pump();
+        });
         return;
       }
       this.stamps.push(now);
@@ -105,29 +116,32 @@ export class FixProposer {
 
   private async propose(id: string, attempt: number): Promise<void> {
     const finding = this.deception.finding(id);
-    if (!this.client || !finding || finding.proposal) return;
+    if (!this.client || !finding || finding.proposal) return void this.active.delete(id);
     try {
       const res = await this.client.beta.messages.parse(
         {
           model: MODEL,
-          max_tokens: 4096,
+          max_tokens: MAX_TOKENS,
           betas: BETAS,
           fallbacks: "default",
           output_config: { effort: "medium", format: betaZodOutputFormat(Proposal) },
           system: FIX_SYSTEM,
           messages: [{ role: "user", content: `<finding>\n${promptJson(this.context(finding))}\n</finding>` }],
         },
-        { timeout: 45_000, maxRetries: 1 },
+        { timeout: CALL_TIMEOUT_MS, maxRetries: 1 },
       );
+      // After stop() the database may be closed: an answer that arrives late is dropped.
+      if (this.stopped) return;
       if (res.stop_reason === "refusal" || !res.parsed_output) throw new Error(`no proposal (${res.stop_reason ?? "empty"})`);
       this.deception.setProposal(id, { summary: res.parsed_output.summary.trim(), generatedAt: Date.now(), model: res.model });
+      this.active.delete(id);
     } catch (err) {
       logApiError("fix", err);
-      if (attempt < this.attempts && !this.stopped)
-        this.later(this.retryMs * 2 ** (attempt - 1), () => {
-          this.queue.push({ id, attempt: attempt + 1 });
-          this.pump();
-        });
+      if (attempt >= this.attempts || this.stopped) return void this.active.delete(id);
+      this.later(this.retryMs * 2 ** (attempt - 1), () => {
+        this.queue.push({ id, attempt: attempt + 1 });
+        this.pump();
+      });
     }
   }
 

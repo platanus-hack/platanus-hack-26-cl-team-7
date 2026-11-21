@@ -112,7 +112,11 @@ class SentinelReporter:
 
     def _run(self) -> None:
         while not self._stop.is_set():
-            self._cycle(final=False)
+            try:
+                self._cycle(final=False)
+            except Exception:  # the worker must outlive any one bad batch or disk error
+                log.exception("reporter: send cycle failed")
+                self._stop.wait(self._flush_interval)
         self._cycle(final=True)
 
     def _cycle(self, *, final: bool) -> None:
