@@ -66,10 +66,13 @@ jobs:
       - name: make eval-ci (accuracy, test-set lock, baseline)
         run: make eval-ci
 
-      # Whole repository history: our pre-merge commits store these files at the root, so a
-      # pathspec on agent-detection/ would scan nothing.
+      # Only this project's history. The rest of the repository has its own owners (and bait
+      # credentials on purpose). b3bb139 is the imported pre-merge history, where these files sit
+      # at the root; "-m -- agent-detection" covers every later commit, merges included.
       - name: Secrets in git history (gitleaks)
-        run: gitleaks git .. --redact --no-banner
+        run: |
+          gitleaks git .. --redact --no-banner --log-opts="b3bb1398be42b1133db3a59d4b16658478d663f4"
+          gitleaks git .. --redact --no-banner --log-opts="-m -- agent-detection"
 
       - name: Dependency flaws (osv-scanner)
         run: make deps
