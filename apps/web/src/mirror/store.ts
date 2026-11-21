@@ -1,5 +1,5 @@
 /**
- * Mirror lane state. Interface: `useMirror`, `startMirror`, `proposalState`.
+ * Mirror lane state. Interface: `useMirror`, `startMirror`.
  * Behind it: the first pages of /v1/tracks and /v1/findings, kept live by the
  * dashboard's stream (track and finding changes), and the selected track's detail,
  * refetched when the stream says that track changed. The pure merge functions are
@@ -82,15 +82,6 @@ export function applyToDetail(detail: TrackDetail, changes: MirrorData): TrackDe
   return { ...detail, track: mergeTracks([detail.track], track)[0]!, findings: mergeFindings(detail.findings, mine) };
 }
 
-export type ProposalState = "ready" | "pending" | "failed" | "unavailable";
-
-/** `aiEnabled` is null while health is unknown: show the proposal as pending, not as missing. */
-export function proposalState(f: Finding, aiEnabled: boolean | null): ProposalState {
-  if (f.proposal) return "ready";
-  if (aiEnabled === false) return "unavailable";
-  return f.proposalStatus === "failed" ? "failed" : "pending";
-}
-
 /* ---------------- store ---------------- */
 
 interface MirrorState {
@@ -127,7 +118,7 @@ export const useMirror = create<MirrorState>((set, get) => ({
       const page = await api.tracks({ range: "24h", limit: MAX_PAGE_LIMIT, cursor });
       set((s) => ({ data: { ...s.data, tracks: mergeTracks(s.data.tracks, page.items) }, tracksCursor: page.nextCursor }));
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : "Could not load older tracks" });
+      set({ error: e instanceof Error ? e.message : "No se pudieron cargar agentes anteriores" });
     }
   },
 }));
@@ -144,7 +135,7 @@ async function loadDetail(trackId: string): Promise<void> {
     const detail = await api.track(trackId);
     if (current()) useMirror.setState({ detail, error: null });
   } catch {
-    if (current()) useMirror.setState({ error: "Could not load this track" });
+    if (current()) useMirror.setState({ error: "No se pudo cargar este agente" });
   }
 }
 
@@ -166,7 +157,7 @@ export async function loadMirror(): Promise<void> {
     const selected = useMirror.getState().selected;
     if (selected) void loadDetail(selected);
   } catch (e) {
-    if (!ctrl.signal.aborted) useMirror.setState({ loading: false, error: e instanceof Error ? e.message : "Could not load the mirror lane" });
+    if (!ctrl.signal.aborted) useMirror.setState({ loading: false, error: e instanceof Error ? e.message : "No se pudo cargar la lista de agentes" });
   }
 }
 

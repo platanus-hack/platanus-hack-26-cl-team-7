@@ -11,7 +11,6 @@ import {
   mergeFindings,
   mergeTracks,
   mirrorChanges,
-  proposalState,
   startMirror,
   useMirror,
 } from "../src/mirror/store";
@@ -86,21 +85,6 @@ describe("stream changes", () => {
     expect(next.track.findings).toBe(1);
     expect(next.findings[0]!.proposal).toEqual(fix);
     expect(applyToDetail(detail, { tracks: [track({ trackId: `trk_${hex(9)}` })], findings: [] })).toBe(detail);
-  });
-});
-
-describe("proposalState", () => {
-  it("says ready, pending while AI works or health is unknown, and unavailable when AI is off", () => {
-    expect(proposalState(fixed(), false)).toBe("ready");
-    expect(proposalState(finding(), true)).toBe("pending");
-    expect(proposalState(finding(), null)).toBe("pending");
-    expect(proposalState(finding(), false)).toBe("unavailable");
-  });
-
-  it("says failed once the AI gave up, unless AI is off now", () => {
-    expect(proposalState(failed(), true)).toBe("failed");
-    expect(proposalState(failed(), null)).toBe("failed");
-    expect(proposalState(failed(), false)).toBe("unavailable");
   });
 });
 
@@ -247,7 +231,7 @@ describe("track detail", () => {
     stubFetch([]);
     useMirror.setState({ selected: null, detail: null, error: null });
     useMirror.getState().select(`trk_${hex(7)}`);
-    await vi.waitFor(() => expect(useMirror.getState().error).toBe("Could not load this track"));
+    await vi.waitFor(() => expect(useMirror.getState().error).toBe("No se pudo cargar este agente"));
     const late: TrackDetail = { track: track({ trackId: `trk_${hex(8)}` }), actions: [], findings: [] };
     let answer: (() => void) | undefined;
     vi.stubGlobal("fetch", () => new Promise<Response>((resolve) => (answer = () => resolve(new Response(JSON.stringify(late), { status: 200 })))));

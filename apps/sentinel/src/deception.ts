@@ -23,6 +23,10 @@ const RETAIN_MS = RANGE_MS["24h"];
 const FUTURE_SKEW_MS = 30_000;
 /** Keys kept on a track row. Later links stay in the event log; the first ones (ip, ip_ua) matter most. */
 const MAX_TRACK_KEYS = 64;
+/** A track detail carries the proving request and those before it, LEAD_UP_ACTIONS in all, for each of its newest LEAD_UP_FINDINGS findings. */
+const LEAD_UP_FINDINGS = 3;
+const LEAD_UP_ACTIONS = 12;
+
 
 export type IngestOutcome = { ok: true; accepted: number; duplicates: number } | { ok: false; reusedEventId: string };
 
@@ -208,15 +212,46 @@ export class DeceptionStore {
     return paged(rows.map(toFinding), q.limit, (f) => [f.ts, f.findingId]);
   }
 
+  /**
+   * The track, its findings, and up to MAX_TRACK_ACTIONS actions newest first: the request that proved
+   * each of the newest findings and the ones before it (so the dashboard can show how the agent got
+   * there), then the newest requests.
+   */
   track(trackId: string): TrackDetail | null {
     const track = this.trackById(trackId);
     if (!track) return null;
-    return { track, actions: this.actions(trackId, MAX_TRACK_ACTIONS), findings: this.trackFindings(trackId) };
+    const findings = this.trackFindings(trackId);
+    const out = new Map<string, TrackAction>();
+    for (const f of findings.slice(0, LEAD_UP_FINDINGS)) for (const a of this.leadUp(trackId, f)) out.set(a.eventId, a);
+    for (const a of this.actions(trackId, MAX_TRACK_ACTIONS)) {
+      if (out.size >= MAX_TRACK_ACTIONS) break;
+      out.set(a.eventId, a);
+    }
+    const actions = [...out.values()].sort((x, y) => y.ts - x.ts || (y.eventId < x.eventId ? -1 : y.eventId > x.eventId ? 1 : 0));
+    return { track, actions, findings };
+  }
+
+  /**
+   * The request that proved a finding and the LEAD_UP_ACTIONS - 1 before it. Both events carry the
+   * request id: `finding.confirmed:<requestId>:<kind>` and `track.action:<requestId>`. Without the
+   * proving request, the requests started before the finding.
+   */
+  private leadUp(trackId: string, f: Finding): TrackAction[] {
+    const ev = this.sql.findingEvent.get(trackId, f.findingId) as { event_id: string } | undefined;
+    const requestId = ev?.event_id.split(":")[1];
+    const proof = requestId ? this.rowsToActions(this.sql.actionById.all(trackId, `track.action:${requestId}`))[0] : undefined;
+    if (!proof) return this.rowsToActions(this.sql.actionsUpTo.all(trackId, f.ts, LEAD_UP_ACTIONS));
+    const before = this.rowsToActions(this.sql.actionsUpTo.all(trackId, proof.ts, LEAD_UP_ACTIONS));
+    return before.some((a) => a.eventId === proof.eventId) ? before : [proof, ...before.slice(0, -1)];
   }
 
   /** Newest actions of a track first. */
   actions(trackId: string, limit: number): TrackAction[] {
-    const rows = this.sql.actions.all(trackId, limit) as { event_id: string; track_id: string; ts: number; body: string }[];
+    return this.rowsToActions(this.sql.actions.all(trackId, limit));
+  }
+
+  private rowsToActions(raw: unknown[]): TrackAction[] {
+    const rows = raw as { event_id: string; track_id: string; ts: number; body: string }[];
     return rows.map((r) => {
       const { method, path, query, status, durationMs, requestBody, responseBody } = JSON.parse(r.body) as ActionBody;
       return { eventId: r.event_id, trackId: r.track_id, ts: r.ts, method, path, query, status, durationMs, requestBody, responseBody };
@@ -273,6 +308,11 @@ function statements(db: DatabaseSync) {
     tracksAfter: p(`SELECT * FROM tracks WHERE opened_at IS NOT NULL AND last_seen >= ? AND (last_seen, track_id) < (?, ?)
       ORDER BY last_seen DESC, track_id DESC LIMIT ?`),
     actions: p(`SELECT event_id, track_id, ts, body FROM deception_events WHERE track_id = ? AND type = 'track.action'
+      ORDER BY ts DESC, event_id DESC LIMIT ?`),
+    findingEvent: p(`SELECT event_id FROM deception_events WHERE track_id = ? AND type = 'finding.confirmed'
+      AND json_extract(body, '$.findingId') = ? LIMIT 1`),
+    actionById: p(`SELECT event_id, track_id, ts, body FROM deception_events WHERE track_id = ? AND type = 'track.action' AND event_id = ?`),
+    actionsUpTo: p(`SELECT event_id, track_id, ts, body FROM deception_events WHERE track_id = ? AND type = 'track.action' AND ts <= ?
       ORDER BY ts DESC, event_id DESC LIMIT ?`),
     finding: p("SELECT * FROM findings WHERE finding_id = ?"),
     trackFindings: p("SELECT * FROM findings WHERE track_id = ? ORDER BY ts DESC, finding_id DESC"),

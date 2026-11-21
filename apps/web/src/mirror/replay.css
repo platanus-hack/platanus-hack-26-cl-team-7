@@ -1,0 +1,226 @@
+/* The attack replay inside a caught agent's details. */
+.rp {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 32px 8px;
+}
+.rp-lead {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.rp-lead em {
+  font-style: normal;
+  color: var(--color-green);
+}
+.rp-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+}
+.rp-stage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.rp-t1 {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--color-text);
+}
+.rp-t2 {
+  font-size: 12px;
+  fill: var(--color-mid);
+}
+.rp-bubble {
+  transition: opacity 0.2s;
+}
+.rp-proof {
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--color-line);
+  font-size: 14px;
+}
+.rp-proof p {
+  margin: 0;
+  line-height: 1.5;
+}
+.rp-proof b {
+  color: var(--color-ember);
+  font-weight: 600;
+}
+.rp-bar {
+  position: relative;
+  display: flex;
+  gap: 3px;
+  height: 28px;
+}
+.rp-seg {
+  flex: 1 1 0;
+  min-width: 6px;
+  border-radius: 4px;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.rp-seg:hover,
+.rp-seg.on {
+  opacity: 1;
+}
+.rp-seg.on {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+.rp-hint {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  max-width: 180px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--color-line);
+  background: var(--color-elev);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  z-index: 2;
+}
+.rp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-mid);
+}
+.rp-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rp-bubble,
+  .rp-seg {
+    transition: none;
+  }
+}
+.rp-bar.dense {
+  gap: 1px;
+}
+.rp-bar.dense .rp-seg {
+  min-width: 2px;
+}
+
+/* A proof explained: vulnerability, weak point, the steps to it, the evidence. */
+.pd {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+.pd-v {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pd-sev {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-ember);
+  border: 1px solid rgba(255, 86, 50, 0.45);
+}
+.pd-sev.crit {
+  color: var(--color-canvas);
+  background: var(--color-ember);
+  border-color: var(--color-ember);
+}
+.pd-gap {
+  margin: 0;
+  line-height: 1.5;
+}
+.pd-h {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-mid);
+}
+.pd-chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pd-chain li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 12px;
+  padding: 0 0 12px 18px;
+}
+.pd-chain li::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-mid);
+}
+.pd-chain li::after {
+  content: "";
+  position: absolute;
+  left: 6.5px;
+  top: 16px;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-line);
+}
+.pd-chain li:last-child::after {
+  display: none;
+}
+.pd-chain li.caught::before {
+  background: var(--color-blue);
+}
+.pd-chain li.fooled::before {
+  background: var(--color-green);
+}
+.pd-chain li.win::before {
+  background: var(--color-ember);
+}
+.pd-chain li.gap::before {
+  background: transparent;
+  border: 1px dashed var(--color-mid);
+}
+.pd-when {
+  font-size: 12px;
+  color: var(--color-mid);
+}
+.pd-what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  word-break: break-all;
+}
+.pd-note {
+  font-size: 12px;
+  color: var(--color-mid);
+  word-break: normal;
+}
+.pd-ev {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--color-mid);
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}

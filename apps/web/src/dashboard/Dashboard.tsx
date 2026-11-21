@@ -26,13 +26,13 @@ function TitleBar() {
       {conn === "reconnecting" && (
         <span className="conn" role="status">
           <i />
-          Reconnecting…
+          Reconectando…
         </span>
       )}
       {conn === "offline" && (
         <span className="conn" role="status">
           <i />
-          Sentinel is offline
+          Sentinel está desconectado
         </span>
       )}
       <a className="ml-auto text-xs underline" href="/ultimo-paso">Último Paso</a>

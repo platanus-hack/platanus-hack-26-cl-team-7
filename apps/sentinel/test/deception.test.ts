@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
-import { DeceptionBatch, PageQuery, RANGE_MS, type DeceptionEvent, type StreamChange } from "@sentinel/contracts";
+import { DeceptionBatch, MAX_TRACK_ACTIONS, PageQuery, RANGE_MS, type DeceptionEvent, type StreamChange } from "@sentinel/contracts";
 import fixture from "../../../packages/contracts/test/fixtures/deception-batch.json" with { type: "json" };
 import { Bus } from "../src/bus.ts";
 import { CursorError, DeceptionStore } from "../src/deception.ts";
@@ -118,6 +118,27 @@ describe("deception store: reads", () => {
     }
     return s.store;
   }
+
+  it("sends the requests that led to a finding along with the newest ones, within the cap", () => {
+    const { store } = open(() => T0 + 10_000);
+    store.ingest([dec.opened()]);
+    const acts = Array.from({ length: 300 }, (_, i) => dec.action({ ts: T0 + 10 + i, path: `/p${i}` }));
+    for (let i = 0; i < acts.length; i += 50) store.ingest(acts.slice(i, i + 50).filter((_, k) => i + k !== 20));
+    // The proving request (#20) started before 30 others that were still running when the finding came.
+    acts[20] = dec.action({ eventId: "track.action:req-proof", ts: T0 + 10 + 20, path: "/p20" });
+    store.ingest([acts[20]!]);
+    store.ingest([dec.finding({ eventId: "finding.confirmed:req-proof:signature_success", ts: T0 + 10 + 50 })]);
+    const d = store.track(TRACK)!;
+    expect(d.actions).toHaveLength(MAX_TRACK_ACTIONS);
+    const paths = d.actions.map((a) => a.path);
+    expect(paths[0]).toBe("/p299");
+    expect(paths).toContain("/p20"); // the proving request, far older than the newest 200
+    expect(paths).toContain("/p9"); // and the 11 requests before it
+    expect(paths).not.toContain("/p8");
+    expect(paths).not.toContain("/p21");
+    const ts = d.actions.map((a) => a.ts);
+    expect(ts).toEqual(ts.toSorted((x, y) => y - x));
+  });
 
   it("pages tracks most recently active first without gaps or repeats", () => {
     const store = many(7);
