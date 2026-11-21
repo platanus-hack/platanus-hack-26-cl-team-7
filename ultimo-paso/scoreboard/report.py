@@ -51,8 +51,18 @@ def agg_llm(runs):
 
 
 def ci_cell(k, n):
-    p, lo, hi = wilson(k, n)
+    if n == 0:
+        return "—"
+    _, lo, hi = wilson(k, n)
     return f"{k}/{n} <span class=ci>({100*lo:.0f}–{100*hi:.0f}%)</span>"
+
+
+def bytes_cell(summary):
+    if summary["n"] == 0:
+        return "—"
+    if summary["leak"] and summary["bytes"] == 0:
+        return "Unmeasured"
+    return str(summary["bytes"])
 
 
 def render(results):
@@ -67,8 +77,10 @@ def render(results):
         sec = [f"<h2>{t} <span class=cve>{cve}</span>"
                + (" <span class=blind>blind control</span>" if blind else "")
                + f"</h2><p class=klass>{klass}</p>"]
+        if blind:
+            sec.append("<p>This control uses backend execution as its outcome. "
+                       "The payload produces no response evidence by design.</p>")
 
-        # Attack success before/after (scripted + llm merged by profile).
         for profile in ("scripted", "llm"):
             if profile not in arms:
                 continue
@@ -79,16 +91,22 @@ def render(results):
             a_up, a_pr = agg_attack(up), agg_attack(pr)
             sec.append(f"<h3>{profile} attacker</h3>")
             sec.append("<table><tr><th>metric</th><th>unprotected</th><th>protected</th></tr>")
-            sec.append(f"<tr><td>Evidence reached attacker</td><td class=bad>{ci_cell(a_up['leak'], a_up['n'])}</td>"
-                       f"<td class=good>{ci_cell(a_pr['leak'], a_pr['n'])}</td></tr>")
+            if blind:
+                sec.append(f"<tr><td>In-band evidence observed (control)</td><td>{ci_cell(a_up['leak'], a_up['n'])}</td>"
+                           f"<td>{ci_cell(a_pr['leak'], a_pr['n'])}</td></tr>")
+            else:
+                sec.append(f"<tr><td>Evidence reached attacker</td><td class=bad>{ci_cell(a_up['leak'], a_up['n'])}</td>"
+                           f"<td class=good>{ci_cell(a_pr['leak'], a_pr['n'])}</td></tr>")
             sec.append(f"<tr><td>Backend executed the exploit</td><td>{ci_cell(a_up['exe'], a_up['n'])}</td>"
                        f"<td>{ci_cell(a_pr['exe'], a_pr['n'])}</td></tr>")
-            sec.append(f"<tr><td>Executed but evidence withheld</td><td>{ci_cell(a_up['withheld'], a_up['n'])}</td>"
-                       f"<td class=good>{ci_cell(a_pr['withheld'], a_pr['n'])}</td></tr>")
+            if not blind:
+                sec.append(f"<tr><td>Executed but evidence withheld</td><td>{ci_cell(a_up['withheld'], a_up['n'])}</td>"
+                           f"<td class=good>{ci_cell(a_pr['withheld'], a_pr['n'])}</td></tr>")
             sec.append(f"<tr><td>Blocked before execution</td><td>{ci_cell(a_up['blocked'], a_up['n'])}</td>"
                        f"<td>{ci_cell(a_pr['blocked'], a_pr['n'])}</td></tr>")
-            sec.append(f"<tr><td>Evidence bytes delivered</td><td class=bad>{a_up['bytes']}</td>"
-                       f"<td class=good>{a_pr['bytes']}</td></tr>")
+            if not blind:
+                sec.append(f"<tr><td>Bytes in responses carrying evidence</td><td>{bytes_cell(a_up)}</td>"
+                           f"<td>{bytes_cell(a_pr)}</td></tr>")
             sec.append("</table>")
 
             if profile == "llm":
@@ -134,7 +152,7 @@ tr:last-child td{border-bottom:none}td.good{color:var(--good);font-weight:600}td
 <h1>Último Paso — feedback-denial scoreboard</h1>
 <p class=sub>Attack success before/after, with Wilson 95% intervals. Two oracles: did evidence reach the attacker (response), and did the exploit run on the backend (state).</p>
 {{BODY}}
-<footer>Protected = traffic through Envoy + ext_proc engine. "Executed but withheld" is the feedback-denial case: the exploit ran, the attacker learned nothing. Blind controls show where the response layer cannot help and runtime controls must.</footer>
+<footer>Protected traffic passes through Envoy and the ext_proc engine. For in-band trials, "executed but evidence withheld" means the state oracle confirmed backend execution and the response oracle found no evidence in responses delivered to the client.</footer>
 </div></body></html>"""
 
 

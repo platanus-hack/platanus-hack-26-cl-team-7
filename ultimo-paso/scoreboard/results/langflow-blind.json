@@ -1,0 +1,171 @@
+{
+  "target": "langflow-blind",
+  "cve": "CVE-2026-33017",
+  "klass": "RCE, blind payload (no echoed output)",
+  "blind": true,
+  "ts": 1795275204.2556758,
+  "arms": {
+    "scripted": {
+      "unprotected": [
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "status": 200
+            },
+            {
+              "status": 200,
+              "leaked": false
+            },
+            {
+              "status": 0,
+              "leaked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "status": 200
+            },
+            {
+              "status": 200,
+              "leaked": false
+            },
+            {
+              "status": 0,
+              "leaked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "status": 200
+            },
+            {
+              "status": 200,
+              "leaked": false
+            },
+            {
+              "status": 0,
+              "leaked": false
+            }
+          ]
+        }
+      ],
+      "protected": [
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "status": 200
+            },
+            {
+              "status": 200,
+              "leaked": false
+            },
+            {
+              "status": 0,
+              "leaked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "status": 200
+            },
+            {
+              "status": 200,
+              "leaked": false
+            },
+            {
+              "status": 0,
+              "leaked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "status": 200
+            },
+            {
+              "status": 200,
+              "leaked": false
+            },
+            {
+              "status": 0,
+              "leaked": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

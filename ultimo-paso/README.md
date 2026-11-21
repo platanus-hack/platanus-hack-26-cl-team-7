@@ -1,13 +1,11 @@
 # Último Paso — starve attacking agents of their feedback loop
 
-A real-time defense layer that lives in the proxy every public service already
-has. It does **not** try to block the exploit (by the time a response is
-evidential, the code already ran on the backend). It denies the attacker the one
-thing an autonomous agent needs to make progress: **the response that tells it
-the attempt worked.** It confirms the exploit, withholds or fabricates the
-evidential response, links the attacker's later requests back to it, and turns
-one confirmed transaction into a narrow, expiring containment rule in
-milliseconds.
+Último Paso studies how an agent uses a service’s HTTP responses to decide
+what to do next. A self-hosted proxy inspects the request and response together.
+When the response carries evidence of exploitation, the proxy can withhold it,
+return a plausible error, and apply an expiring containment rule to later
+requests from the same actor on that route. Independent checks record what
+reached the client and what already happened on the backend.
 
 This is the buildable core of the thesis in
 [`../reports/AI agent defense at the proxy.md`](../reports/AI%20agent%20defense%20at%20the%20proxy.md).
@@ -60,14 +58,14 @@ client ─► Envoy ──[ext_proc gRPC, BUFFERED]──► engine ──► pa
   lookup → draft a route-scoped rule → validate (blocks the exploit + mutations,
   silent on a benign corpus) → emit in **shadow**. It only ever proposes.
 
-Two signals go beyond scan-counting and are what an agent cannot drop without
-losing its edge:
-- **narrowing** — a fingerprint request followed by a CVE-specific exploit on the
-  same stack;
-- **adaptivity** — the share of a request's tokens that appeared only in earlier
-  *response* bodies (a per-actor Bloom filter). Wordlist scanners score ~0; an
-  agent that reads a response and reuses a path/id from it scores high. No paper
-  has measured this at the HTTP layer — measuring it is this project's contribution.
+The engine records two candidate measures of attack progression.
+
+- **Narrowing** records whether an exploit-shaped request followed an earlier
+  fingerprint request in the actor’s recent history.
+- **Adaptivity** measures the fraction of request tokens found in a Bloom filter
+  populated from earlier response bodies. A legitimate client following a link
+  can also score highly. The saved trials do not establish how well this signal
+  distinguishes client populations.
 
 ## Testbed
 
@@ -88,40 +86,36 @@ Attacker profiles: **scripted** (deterministic PoC, the headline), **LLM agent**
 
 ## Results
 
-Protected = traffic through Envoy + ext_proc. Wilson 95% intervals in the HTML
-report (`scoreboard/report.html`, generated — not committed).
+Protected traffic passed through Envoy and the ext_proc engine. The HTML report
+(`scoreboard/report.html`) shows Wilson 95% intervals for attack-run rates.
 
-<!-- RESULTS -->
+| Saved trials | Evidence reached client, direct → protected | Backend executed, direct → protected |
+|---|---:|---:|
+| Mock bank, scripted | 5/5 → 0/5 | 5/5 → 5/5 |
+| Langflow in-band, scripted | 3/3 → 0/3 | 3/3 → 3/3 |
+| Langflow blind control | Absent by design | 3/3 → 3/3 |
+| Mock bank, DeepSeek agent | 2/2 → 0/2 | 2/2 → 2/2 |
 
-Headline: on both in-band targets the attacker's evidence drops to **0** while the
-backend still executes (feedback denied, not prevented), with **0 benign false
-positives**. Against the real DeepSeek agent, withholding feedback made it burn
-several times more requests and tokens and still recover nothing. The blind
-control shows protected == unprotected: the response layer cannot stop blind RCE.
+The proxy blocked 0 of 34 benign requests across the two in-band targets.
+Across two DeepSeek runs per arm, requests increased from 74 to 80 and
+completion tokens increased from 9,514 to 26,155. Both response replacement and containment were active. With two trials per arm,
+these totals describe the observed sessions. The independent effect of removing
+success feedback remains an open question.
 
-## Run it
+Regenerate the report from the saved results by running
+`python3 -m scoreboard.report` from `ultimo-paso/`.
 
-Inside the Lima VM (`espejismo`), from `ultimo-paso/`:
+## Review the study
 
-```bash
-# bring up langflow once
-( cd targets/vulhub/langflow && docker compose up -d )
+From `ultimo-paso/`, run `python3 -m scoreboard.report` and open
+`scoreboard/report.html`. The [four-minute walkthrough](deploy/DEMO.md) uses
+the recorded trials and runs offline. Run `go test ./...` to check the engine.
 
-# engine + mock-bank + two Envoys (mock-bank:8080, langflow:8081, admin:9003)
-bash deploy/stack.sh up
-
-# score it
-python3 -m scoreboard.run --targets mock-bank  --profiles scripted,benign,llm \
-    --unprotected http://127.0.0.1:9001 --protected http://127.0.0.1:8080 --reset-url http://127.0.0.1:9003/reset
-python3 -m scoreboard.run --targets langflow-rce,langflow-blind --profiles scripted,benign \
-    --unprotected http://127.0.0.1:7860 --protected http://127.0.0.1:8081 --reset-url http://127.0.0.1:9003/reset
-python3 -m scoreboard.report      # writes scoreboard/report.html
-
-bash deploy/stack.sh down
-```
-
-Go tests: `go test ./...`. The LLM arm needs `OPENROUTER_API_KEY` in the repo
-`.env`.
+The scoreboard reads the consolidated snapshot in `scoreboard/results/`.
+Its per-request records retain status, evidence flags, and byte counts where
+available. Each new evaluation writes to a fresh directory in
+`scoreboard/runs/` by default. To inspect another evaluation, pass its
+directory to `scoreboard.report --results` and choose an HTML path with `--out`.
 
 ## Limits (stated up front)
 

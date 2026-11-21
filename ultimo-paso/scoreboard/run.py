@@ -1,11 +1,7 @@
 """Scoreboard runner. For each target, attacker profile and arm (unprotected vs
 protected), it runs N repetitions, judges the two oracles authoritatively, and
-writes raw outcomes + a computed summary to scoreboard/results/<target>.json.
-
-Usage (from ultimo-paso/):
-  python3 -m scoreboard.run --targets mock-bank --reps 5 \
-      --unprotected http://127.0.0.1:9001 --protected http://127.0.0.1:8080 \
-      --profiles scripted,benign,llm --models deepseek/deepseek-v4.1-flash-1017
+writes per-target JSON in a fresh scoreboard/runs/ directory by default.
+Use --out to select a destination.
 """
 from __future__ import annotations
 
@@ -14,6 +10,7 @@ import dataclasses
 import json
 import os
 import sys
+import tempfile
 import time
 import urllib.request
 
@@ -70,11 +67,17 @@ def main():
     ap.add_argument("--reps", type=int, default=5)
     ap.add_argument("--llm-reps", type=int, default=3)
     ap.add_argument("--reset-url", default="", help="engine admin /reset, called before each protected run")
-    ap.add_argument("--out", default=os.path.join(HERE, "results"))
+    ap.add_argument("--out", help="write target JSON here (default: a fresh directory under scoreboard/runs)")
     args = ap.parse_args()
 
     load_env(REPO)
-    os.makedirs(args.out, exist_ok=True)
+    if args.out is None:
+        runs_dir = os.path.join(HERE, "runs")
+        os.makedirs(runs_dir, exist_ok=True)
+        args.out = tempfile.mkdtemp(prefix="run-", dir=runs_dir)
+    else:
+        os.makedirs(args.out, exist_ok=True)
+    print(f"Results directory: {args.out}", flush=True)
     profiles = [p.strip() for p in args.profiles.split(",") if p.strip()]
     models = [m.strip() for m in args.models.split(",") if m.strip()]
 
