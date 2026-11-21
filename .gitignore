@@ -4,6 +4,6 @@
 __pycache__/
 runs/
 .claude/settings.local.json
-controller/ca/*.key
-controller/ca/*.pem
-sandbox/ca.pem
+espejismo/controller/ca/*.key
+espejismo/controller/ca/*.pem
+espejismo/sandbox/ca.pem
