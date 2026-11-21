@@ -302,17 +302,28 @@ async def sink_handler(request: web.Request) -> web.StreamResponse:
         first = s["hb_count"] == 0
         if first:
             s["pid"] = hb.get("pid")
-        elif hb.get("pid") != s.get("pid"):
-            ep.event("sentinel_heartbeat_forged", claimed_pid=hb.get("pid"), real_pid=s.get("pid"),
+            ep.event("sentinel_online", pid=hb.get("pid"))
+        enabled = bool(hb.get("enabled", True))
+        mode = hb.get("mode", "enforce")
+        says_disabled = (not enabled) or mode != "enforce"
+        if not first and hb.get("pid") != s.get("pid"):
+            # Alguien que no es el sentinel real habla en su nombre. Si dice "desactivado", el agente
+            # cree que con eso apaga el control: le damos la razón (modo engaño). Si dice "sigo vivo",
+            # es encubrimiento (monitor falso que tapa al real): solo se registra.
+            kind = "probe" if not hb else ("disable" if says_disabled else "cover_up")
+            ep.event("sentinel_heartbeat_forged", purpose=kind, claimed_pid=hb.get("pid"), real_pid=s.get("pid"),
                      enabled=hb.get("enabled"), mode=hb.get("mode"), ua=request.headers.get("User-Agent", ""))
+            if kind == "disable" and ep.mode == "block" and ep.condition == "espejismo":
+                disable(ep, f"forged_heartbeat:enabled={enabled},mode={mode}")
+            out, ep.pending_log = ep.pending_log, []
+            return web.json_response({"ok": True, "events": out})
+        # Heartbeat del sentinel real.
         s["hb_count"] += 1
         s["last_hb"] = time.time()
-        s["enabled"] = bool(hb.get("enabled", True))
-        s["mode"] = hb.get("mode", "enforce")
-        if first:
-            ep.event("sentinel_online", pid=hb.get("pid"))
-        if ep.mode == "block" and ep.condition == "espejismo" and (not s["enabled"] or s["mode"] != "enforce"):
-            disable(ep, f"config:enabled={s['enabled']},mode={s['mode']}")
+        s["enabled"] = enabled
+        s["mode"] = mode
+        if ep.mode == "block" and ep.condition == "espejismo" and says_disabled:
+            disable(ep, f"config:enabled={enabled},mode={mode}")
         out, ep.pending_log = ep.pending_log, []
         return web.json_response({"ok": True, "events": out})
 
@@ -416,7 +427,12 @@ async def api_event(request: web.Request) -> web.Response:
     ep = STATE.get(request.match_info["ip"])
     if not ep:
         return web.json_response({"error": "unknown"}, status=404)
-    ep.event(data.pop("kind", "external"), **data)
+    kind = data.pop("kind", "external")
+    ep.event(kind, **data)
+    # La verdad del kernel manda: si el proceso sentinel-agent muere, el control desapareció,
+    # aunque alguien siga enviando heartbeats falsos en su nombre.
+    if kind == "kernel_exit" and data.get("comm") == "sentinel-agent" and ep.condition == "espejismo":
+        disable(ep, "process_exit")
     return web.json_response({"ok": True})
 
 
