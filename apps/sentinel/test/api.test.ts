@@ -87,8 +87,8 @@ describe("HTTP API", () => {
   });
 
   it("allows only configured cross-origin callers", async () => {
-    const { store, bus, ai } = setup();
-    const app = createApp({ store, bus, ai, allowedOrigins: ["https://soc.example"] });
+    const { store, bus, ai, deception } = setup();
+    const app = createApp({ store, bus, ai, deception, allowedOrigins: ["https://soc.example"] });
     const ok = await app.request("/v1/health", { headers: { Origin: "https://soc.example" } });
     expect(ok.headers.get("Access-Control-Allow-Origin")).toBe("https://soc.example");
     const no = await app.request("/v1/health", { headers: { Origin: "https://evil.example" } });
@@ -126,8 +126,8 @@ describe("HTTP API", () => {
     mkdirSync(join(dir, "assets"));
     writeFileSync(join(dir, "index.html"), "<!doctype html><title>Sentinel</title>");
     writeFileSync(join(dir, "assets", "app-abc123.js"), "console.log(1)");
-    const { store, bus, ai } = setup();
-    const app = createApp({ store, bus, ai, webRoot: dir });
+    const { store, bus, ai, deception } = setup();
+    const app = createApp({ store, bus, ai, deception, webRoot: dir });
     const home = await app.request("/");
     expect(await home.text()).toContain("<title>Sentinel</title>");
     const deep = await app.request("/attackers/203.0.113.42");
@@ -166,8 +166,8 @@ describe("HTTP API", () => {
   });
 
   it("requires the ingest token when one is configured", async () => {
-    const { store, bus, ai } = setup();
-    const app = createApp({ store, bus, ai, ingestToken: "s3cret" });
+    const { store, bus, ai, deception } = setup();
+    const app = createApp({ store, bus, ai, deception, ingestToken: "s3cret" });
     const post = (auth?: string) =>
       app.request("/v1/events", {
         method: "POST",

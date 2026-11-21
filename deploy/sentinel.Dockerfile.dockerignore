@@ -1,0 +1,7 @@
+# BuildKit reads this file for deploy/sentinel.Dockerfile only.
+**/node_modules
+**/dist
+**/coverage
+apps/sentinel/data
+run
+.venv

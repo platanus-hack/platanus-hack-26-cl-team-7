@@ -88,3 +88,4 @@ and in the row differ. On the review date the owner renews or removes the except
 | Rule | Files | Owner | Reason | Review date |
 | --- | --- | --- | --- | --- |
 | `S311` | `eval/synthetic.py`, `eval/tail.py`, `eval/base_rate.py`, `eval/convert/csic.py` | team-7 | Seeded, non-cryptographic `random.Random` makes the synthetic data reproducible; it never makes secrets. | 2027-05-21 |
+| `S608` | `demo/auth.py` | team-7 | The demo shop's planted SQL injection login flaw (the deception twin's bait) builds its SQL from text on purpose. It runs on a read-only, authorizer-guarded connection (`demo/db.py`). | 2027-05-21 |

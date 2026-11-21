@@ -30,6 +30,10 @@ function keyOf(c: StreamChange): string {
       return `b:${c.ip}`;
     case "counts":
       return "c";
+    case "track":
+      return `t:${c.track.trackId}`;
+    case "finding":
+      return `f:${c.finding.findingId}`;
   }
 }
 

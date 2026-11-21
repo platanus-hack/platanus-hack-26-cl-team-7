@@ -6,24 +6,19 @@ import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
-import {
-  CopilotRequest,
-  IngestBody,
-  IngestEvent,
-  Range,
-  type ApiError,
-  type CopilotEvent,
-  type Health,
-} from "@sentinel/contracts";
+import { CopilotRequest, IngestBody, IngestEvent, Range, type CopilotEvent, type Health } from "@sentinel/contracts";
 import type { Ai } from "./ai.ts";
-import { timingSafeEqual } from "node:crypto";
 import type { Bus, EncodedFrame } from "./bus.ts";
+import type { DeceptionStore } from "./deception.ts";
+import { deceptionRoutes } from "./deception-routes.ts";
+import { fail, tokenMatches } from "./http.ts";
 import type { Store } from "./store.ts";
 
 export interface AppDeps {
   store: Store;
   bus: Bus;
   ai: Ai;
+  deception: DeceptionStore;
   version?: string;
   startedAt?: number;
   heartbeatMs?: number;
@@ -33,7 +28,7 @@ export interface AppDeps {
   webRoot?: string;
   /** Host names the API answers besides localhost. Anything else is refused, which stops DNS rebinding. */
   allowedHosts?: string[];
-  /** When set, POST /v1/events needs `Authorization: Bearer <token>`. */
+  /** When set, POST /v1/events and POST /v1/deception/events need `Authorization: Bearer <token>`. */
   ingestToken?: string;
 }
 
@@ -41,11 +36,7 @@ const MAX_QUEUED_FRAMES = 1000;
 const MAX_QUEUED_BYTES = 16 * 1024 * 1024;
 const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
 
-function fail(c: Context, status: 400 | 401 | 403 | 404 | 413 | 415 | 500 | 503, code: string, message: string) {
-  return c.json<ApiError>({ error: { code, message } }, status);
-}
-
-export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken }: AppDeps) {
+export function createApp({ store, bus, ai, deception, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
@@ -234,6 +225,8 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     });
   });
 
+  app.route("/", deceptionRoutes({ deception, ingestToken }));
+
   // Unknown API paths answer in the API's error shape, never with the web app.
   app.all("/*", (c) => fail(c, 404, "not_found", "No such route"));
 
@@ -254,10 +247,4 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     root.get("*", serveStatic({ root: webRoot, path: "index.html", precompressed: true }));
   }
   return root;
-}
-
-function tokenMatches(header: string | undefined, token: string): boolean {
-  const given = Buffer.from(header?.replace(/^Bearer\s+/i, "") ?? "");
-  const want = Buffer.from(token);
-  return given.length === want.length && timingSafeEqual(given, want);
 }

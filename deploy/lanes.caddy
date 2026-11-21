@@ -1,0 +1,65 @@
+# Lane rules shared by deploy/Caddyfile (compose) and deploy/Caddyfile.local, so both edges route
+# the same way. Use inside a site block: `import lanes <socket dir>`, where the directory holds
+# lane.sock (router lane endpoint), tap.sock (router tap) and real.sock (real shop).
+#
+# Per request, in order:
+#   1. delete the client's copies of the lane headers, then set X-Client-Ip and X-Request-Id;
+#   2. ask the router's lane endpoint (GET /lane) which lane the request takes;
+#   3. the mirror lane and every login POST go to the tap, the rest to the real shop;
+#   4. delete response headers that name the software or could tell the lanes apart.
+# When the lane endpoint cannot be reached or does not answer in time, the request fails OPEN to
+# the real shop. A tap or shop failure keeps its error, so a mirror-lane request never falls
+# through to real data.
+
+(normalize_response) {
+	header {
+		-Server
+		-Via
+		-X-Powered-By
+		-X-Lane
+		-X-Track-Id
+	}
+}
+
+(lanes) {
+	route {
+		request_header -X-Lane
+		request_header -X-Track-Id
+		request_header -X-Client-Ip
+		request_header -X-Request-Id
+		request_header X-Client-Ip {remote_host}
+		request_header X-Request-Id {http.request.uuid}
+		import normalize_response
+
+		# edge_stage tells handle_errors whether the lane endpoint or a shop failed.
+		vars edge_stage lane
+		# "/lane?" drops the original query; the lane endpoint reads X-Forwarded-Uri instead.
+		forward_auth unix/{args[0]}/lane.sock {
+			uri /lane?
+			copy_headers X-Lane X-Track-Id
+			# A non-2xx lane answer is never shown to the client: the request goes on without
+			# X-Lane, which is the real lane.
+			@lane_refused status 1xx 3xx 4xx 5xx
+			handle_response @lane_refused {
+				vars edge_stage routed
+			}
+			transport http {
+				dial_timeout 1s
+				response_header_timeout 2s
+			}
+		}
+		vars edge_stage routed
+
+		@tap expression header({'X-Lane': 'mirror'}) || (method('POST') && path('/login', '/api/session'))
+		reverse_proxy @tap unix/{args[0]}/tap.sock
+		reverse_proxy unix/{args[0]}/real.sock
+	}
+
+	handle_errors {
+		@lane_down vars edge_stage lane
+		handle @lane_down {
+			import normalize_response
+			reverse_proxy unix/{args[0]}/real.sock
+		}
+	}
+}

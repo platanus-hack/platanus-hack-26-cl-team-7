@@ -1,22 +1,45 @@
 #!/usr/bin/env bash
-# Local stack without Docker: demo site :8081, Caddy :8080 (JSON log in run/access.log),
-# dashboard :8090 and the engine following the log. PIDs, start times and output go to run/.
-#   scripts/stack_local.sh [start [service ...]]   services: site caddy dashboard engine
+# Local mirror-lane stack without Docker. Everything lives in run/ (gitignored):
+#   sentinel  Sentinel API and dashboard on 127.0.0.1:8787 (pnpm --filter @sentinel/server start)
+#   real      real shop on run/real.sock, data in run/real.db and run/real-files
+#   twin      twin shop on run/twin.sock, masked data in run/twin.db, egress only via the relay
+#   sync      real-side sync service on run/sync.sock (public rows, copy on flag)
+#   router    lane endpoint run/lane.sock, tap run/tap.sock, callback relay 127.0.0.1:8097
+#   caddy     public edge on :8080 (deploy/Caddyfile.local, JSON log in run/access.log)
+# Before the first start, demo.seed writes run/real.db and demo.mask writes run/twin.db and
+# run/canaries.json; each runs until it succeeds once (run/seed.done, run/mask.done). The ingest token for
+# Sentinel and the router is generated once into run/sentinel.token (mode 0600, never committed).
+# PIDs, start times and output go to run/.
+#   scripts/stack_local.sh [start [service ...]]   services: sentinel real twin sync router caddy
 #   scripts/stack_local.sh stop | status
+# STACK_EDGE_PORT, SENTINEL_PORT and STACK_RELAY_PORT move the three TCP ports (tests use them).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN="$ROOT/run"
-ALL=(site caddy dashboard engine)
+ALL=(sentinel real twin sync router caddy)
 STARTED=()
-SETTLE_TICKS=15 # a service without a port is ready once it stays up this many 0.1 s checks
+READY_TICKS=100 # readiness checks, 0.1 s apart
+STOP_TICKS=50   # checks for a clean exit after SIGTERM, 0.1 s apart, before SIGKILL
+export STACK_EDGE_PORT="${STACK_EDGE_PORT:-8080}"
+export SENTINEL_PORT="${SENTINEL_PORT:-8787}"
+STACK_RELAY_PORT="${STACK_RELAY_PORT:-8097}"
+TOKEN_FILE="$RUN/sentinel.token"
+# Exit 0 when something accepts connections on the Unix socket in argv[1].
+SOCKET_PROBE='import socket, sys
+s = socket.socket(socket.AF_UNIX)
+s.settimeout(1)
+s.connect(sys.argv[1])'
 
-port_of() {
+# What a service listens on once it is ready: "sock:<file in run/>" or "port:<tcp port>".
+endpoints_of() {
   case "$1" in
-    site) echo 8081 ;;
-    caddy) echo 8080 ;;
-    dashboard) echo 8090 ;;
-    *) echo "" ;;
+    sentinel) echo "port:$SENTINEL_PORT" ;;
+    real) echo "sock:real.sock" ;;
+    twin) echo "sock:twin.sock" ;;
+    sync) echo "sock:sync.sock" ;;
+    router) echo "sock:lane.sock sock:tap.sock port:$STACK_RELAY_PORT" ;;
+    caddy) echo "port:$STACK_EDGE_PORT" ;;
   esac
 }
 
@@ -48,50 +71,114 @@ port_open() {
   (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
 }
 
+# Relative to the repository root (start runs there): macOS caps AF_UNIX paths near 104 bytes.
+socket_live() {
+  "$PY" -c "$SOCKET_PROBE" "run/$1" 2>/dev/null
+}
+
+# A stale socket file (its server died) is not "in use": the service removes it when it binds.
+endpoint_up() {
+  case "$1" in
+    sock:*) socket_live "${1#sock:}" ;;
+    port:*) port_open "${1#port:}" ;;
+  esac
+}
+
+describe() {
+  case "$1" in
+    sock:*) echo "socket run/${1#sock:}" ;;
+    port:*) echo "port ${1#port:}" ;;
+  esac
+}
+
+all_up() {
+  local endpoint
+  for endpoint in $(endpoints_of "$1"); do
+    endpoint_up "$endpoint" || return 1
+  done
+}
+
 wait_ready() {
-  local name=$1 port ticks=0
-  port="$(port_of "$name")"
-  for _ in $(seq 1 100); do
+  local name=$1
+  for _ in $(seq 1 "$READY_TICKS"); do
     is_running "$name" || return 1
-    ticks=$((ticks + 1))
-    if [[ -n "$port" ]]; then
-      port_open "$port" && return 0
-    elif ((ticks >= SETTLE_TICKS)); then
-      return 0
-    fi
+    all_up "$name" && return 0
     sleep 0.1
   done
   return 1
 }
 
-# The engine has no port to probe, so its routes and rules are loaded once up front: a bad config
-# fails here with the traceback in run/engine.log instead of after a reported start.
+# The router runs the engine Detector inline, so its routes and rules are loaded once up front: a
+# bad config fails here with the traceback in run/router.log instead of after a reported start.
 preflight() {
-  [[ "$1" == engine ]] || return 0
-  "$PY" -m engine replay /dev/null >"$RUN/engine.log" 2>&1
+  [[ "$1" == router ]] || return 0
+  "$PY" -m engine replay /dev/null >"$RUN/router.log" 2>&1
 }
 
 run_service() {
   trap '' HUP
   case "$1" in
-    site) exec "$PY" -m demo --port 8081 ;;
+    sentinel)
+      SENTINEL_INGEST_TOKEN="$(cat "$TOKEN_FILE")" SENTINEL_DB="$RUN/sentinel.db" \
+        exec pnpm --filter @sentinel/server start ;;
+    real) exec "$PY" -m demo --socket run/real.sock --db run/real.db --files run/real-files ;;
+    twin)
+      exec "$PY" -m demo --socket run/twin.sock --db run/twin.db --files run/twin-files \
+        --egress-proxy "http://127.0.0.1:$STACK_RELAY_PORT" ;;
+    sync) exec "$PY" -m demo.sync --socket run/sync.sock --real run/real.db --twin run/twin.db ;;
+    router)
+      SENTINEL_INGEST_TOKEN="$(cat "$TOKEN_FILE")" exec "$PY" -m mirror \
+        --lane run/lane.sock --tap run/tap.sock --relay "127.0.0.1:$STACK_RELAY_PORT" \
+        --real run/real.sock --twin run/twin.sock --sync run/sync.sock \
+        --sentinel "http://127.0.0.1:$SENTINEL_PORT" --state run/mirror-keys.jsonl \
+        --spool run/mirror-spool.jsonl --canaries run/canaries.json ;;
     caddy) exec caddy run --config deploy/Caddyfile.local --adapter caddyfile ;;
-    dashboard) exec "$PY" -m dashboard --port 8090 --db "$RUN/verdicts.db" ;;
-    engine) exec "$PY" -m engine follow "$RUN/access.log" --webhook http://127.0.0.1:8090/webhook ;;
   esac
 }
 
+# One-time data jobs, real side only: seed the real shop, then mask a copy for the twin.
+run_job() {
+  local name=$1
+  shift
+  echo "$name: running once"
+  if ! "$PY" -m "$@" </dev/null >"$RUN/$name.log" 2>&1; then
+    echo "$name: failed; last lines of run/$name.log:" >&2
+    tail -n 20 "$RUN/$name.log" >&2
+    return 1
+  fi
+}
+
+# A job counts as done once its marker file exists, so a job that died halfway runs again from a
+# clean slate; a new seed also redoes the mask.
+prepare() {
+  mkdir -p "$RUN/real-files" "$RUN/twin-files"
+  if [[ ! -s "$TOKEN_FILE" ]]; then
+    (umask 077 && "$PY" -c 'import secrets; print(secrets.token_hex(32))' >"$TOKEN_FILE")
+  fi
+  if [[ ! -f "$RUN/seed.done" ]]; then
+    rm -f "$RUN/real.db" "$RUN/real.db-wal" "$RUN/real.db-shm" "$RUN/mask.done"
+    run_job seed demo.seed --db run/real.db --files run/real-files || return 1
+    touch "$RUN/seed.done"
+  fi
+  if [[ ! -f "$RUN/mask.done" ]]; then
+    rm -f "$RUN/twin.db" "$RUN/twin.db-wal" "$RUN/twin.db-shm" "$RUN/canaries.json"
+    run_job mask demo.mask --from run/real.db --to run/twin.db --allow config/mask.yaml || return 1
+    touch "$RUN/mask.done"
+  fi
+}
+
 start_one() {
-  local name=$1 port pid
+  local name=$1 endpoint pid
   if pid="$(pid_of "$name")"; then
     echo "$name: already running (pid $pid)"
     return 0
   fi
-  port="$(port_of "$name")"
-  if [[ -n "$port" ]] && port_open "$port"; then
-    echo "$name: port $port is already in use" >&2
-    return 1
-  fi
+  for endpoint in $(endpoints_of "$name"); do
+    if endpoint_up "$endpoint"; then
+      echo "$name: $(describe "$endpoint") is already in use" >&2
+      return 1
+    fi
+  done
   if ! preflight "$name"; then
     echo "$name: config check failed; last lines of run/$name.log:" >&2
     tail -n 20 "$RUN/$name.log" >&2
@@ -108,18 +195,30 @@ start_one() {
     tail -n 20 "$RUN/$name.log" >&2
     return 1
   fi
-  echo "$name: started (pid $pid)${port:+ on :$port}"
+  echo "$name: started (pid $pid)"
+}
+
+# pnpm runs Sentinel as a child process, so a stop signals the whole process tree.
+tree_of() {
+  local child
+  echo "$1"
+  for child in $(pgrep -P "$1" 2>/dev/null || true); do
+    tree_of "$child"
+  done
 }
 
 stop_one() {
-  local name=$1 pid
+  local name=$1 pid tree alive p
   if pid="$(pid_of "$name")"; then
-    kill "$pid"
-    for _ in $(seq 1 50); do
-      kill -0 "$pid" 2>/dev/null || break
+    tree="$(tree_of "$pid")"
+    kill $tree 2>/dev/null || true
+    for _ in $(seq 1 "$STOP_TICKS"); do
+      alive=""
+      for p in $tree; do kill -0 "$p" 2>/dev/null && alive="$alive $p"; done
+      [[ -n "$alive" ]] || break
       sleep 0.1
     done
-    kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
+    [[ -z "$alive" ]] || kill -9 $alive 2>/dev/null || true
     echo "$name: stopped (pid $pid)"
   fi
   rm -f "$RUN/$name.pid" "$RUN/$name.started"
@@ -132,13 +231,15 @@ start() {
   touch "$RUN/access.log"
   cd "$ROOT"
   PY="$(uv run --frozen python -c 'import sys; print(sys.executable)')"
+  prepare || exit 1
   for name in "${services[@]}"; do
     if ! start_one "$name"; then
       stop_started
       exit 1
     fi
   done
-  echo "proxy http://127.0.0.1:8080  dashboard http://127.0.0.1:8090  log $RUN/access.log"
+  echo "edge http://127.0.0.1:$STACK_EDGE_PORT  sentinel http://127.0.0.1:$SENTINEL_PORT" \
+    " log $RUN/access.log"
 }
 
 # After a failed start, stop only what this call launched, newest first; services that were
@@ -172,5 +273,5 @@ case "${1:-start}" in
   start) shift || true; start "$@" ;;
   stop) stop ;;
   status) status ;;
-  *) echo "usage: $0 [start [site|caddy|dashboard|engine ...]] | stop | status" >&2; exit 2 ;;
+  *) echo "usage: $0 [start [sentinel|real|twin|sync|router|caddy ...]] | stop | status" >&2; exit 2 ;;
 esac

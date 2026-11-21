@@ -2,7 +2,7 @@
  * The Sentinel client: the one module that talks to the server.
  * JSON requests with timeouts and the error envelope, plus an SSE reader for streams.
  */
-import type { AttackerDetail, Block, Health, Range, Snapshot } from "@sentinel/contracts";
+import type { AttackerDetail, Block, FindingPage, Health, Range, Snapshot, TrackDetail, TrackPage } from "@sentinel/contracts";
 
 /** Same origin by default: Sentinel serves this app in production and Vite proxies /v1 in development. */
 export const BASE_URL: string = (import.meta.env.VITE_SENTINEL_URL as string | undefined) ?? "";
@@ -41,12 +41,28 @@ async function request<T>(path: string, init?: RequestInit & { timeoutMs?: numbe
   }
 }
 
+/** Paging of GET /v1/tracks and /v1/findings. `cursor` is the previous page's nextCursor. */
+export interface PageParams {
+  range: Range;
+  limit: number;
+  cursor?: string | null;
+}
+
+function pageQuery({ range, limit, cursor }: PageParams): string {
+  const q = new URLSearchParams({ range, limit: String(limit) });
+  if (cursor) q.set("cursor", cursor);
+  return q.toString();
+}
+
 export const api = {
   health: (signal?: AbortSignal) => request<Health>("/v1/health", { signal, timeoutMs: 3000 }),
   snapshot: (range: Range, signal?: AbortSignal) => request<Snapshot>(`/v1/snapshot?range=${range}`, { signal }),
   attacker: (ip: string, signal?: AbortSignal) => request<AttackerDetail>(`/v1/attackers/${encodeURIComponent(ip)}`, { signal }),
   block: (ip: string) => request<Block>(`/v1/blocks/${encodeURIComponent(ip)}`, { method: "PUT" }),
   unblock: (ip: string) => request<void>(`/v1/blocks/${encodeURIComponent(ip)}`, { method: "DELETE" }),
+  tracks: (p: PageParams, signal?: AbortSignal) => request<TrackPage>(`/v1/tracks?${pageQuery(p)}`, { signal }),
+  track: (trackId: string, signal?: AbortSignal) => request<TrackDetail>(`/v1/tracks/${encodeURIComponent(trackId)}`, { signal }),
+  findings: (p: PageParams, signal?: AbortSignal) => request<FindingPage>(`/v1/findings?${pageQuery(p)}`, { signal }),
   streamUrl: (after: string) => `${BASE_URL}/v1/stream?after=${encodeURIComponent(after)}`,
   copilotUrl: () => `${BASE_URL}/v1/copilot/messages`,
 };

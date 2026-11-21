@@ -28,7 +28,7 @@ def make_detector(thresholds: Thresholds | None = None) -> Detector:
 
 
 def req(ts: float, path: str, query: str = "", ip: str = IP, ua: str = UA) -> Request:
-    return Request(ts=ts, ip=ip, user_agent=ua, method="GET", path=path, query=query, status=404)
+    return Request(ts=ts, ip=ip, user_agent=ua, method="GET", path=path, query=query)
 
 
 def process_all(detector: Detector, requests: list[Request]) -> list[Verdict]:

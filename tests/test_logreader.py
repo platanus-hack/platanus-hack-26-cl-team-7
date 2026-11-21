@@ -27,7 +27,6 @@ def test_parse_realistic_access_line() -> None:
         method="POST",
         path="/login",
         query="",
-        status=302,
     )
 
 
@@ -94,11 +93,11 @@ def test_odd_headers_give_empty_user_agent(headers: Any) -> None:
     assert req.user_agent == ""
 
 
-def test_status_and_ts_types() -> None:
+def test_status_is_required_but_not_kept_and_ts_type() -> None:
     req = parse_line(caddy_line(ts=1732176001.5, status=404))
     assert req is not None
-    assert req.status == 404
-    assert isinstance(req.status, int)
+    assert not hasattr(req, "status")
+    assert req == parse_line(caddy_line(ts=1732176001.5, status=200))
     assert req.ts == 1732176001.5
 
 

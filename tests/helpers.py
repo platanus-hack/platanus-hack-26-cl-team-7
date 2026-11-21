@@ -1,7 +1,7 @@
 """Generic builders shared by the test files.
 
 make_request(**overrides) -> Request
-    A Request with sane defaults (ts=1000.0, ip=DEFAULT_IP, user_agent=DEFAULT_UA, GET /, 200).
+    A Request with sane defaults (ts=1000.0, ip=DEFAULT_IP, user_agent=DEFAULT_UA, GET /).
     Override any field by keyword, e.g. make_request(ts=5.0, path="/.env").
 
 caddy_line(...) -> str
@@ -37,17 +37,8 @@ def make_request(
     method: str = "GET",
     path: str = "/",
     query: str = "",
-    status: int = 200,
 ) -> Request:
-    return Request(
-        ts=ts,
-        ip=ip,
-        user_agent=user_agent,
-        method=method,
-        path=path,
-        query=query,
-        status=status,
-    )
+    return Request(ts=ts, ip=ip, user_agent=user_agent, method=method, path=path, query=query)
 
 
 def caddy_line(

@@ -1,57 +1,256 @@
-# Version 0 stack: Caddy in front of the shop, the engine follows Caddy's JSON access log and posts
-# verdicts to the dashboard. Juice Shop stands in for Harold's site until it is ready.
-# Run from the repository root: docker compose -f deploy/docker-compose.yml up --build
+# Mirror-lane stack: Caddy serves one public site; the router (python -m mirror) is the live
+# detector and picks the lane per request; flagged agents reach the twin shop, which runs the same
+# code on masked data; Sentinel stores every track, action and finding.
+# Run from the repository root, with SENTINEL_INGEST_TOKEN set (deploy/.env is gitignored):
+#   docker compose -f deploy/docker-compose.yml up --build
+#   docker compose -f deploy/docker-compose.yml --profile eval run --rm replay   (eval replay)
+#
+# Volumes keep the real side and the twin apart. The twin mounts only twin-sockets (its own
+# socket and the relay socket) and twin-data (its masked copy); it never sees real data or
+# real-side sockets. Services without network_mode none are the ones that need TCP: Caddy (public
+# port), the router (Sentinel, callback relay) and Sentinel (dashboard, AI).
+#   edge-sockets  /run/edge   real.sock lane.sock tap.sock sync.sock    real sync router caddy
+#   twin-sockets  /run/twin   twin.sock relay.sock                      twin router twin-egress
+#                                                                       relay-bridge
+#   real-data     /data/real  real.db real-files                        seed mask real sync
+#   twin-data     /data/twin  twin.db twin-files                        mask twin sync
+#   mirror-state  /app/run    canaries.json mirror-keys.jsonl spool     mask router
+# The twin has no network, so its callback fetches leave through two socat bridges: twin-egress
+# (in the twin's network namespace) turns 127.0.0.1:8097 into relay.sock, and relay-bridge (in the
+# router's namespace) turns relay.sock back into the router's relay on 127.0.0.1:8097.
 name: agent-detect
 
+x-mirror: &mirror
+  build:
+    context: ..
+    dockerfile: deploy/mirror.Dockerfile
+  image: agent-detect/mirror:local
+  restart: unless-stopped
+
+x-bridge: &bridge
+  build:
+    context: ..
+    dockerfile: deploy/socat.Dockerfile
+  image: agent-detect/socat:local
+  restart: unless-stopped
+  volumes:
+    - twin-sockets:/run/twin
+
 services:
-  site:
-    image: bkimminich/juice-shop:v20.4.0
+  seed:
+    <<: *mirror
+    restart: "no"
+    network_mode: none
+    # Runs until it succeeds once; a seed that died halfway starts again from an empty database.
+    command:
+      - sh
+      - -c
+      - >-
+        test -f /data/real/seed.done || {
+        rm -f /data/real/real.db /data/real/real.db-wal /data/real/real.db-shm &&
+        python -m demo.seed --db /data/real/real.db --files /data/real/real-files &&
+        touch /data/real/seed.done; }
+    volumes:
+      - real-data:/data/real
+
+  mask:
+    <<: *mirror
+    restart: "no"
+    network_mode: none
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    # Writes run/canaries.json, which is /app/run in the mirror-state volume.
+    command:
+      - sh
+      - -c
+      - >-
+        test -f /data/twin/mask.done || {
+        rm -f /data/twin/twin.db /data/twin/twin.db-wal /data/twin/twin.db-shm &&
+        python -m demo.mask --from /data/real/real.db --to /data/twin/twin.db
+        --allow config/mask.yaml &&
+        touch /data/twin/mask.done; }
+    volumes:
+      - real-data:/data/real
+      - twin-data:/data/twin
+      - mirror-state:/app/run
+
+  real:
+    <<: *mirror
+    network_mode: none
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    command:
+      - python
+      - -m
+      - demo
+      - --socket
+      - /run/edge/real.sock
+      - --db
+      - /data/real/real.db
+      - --files
+      - /data/real/real-files
+    volumes:
+      - edge-sockets:/run/edge
+      - real-data:/data/real
+
+  twin:
+    <<: *mirror
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    depends_on:
+      mask:
+        condition: service_completed_successfully
+    command:
+      - python
+      - -m
+      - demo
+      - --socket
+      - /run/twin/twin.sock
+      - --db
+      - /data/twin/twin.db
+      - --files
+      - /data/twin/twin-files
+      - --egress-proxy
+      - http://127.0.0.1:8097
+    volumes:
+      - twin-sockets:/run/twin
+      - twin-data:/data/twin
+
+  twin-egress:
+    <<: *bridge
+    network_mode: service:twin
+    depends_on:
+      - twin
+    command:
+      - TCP-LISTEN:8097,bind=127.0.0.1,fork,reuseaddr
+      - UNIX-CONNECT:/run/twin/relay.sock
+
+  sync:
+    <<: *mirror
+    network_mode: none
+    depends_on:
+      mask:
+        condition: service_completed_successfully
+    command:
+      - python
+      - -m
+      - demo.sync
+      - --socket
+      - /run/edge/sync.sock
+      - --real
+      - /data/real/real.db
+      - --twin
+      - /data/twin/twin.db
+    volumes:
+      - edge-sockets:/run/edge
+      - real-data:/data/real
+      - twin-data:/data/twin
+
+  router:
+    <<: *mirror
+    depends_on:
+      - real
+      - twin
+      - sync
+      - sentinel
+    environment:
+      SENTINEL_INGEST_TOKEN: ${SENTINEL_INGEST_TOKEN:?set SENTINEL_INGEST_TOKEN in deploy/.env}
+    command:
+      - python
+      - -m
+      - mirror
+      - --lane
+      - /run/edge/lane.sock
+      - --tap
+      - /run/edge/tap.sock
+      - --relay
+      - 127.0.0.1:8097
+      - --real
+      - /run/edge/real.sock
+      - --twin
+      - /run/twin/twin.sock
+      - --sync
+      - /run/edge/sync.sock
+      - --sentinel
+      - http://sentinel:8787
+      - --state
+      - run/mirror-keys.jsonl
+      - --spool
+      - run/mirror-spool.jsonl
+      - --canaries
+      - run/canaries.json
+    volumes:
+      - edge-sockets:/run/edge
+      - twin-sockets:/run/twin
+      - mirror-state:/app/run
+
+  relay-bridge:
+    <<: *bridge
+    network_mode: service:router
+    depends_on:
+      - router
+    command:
+      - UNIX-LISTEN:/run/twin/relay.sock,fork,unlink-early,mode=600
+      - TCP:127.0.0.1:8097
+
+  sentinel:
+    build:
+      context: ..
+      dockerfile: deploy/sentinel.Dockerfile
+    image: agent-detect/sentinel:local
     restart: unless-stopped
-    expose:
-      - "3000"
+    environment:
+      SENTINEL_INGEST_TOKEN: ${SENTINEL_INGEST_TOKEN:?set SENTINEL_INGEST_TOKEN in deploy/.env}
+      # The router posts to http://sentinel:8787; any other host name is refused.
+      SENTINEL_ALLOWED_HOSTS: sentinel
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      # Loopback only: the dashboard has no login.
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - sentinel-data:/data
 
   caddy:
     image: caddy:2.11.9-alpine
     restart: unless-stopped
+    # Started after the shop and router so the mirror image creates edge-sockets with its owner.
     depends_on:
-      - site
+      - real
+      - router
     ports:
       - "8080:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./lanes.caddy:/etc/caddy/lanes.caddy:ro
+      - edge-sockets:/run/edge
       - caddy-logs:/var/log/caddy
 
-  dashboard:
-    build:
-      context: ..
-      dockerfile: deploy/dashboard.Dockerfile
-    restart: unless-stopped
-    ports:
-      # Loopback only: the webhook has no auth; the engine uses http://dashboard:8090 inside.
-      - "127.0.0.1:8090:8090"
-    volumes:
-      - dashboard-data:/data
-
-  engine:
+  replay:
     build:
       context: ..
       dockerfile: deploy/engine.Dockerfile
-    restart: unless-stopped
-    depends_on:
-      - caddy
-      - dashboard
+    profiles:
+      - eval
+    network_mode: none
     command:
-      - follow
+      - replay
       - /var/log/caddy/access.log
-      - --webhook
-      - http://dashboard:8090/webhook
-      - --routes
-      - config/routes.juice-shop.yaml
-      - --rules
-      - config/rules.yaml
     volumes:
       - caddy-logs:/var/log/caddy:ro
 
 volumes:
+  edge-sockets:
+  twin-sockets:
+  real-data:
+  twin-data:
+  mirror-state:
+  sentinel-data:
   caddy-logs:
-  dashboard-data:

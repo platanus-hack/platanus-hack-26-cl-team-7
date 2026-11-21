@@ -22,7 +22,7 @@ ASSET = RouteMatch(pattern="/static/**", asset=True)
 
 
 def req(ts: float, path: str, ip: str = IP, ua: str = UA) -> Request:
-    return Request(ts=ts, ip=ip, user_agent=ua, method="GET", path=path, query="", status=404)
+    return Request(ts=ts, ip=ip, user_agent=ua, method="GET", path=path, query="")
 
 
 def rules_fired(thresholds: Thresholds, requests: list[Request]) -> list[str]:

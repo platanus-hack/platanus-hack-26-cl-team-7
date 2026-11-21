@@ -31,6 +31,9 @@ ignore = ["PLR2004", "S101"]
 "eval/tail.py" = ["S311"]
 "eval/base_rate.py" = ["S311"]
 "eval/convert/csic.py" = ["S311"]
+# Standing lint exception (CONSTRAINTS.md "Lint exceptions"): the demo shop's planted SQL
+# injection login flaw builds its SQL from text on purpose. Owner team-7, review 2027-05-21.
+"demo/auth.py" = ["S608"]
 
 [tool.mypy]
 strict = true
@@ -43,12 +46,12 @@ addopts = "-q"
 [tool.coverage.run]
 # source_pkgs (not source) keeps repo-relative file names in coverage.xml, so diff-cover never
 # mixes up engine/__init__.py with dashboard/__init__.py.
-source_pkgs = ["engine", "eval", "dashboard", "scripts", "demo"]
+source_pkgs = ["engine", "eval", "dashboard", "scripts", "demo", "mirror"]
 branch = true
 
 # File size limits. Exceptions need an owner and an end date (see CONSTRAINTS.md).
 [tool.check_size]
 source_limit = 200
 test_limit = 300
-roots = ["engine", "eval", "dashboard", "scripts", "demo", "tests"]
+roots = ["engine", "eval", "dashboard", "scripts", "demo", "mirror", "tests"]
 exceptions = []

@@ -18,6 +18,7 @@ import {
 } from "@sentinel/contracts";
 import type { Bus } from "./bus.ts";
 import { EMPTY_GEO, fingerprint, geoFromHint, parseClient, type ClientInfo, type Geo } from "./enrich.ts";
+import { migrate } from "./schema.ts";
 
 /* ------------------------------ detection ----------------------------- */
 
@@ -126,6 +127,8 @@ export interface StoreOptions {
   now?: () => number;
   /** When true, events the rules cannot settle wait as "analyzing" for an AI verdict. */
   aiVerdicts?: boolean;
+  /** Other stores that keep 24 h of rows. prune() runs theirs on the same schedule. */
+  retained?: { prune(now: number): void }[];
 }
 
 interface AttackerState extends ClientInfo, Geo {
@@ -166,13 +169,15 @@ export class Store {
   private readonly db: DatabaseSync | null;
   private readonly now: () => number;
   private readonly aiVerdicts: boolean;
+  private readonly retained: { prune(now: number): void }[];
 
   /** Every change is published to `bus`. Subscribe there to react to new events or attackers. */
-  constructor(bus: Bus, { db = null, now = Date.now, aiVerdicts = false }: StoreOptions = {}) {
+  constructor(bus: Bus, { db = null, now = Date.now, aiVerdicts = false, retained = [] }: StoreOptions = {}) {
     this.bus = bus;
     this.db = db;
     this.now = now;
     this.aiVerdicts = aiVerdicts;
+    this.retained = retained;
     if (db) {
       migrate(db);
       this.load(db);
@@ -406,7 +411,9 @@ export class Store {
     for (const [ip, a] of this.attackers_) if (a.lastSeen < cutoff && !this.blocks_.has(ip)) this.attackers_.delete(ip);
     this.logins.prune(now);
     this.pruneBuckets();
-    if (!this.db || this.closed) return;
+    if (this.closed) return;
+    for (const r of this.retained) r.prune(now);
+    if (!this.db) return;
     this.flushWrites();
     // Event rows are capped for the feed; counters live in their own small tables and keep 24 h.
     this.db.prepare("DELETE FROM events WHERE seq <= ?").run(this.eventSeq - MAX_EVENTS);
@@ -641,35 +648,4 @@ export class Store {
       }
     }
   }
-}
-
-const SCHEMA_VERSION = 2;
-
-function migrate(db: DatabaseSync): void {
-  // Version 1 kept no counters. Its rows cannot rebuild them, so start fresh.
-  const { user_version: version } = db.prepare("PRAGMA user_version").get() as { user_version: number };
-  if (version < SCHEMA_VERSION) {
-    db.exec("DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS attackers; DROP TABLE IF EXISTS buckets; DROP TABLE IF EXISTS reports;");
-    db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
-  }
-  db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA synchronous = NORMAL;
-    CREATE TABLE IF NOT EXISTS events (
-      id TEXT PRIMARY KEY, seq INTEGER NOT NULL, ts INTEGER NOT NULL, ip TEXT NOT NULL,
-      method TEXT NOT NULL, path TEXT NOT NULL, payload TEXT NOT NULL, attack_type TEXT NOT NULL,
-      status TEXT NOT NULL, source TEXT NOT NULL, confidence REAL NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS events_ts ON events (ts);
-    CREATE INDEX IF NOT EXISTS events_seq ON events (seq);
-    CREATE TABLE IF NOT EXISTS attackers (
-      ip TEXT PRIMARY KEY, user_agent TEXT, country TEXT, country_code TEXT, city TEXT, network TEXT,
-      first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL, events INTEGER NOT NULL, killed INTEGER NOT NULL,
-      not_killed INTEGER NOT NULL, types TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS attackers_last_seen ON attackers (last_seen);
-    CREATE TABLE IF NOT EXISTS buckets (t INTEGER PRIMARY KEY, received INTEGER NOT NULL, killed INTEGER NOT NULL);
-    CREATE TABLE IF NOT EXISTS blocks (ip TEXT PRIMARY KEY, blocked_at INTEGER NOT NULL);
-    CREATE TABLE IF NOT EXISTS reports (ip TEXT PRIMARY KEY, summary TEXT NOT NULL, generated_at INTEGER NOT NULL, model TEXT NOT NULL);
-  `);
 }

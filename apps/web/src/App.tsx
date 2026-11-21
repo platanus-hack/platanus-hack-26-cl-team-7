@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Dashboard } from "./dashboard/Dashboard";
 import { connect, loadHealth, startClock, useDashboard } from "./dashboard/store";
+import { startMirror } from "./mirror/store";
 import { Skeleton } from "./ui";
 
 const CopilotPanel = lazy(() => import("./copilot/CopilotPanel"));
@@ -21,6 +22,8 @@ export function App() {
   const copilotOpen = useDashboard((s) => s.copilotOpen);
 
   useEffect(() => {
+    // The mirror taps the stream before the first snapshot, so that snapshot's resync loads it.
+    const stopMirror = startMirror();
     connect(useDashboard.getState().data.range);
     void loadHealth();
     const stopClock = startClock();
@@ -36,6 +39,7 @@ export function App() {
     window.addEventListener("keydown", onKey);
     return () => {
       stopClock();
+      stopMirror();
       clearInterval(healthTimer);
       window.removeEventListener("keydown", onKey);
     };

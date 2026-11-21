@@ -1,13 +1,16 @@
 /**
  * The dashboard window. Interface: `<Dashboard sidebarOverlay={…} />`.
  * Inside: title bar, attacks chart (hand-written SVG), virtualized live feed,
- * attackers list and attacker panel, all reading the dashboard store.
+ * attackers list and attacker panel, all reading the dashboard store. The title
+ * bar switches the main area to the mirror lane view (../mirror/MirrorPanel).
  */
 import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Columns2 } from "lucide-react";
 import { ATTACK_LABEL, RANGES, type AttackEvent, type Attacker, type Range, type SeriesPoint } from "@sentinel/contracts";
 import { useDashboard } from "./store";
+import { MirrorPanel } from "../mirror/MirrorPanel";
+import { useMirror } from "../mirror/store";
 import { Orb, Segmented, Skeleton, Status, clock, cn, joinDefined, num } from "../ui";
 
 const RANGE_LABEL: Record<Range, string> = { "5m": "5 min", "1h": "1 h", "24h": "24 h" };
@@ -19,6 +22,9 @@ function TitleBar() {
   const open = useDashboard((s) => s.copilotOpen);
   const setRange = useDashboard((s) => s.setRange);
   const toggle = useDashboard((s) => s.toggleCopilot);
+  const mirrorOpen = useMirror((s) => s.open);
+  const toggleMirror = useMirror((s) => s.toggle);
+  const findings = useMirror((s) => s.data.findings.length);
 
   return (
     <header className="bar">
@@ -41,7 +47,12 @@ function TitleBar() {
           Sentinel is offline
         </span>
       )}
-      <Segmented label="Time range" value={range} options={RANGES.map((r) => ({ value: r, label: RANGE_LABEL[r] }))} onChange={setRange} />
+      {!mirrorOpen && <Segmented label="Time range" value={range} options={RANGES.map((r) => ({ value: r, label: RANGE_LABEL[r] }))} onChange={setRange} />}
+      <button type="button" className={cn("ask", mirrorOpen && "ml-auto")} aria-pressed={mirrorOpen} onClick={() => toggleMirror()}>
+        <Columns2 size={16} />
+        Mirror
+        {findings > 0 && <span className="kbd tnum">{num(findings)}</span>}
+      </button>
       <button type="button" className="ask" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
         <Orb size={20} />
         Copilot
@@ -370,20 +381,25 @@ function AttackerPanel() {
 /** The whole dashboard window. `sidebarOverlay` (the copilot) covers the right sidebar when given. */
 export function Dashboard({ sidebarOverlay }: { sidebarOverlay?: ReactNode }) {
   const error = useDashboard((s) => s.error);
+  const mirrorOpen = useMirror((s) => s.open);
   return (
     <div className="shell">
       <TitleBar />
-      <main className="main">
-        <div className="left">
-          <AttacksChart />
-          <LiveFeed />
-        </div>
-        <div className="right">
-          <Attackers />
-          <AttackerPanel />
-          {sidebarOverlay}
-        </div>
-      </main>
+      {mirrorOpen ? (
+        <MirrorPanel sidebarOverlay={sidebarOverlay} />
+      ) : (
+        <main className="main">
+          <div className="left">
+            <AttacksChart />
+            <LiveFeed />
+          </div>
+          <div className="right">
+            <Attackers />
+            <AttackerPanel />
+            {sidebarOverlay}
+          </div>
+        </main>
+      )}
       {error && (
         <div role="alert" className="fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl border border-line bg-elev px-4 py-2 text-sm text-ash shadow-2xl">
           {error}

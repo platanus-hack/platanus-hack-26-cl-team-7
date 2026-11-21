@@ -290,6 +290,18 @@ function loadDetail(ip: string): Promise<void> {
 
 /* ---------------- live connection: snapshot + SSE, applied once per frame ---------------- */
 
+/** Another view that reads the same stream: it gets every batch list applied here, and a resync after each new snapshot. */
+export interface StreamTap {
+  batches: (batches: StreamBatch[]) => void;
+  resync: () => void;
+}
+const taps = new Set<StreamTap>();
+
+export function tapStream(tap: StreamTap): () => void {
+  taps.add(tap);
+  return () => taps.delete(tap);
+}
+
 let source: EventSource | null = null;
 let snapshotCtrl: AbortController | null = null;
 let queue: StreamBatch[] = [];
@@ -315,6 +327,7 @@ function flush() {
   for (const ip of confirmed.keys()) pendingBlock = without(pendingBlock, ip);
   const data = withBlockOverrides(applyBatches(s.data, apply), pendingBlock);
   useDashboard.setState({ data, pendingBlock });
+  for (const tap of taps) tap.batches(apply);
 }
 
 /** Visible tab: once per animation frame. Hidden tab (no rAF there): every 250 ms. */
@@ -411,6 +424,7 @@ export function connect(range: Range) {
       useDashboard.setState({ data, selectedIp });
       if (selectedIp) void loadDetail(selectedIp);
       openStream(snap.epoch, snap.seq);
+      for (const tap of taps) tap.resync();
     })
     .catch(() => {
       if (ctrl.signal.aborted) return;
