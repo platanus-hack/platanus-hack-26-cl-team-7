@@ -1,0 +1,141 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+.r{--ink:var(--foreground,#0b0b0b);--ink2:var(--muted-foreground,#52514e);--line:var(--border,#e1e0d9);--acc:var(--primary,#2a78d6);
+ font-family:var(--font-sans,system-ui,-apple-system,"Segoe UI",sans-serif);color:var(--ink);font-size:13.5px;line-height:1.45}
+.r *{box-sizing:border-box}
+h2{font-size:16px;margin:0 0 4px;font-weight:650}
+h3{font-size:14px;margin:0;font-weight:650}
+.sub{color:var(--ink2);font-size:12.5px;margin:0 0 14px}
+.sec{margin-top:26px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:600px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:var(--radius,10px);padding:14px 16px;background:var(--card,transparent)}
+.head{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:6px}
+.tag{font-size:10.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--ink2);white-space:nowrap}
+.tag.own{color:var(--acc)}
+dl{margin:0;display:grid;grid-template-columns:78px 1fr;gap:3px 10px;font-size:12.5px}
+dt{color:var(--ink2)}
+dd{margin:0}
+.why{margin:8px 0 0;font-size:12.5px}
+.why b{font-weight:600}
+.lim{margin:4px 0 0;font-size:12.5px;color:var(--ink2)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink2);font-weight:500;vertical-align:bottom}
+.y{color:var(--acc);font-weight:700}
+.p{color:var(--ink2)}
+.n{color:var(--ink2);opacity:.5}
+.lvl{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:600px){.lvl{grid-template-columns:1fr}}
+.lvl .card p{margin:4px 0 0;font-size:12.5px}
+ul.gaps{margin:6px 0 0;padding-left:18px;font-size:12.5px}
+ul.gaps li{margin:3px 0}
+a{color:var(--acc)}
+</style></head><body>
+<div class="r">
+  <h2>The data for version 0</h2>
+  <p class="sub">Five public sources and three sets we record ourselves. Each one covers a gap that the others leave.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Source</th><th>Real humans</th><th>Probing / scanners</th><th>Attack payloads</th><th>AI-agent behavior</th><th>Full headers + ms timing</th><th>Our site's routes</th></tr></thead>
+    <tbody>
+      <tr><td>Zanbil shop logs</td><td class="y">●</td><td class="p">◐</td><td class="p">◐</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>Zenodo library logs</td><td class="y">●</td><td class="y">● robots</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>CSIC 2010</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="n">—</td><td class="p">◐ headers</td><td class="n">—</td></tr>
+      <tr><td>Transluce agent activity</td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td>SecLists</td><td class="n">—</td><td class="y">● lists</td><td class="y">● lists</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+      <tr><td><b>Volunteers on Harold's site</b></td><td class="y">●</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="y">●</td><td class="y">●</td></tr>
+      <tr><td><b>Scanner runs</b></td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="n">—</td><td class="y">●</td><td class="y">●</td></tr>
+      <tr><td><b>AI-agent lab runs</b> (later)</td><td class="n">—</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td><td class="y">●</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub" style="margin-top:6px">● covers it · ◐ partly (Zanbil: unlabeled bots and probes mixed in · CSIC: headers but no timing) · — not covered. Bold rows are data we record through the Caddy proxy.</p>
+
+  <div class="sec">
+    <h2>Public datasets</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="head"><h3><a href="https://www.kaggle.com/datasets/eliasdabbas/web-server-access-logs">Zanbil shop logs</a></h3><span class="tag">CC0 · 3.3 GB</span></div>
+        <dl><dt>What</dt><dd>~10 million nginx access-log lines from a real Iranian online shop (zanbil.ir), 2019.</dd>
+        <dt>Fields</dt><dd>IP, time (1 s), method, path + query, status, bytes, referer, User-Agent.</dd>
+        <dt>Labels</dt><dd>None. A <a href="https://www.kaggle.com/datasets/mahendradata/web-server-access-logs-labeled">labeled copy</a> marks attacks by keyword rules.</dd></dl>
+        <p class="why"><b>Why:</b> real humans at real volume, in exactly the default log format a small site has. It is the base for the false-alarm and 1-in-10,000 tests.</p>
+        <p class="lim">Limit: another site's routes, so it can't test the route-list rule. Bots are mixed in unlabeled.</p>
+      </div>
+      <div class="card">
+        <div class="head"><h3><a href="https://zenodo.org/records/3477932">Zenodo web robot logs</a></h3><span class="tag">CC BY 4.0 · 3.2 GB</span></div>
+        <dl><dt>What</dt><dd>4,091,155 requests from a university library search site, March 2018. 27,061 IPs, 3,441 User-Agents.</dd>
+        <dt>Fields</dt><dd>Raw anonymized log requests (JSON), plus per-session feature tables (CSV).</dd>
+        <dt>Labels</dt><dd>Sessions labeled human or robot.</dd></dl>
+        <p class="why"><b>Why:</b> the only large public set with human-vs-robot labels. It checks the "sure human" filter and the pace rules on real people.</p>
+        <p class="lim">Limit: the last part of each URL is hashed, so file and payload rules can't run on it. Robots here are crawlers, not attackers.</p>
+      </div>
+      <div class="card">
+        <div class="head"><h3><a href="https://www.kaggle.com/datasets/ispangler/csic-2010-web-application-attacks">CSIC 2010</a></h3><span class="tag">Research set</span></div>
+        <dl><dt>What</dt><dd>36,000 normal and 25,000+ attack HTTP requests to a test shop app.</dd>
+        <dt>Fields</dt><dd>Full requests: method, URL, headers and body.</dd>
+        <dt>Labels</dt><dd>Normal or anomalous: SQL injection, XSS, path traversal, CRLF, buffer overflow, hidden-file probes.</dd></dl>
+        <p class="why"><b>Why:</b> outside ground truth for the critical-flag rule (R3). Nobody on the team wrote these labels.</p>
+        <p class="lim">Limit: generated traffic from 2010, one app, no sessions or timing.</p>
+      </div>
+      <div class="card">
+        <div class="head"><h3><a href="https://transluce.org/agent-activity">Transluce agent activity</a></h3><span class="tag">No license · internal only</span></div>
+        <dl><dt>What</dt><dd>URL-scan reports from 2026 that real AI agents made: 6,467 with strong evidence, 31,182 with weaker evidence.</dd>
+        <dt>Fields</dt><dd>Scanned URLs and timestamps.</dd>
+        <dt>Labels</dt><dd>Agent-like activity, as judged by Transluce.</dd></dl>
+        <p class="why"><b>Why:</b> the only real record of how AI agents probe. Example: 12 probes of 7 attack types in 28 s. It checks that our lab agents behave like real ones.</p>
+        <p class="lim">Limit: not traffic to our site, and no request headers. No license, so we use it but don't redistribute it.</p>
+      </div>
+      <div class="card">
+        <div class="head"><h3><a href="https://github.com/danielmiessler/SecLists">SecLists</a></h3><span class="tag">MIT · lists</span></div>
+        <dl><dt>What</dt><dd>The standard word lists that scanners use: paths, sensitive files, payloads, sorted by technology.</dd></dl>
+        <p class="why"><b>Why:</b> it feeds rule R3 (sensitive files and payloads) and the scanner runs. The paths an attacker tries are mostly on these lists.</p>
+        <p class="lim">Limit: lists, not traffic. Nothing to score against.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Data we record ourselves</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="head"><h3>Volunteers on Harold's site</h3><span class="tag own">Must have</span></div>
+        <p class="why">People use the site normally through Caddy. This is the only data with real humans <b>and</b> our routes, full headers and millisecond timing, so the route-list rule (R1) can only be tested here. Target: 30 or more sessions.</p>
+      </div>
+      <div class="card">
+        <div class="head"><h3>Scanner runs</h3><span class="tag own">Must have</span></div>
+        <p class="why">ffuf, nuclei and nikto against the site through Caddy, plus CSIC payloads replayed into it. These give labeled probing sessions on our own routes for rules R1 to R3.</p>
+      </div>
+      <div class="card">
+        <div class="head"><h3>AI-agent lab runs</h3><span class="tag own">Later, by you</span></div>
+        <p class="why">CAI, PentestGPT and hackingBuddyGPT against our lab only. This is the only source that covers every column above. Until it exists, AI-agent recall is "not measured".</p>
+      </div>
+      <div class="card">
+        <div class="head"><h3>Rule fixtures</h3><span class="tag own">Hand-written</span></div>
+        <p class="why">Tiny made-up sessions at each rule's limit, for example exactly 10 and 11 endpoints in 60 s. Used by the <code>pytest</code> rule tests.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Which data feeds each test level</h2>
+    <div class="lvl">
+      <div class="card"><h3>1 · Rule tests</h3><p>Rule fixtures only. Each rule fires at its limit and not below it.</p></div>
+      <div class="card"><h3>2 · Labeled replay</h3><p>Volunteers, scanner runs, CSIC, Zenodo humans and robots, Zanbil confirmed humans. Gives precision, recall and requests before the verdict.</p></div>
+      <div class="card"><h3>3 · Realistic rate</h3><p>Zanbil volume with scanner sessions mixed in at 1 in 10,000. Gives the false alarms a client would really see.</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>What no public data gives us</h2>
+    <ul class="gaps">
+      <li><b>Bank traffic:</b> no public set exists, because banks don't release logs. Each client's own logs replace it.</li>
+      <li><b>AI agents on our routes, with full headers:</b> only the lab runs give this.</li>
+      <li><b>Large-scale real humans on our own routes:</b> volunteers are few, so the report shows the session count next to every rate.</li>
+    </ul>
+  </div>
+</div>
+</body></html>
