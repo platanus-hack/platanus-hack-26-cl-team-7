@@ -88,7 +88,7 @@ func main() {
 		}
 	}
 
-	go runAdmin(*admin, rules, mgr)
+	go runAdmin(*admin, rules, mgr, eng)
 
 	switch *mode {
 	case "revproxy":
@@ -106,10 +106,15 @@ func main() {
 	}
 }
 
-func runAdmin(addr string, rules *engine.RuleStore, mgr *containment.Manager) {
+func runAdmin(addr string, rules *engine.RuleStore, mgr *containment.Manager, eng *engine.Engine) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/rules", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, rules.Active())
+	})
+	mux.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
+		eng.Reset()
+		log.Printf("[admin] engine state reset")
+		w.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("/alerts", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, mgr.Alerts())

@@ -1,0 +1,751 @@
+{
+  "target": "mock-bank",
+  "cve": "SEEDED-CWE-22",
+  "klass": "arbitrary file read (in-band, response body)",
+  "blind": false,
+  "ts": 1795274139.8575292,
+  "arms": {
+    "scripted": {
+      "unprotected": [
+        {
+          "evidence_leaked": true,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 1912,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 200,
+              "leaked": true,
+              "bytes": 141
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 200,
+              "leaked": true,
+              "bytes": 27
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 200,
+              "leaked": true,
+              "bytes": 1744
+            }
+          ]
+        },
+        {
+          "evidence_leaked": true,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 1912,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 200,
+              "leaked": true,
+              "bytes": 141
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 200,
+              "leaked": true,
+              "bytes": 27
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 200,
+              "leaked": true,
+              "bytes": 1744
+            }
+          ]
+        },
+        {
+          "evidence_leaked": true,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 1912,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 200,
+              "leaked": true,
+              "bytes": 141
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 200,
+              "leaked": true,
+              "bytes": 27
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 200,
+              "leaked": true,
+              "bytes": 1744
+            }
+          ]
+        },
+        {
+          "evidence_leaked": true,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 1912,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 200,
+              "leaked": true,
+              "bytes": 141
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 200,
+              "leaked": true,
+              "bytes": 27
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 200,
+              "leaked": true,
+              "bytes": 1744
+            }
+          ]
+        },
+        {
+          "evidence_leaked": true,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 1912,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 200,
+              "leaked": true,
+              "bytes": 141
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 200,
+              "leaked": true,
+              "bytes": 27
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 200,
+              "leaked": true,
+              "bytes": 1744
+            }
+          ]
+        }
+      ],
+      "protected": [
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": true,
+          "blocked_pre_exec": false,
+          "requests": 3,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 0,
+          "transcript": [
+            {
+              "req": "GET /export?file=../.env",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../secret-canary.txt",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            },
+            {
+              "req": "GET /export?file=../../../../etc/passwd",
+              "status": 500,
+              "leaked": false,
+              "bytes": 116
+            }
+          ]
+        }
+      ]
+    },
+    "benign": {
+      "unprotected": [
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        }
+      ],
+      "protected": [
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        },
+        {
+          "evidence_leaked": false,
+          "backend_executed": false,
+          "blocked_pre_exec": false,
+          "requests": 5,
+          "leaked_bytes": 0,
+          "declared_success": false,
+          "gave_up": false,
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "benign_blocked": 0,
+          "benign_total": 5,
+          "transcript": [
+            {
+              "req": "GET /",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /accounts/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /statements/42",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /export?file=logo.txt",
+              "status": 200,
+              "blocked": false
+            },
+            {
+              "req": "GET /login",
+              "status": 200,
+              "blocked": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

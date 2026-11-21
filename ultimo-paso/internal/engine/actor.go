@@ -242,3 +242,11 @@ func (t *ActorTable) Get(r *Request) *Actor {
 	defer t.mu.Unlock()
 	return t.resolve(r)
 }
+
+// Clear removes all actor state and token lineage in place.
+func (t *ActorTable) Clear() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.actors = map[string]*Actor{}
+	t.lineage = map[string]string{}
+}

@@ -227,3 +227,11 @@ func (e *Engine) emitResp(r *Request, a *Actor, d ResponseDecision) {
 	e.events.Emit(Event{TS: e.now(), Kind: "response", ActorID: a.ID, Level: a.Level.String(),
 		Route: r.Route, Action: d.Action.String(), Evidence: d.Evidence, Reason: d.Reason})
 }
+
+// Reset clears per-actor state and containment rules in place (preserving the
+// pointers that containment/research hold). Used between scoreboard reps so each
+// run starts from a clean slate.
+func (e *Engine) Reset() {
+	e.Actors.Clear()
+	e.Rules.Clear()
+}

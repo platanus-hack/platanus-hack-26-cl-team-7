@@ -130,3 +130,10 @@ func (s *RuleStore) Active() []Rule {
 	}
 	return out
 }
+
+// Clear removes all rules in place.
+func (s *RuleStore) Clear() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.rules = nil
+}
