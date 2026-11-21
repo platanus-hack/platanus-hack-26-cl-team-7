@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+.DS_Store
+coverage/
+apps/sentinel/data/

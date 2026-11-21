@@ -1,0 +1,21 @@
+{
+  "name": "sentinel-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.24.0",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "dev": "concurrently -k -n sentinel,sim,app -c blue,gray,green \"pnpm --filter @sentinel/server dev\" \"pnpm --filter @sentinel/simulator dev\" \"pnpm --filter @sentinel/desktop dev\"",
+    "dev:web": "concurrently -k -n sentinel,sim,web -c blue,gray,green \"pnpm --filter @sentinel/server dev\" \"pnpm --filter @sentinel/simulator dev\" \"pnpm --filter @sentinel/desktop dev:web\"",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "oxlint .",
+    "build": "pnpm --filter @sentinel/desktop build"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.7",
+    "oxlint": "1.94.0",
+    "typescript": "7.0.2",
+    "vitest": "5.1.1"
+  }
+}
