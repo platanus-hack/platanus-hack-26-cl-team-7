@@ -1,0 +1,8 @@
+// Sitio estático en Cloudflare (cuenta harold18m). Desplegar desde esta carpeta:
+// env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID -u CF_API_TOKEN -u CF_ACCOUNT_ID npx wrangler@4 deploy
+{
+  "name": "espejismo-demo",
+  "account_id": "fa21477007610346907b3d43843094c5",
+  "compatibility_date": "2026-11-19",
+  "assets": { "directory": "." }
+}
