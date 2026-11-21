@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { MAX_EVENTS_PER_FRAME, type SeriesPoint, type StreamBatch, type StreamChange } from "@sentinel/contracts";
+import { MAX_ATTACKERS, MAX_EVENTS_PER_FRAME, type SeriesPoint, type StreamBatch, type StreamChange } from "@sentinel/contracts";
 
 /** What the replay history keeps: the SSE id and the encoded batch. */
 export interface EncodedFrame {
@@ -127,6 +127,7 @@ const COUNT_BUCKET_MS = 10_000;
  * flood costs a small frame instead of megabytes, and the chart stays exact.
  */
 export function foldEvents(changes: StreamChange[]): StreamChange[] {
+  changes = capAttackers(changes);
   let events = 0;
   for (const c of changes) if (c.kind === "event") events++;
   let fold = events - MAX_EVENTS_PER_FRAME;
@@ -150,4 +151,12 @@ export function foldEvents(changes: StreamChange[]): StreamChange[] {
   }
   kept.push({ kind: "counts", buckets: [...buckets.values()] });
   return kept;
+}
+
+/** A flood from many IPs changes thousands of attackers per frame; clients only need the riskiest. */
+function capAttackers(changes: StreamChange[]): StreamChange[] {
+  const attackers = changes.filter((c) => c.kind === "attacker");
+  if (attackers.length <= MAX_ATTACKERS) return changes;
+  const keep = new Set(attackers.sort((x, y) => y.attacker.risk - x.attacker.risk).slice(0, MAX_ATTACKERS));
+  return changes.filter((c) => c.kind !== "attacker" || keep.has(c));
 }

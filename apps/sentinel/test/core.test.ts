@@ -242,6 +242,17 @@ describe("store", () => {
     expect(counts.reduce((n, b) => n + b.killed, 0)).toBe(350);
   });
 
+  it("sends at most 200 attackers per frame and per snapshot during a many-IP flood", () => {
+    const bus = new Bus(1);
+    const store = new Store(bus);
+    let max = 0;
+    bus.subscribe((f) => (max = Math.max(max, f.batch.changes.filter((c) => c.kind === "attacker").length)));
+    store.ingest(Array.from({ length: 1000 }, (_, i) => ev({ ip: `10.0.${i >> 8}.${i & 255}`, path: "/x?id=1 UNION SELECT a FROM b" })));
+    bus.flush();
+    expect(max).toBe(200);
+    expect(store.snapshot("1h").attackers).toHaveLength(200);
+  });
+
   it("persists to SQLite and rebuilds the same state", async () => {
     const db = new DatabaseSync(":memory:");
     const store = new Store(new Bus(5), { db });

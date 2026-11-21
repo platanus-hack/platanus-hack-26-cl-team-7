@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import {
   ATTACK_TYPES,
+  MAX_ATTACKERS,
   BUCKET_MS,
   RANGE_MS,
   type AttackEvent,
@@ -317,7 +318,7 @@ export class Store {
       bucketMs: BUCKET_MS[range],
       series: this.series(range, now),
       events: this.events(range, { limit: 200 }),
-      attackers: this.attackers(range),
+      attackers: this.attackers(range).slice(0, MAX_ATTACKERS),
       seq: this.bus.lastSeq,
       epoch: this.bus.epoch,
     };

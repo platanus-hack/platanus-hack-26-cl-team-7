@@ -190,6 +190,8 @@ export type StreamChange =
  * server kept (or the server restarted): reload the snapshot and reconnect.
  */
 export const MAX_EVENTS_PER_FRAME = 500;
+/** Snapshots and frames carry at most this many attackers (the highest risk). The UI shows 100. */
+export const MAX_ATTACKERS = 200;
 
 export interface StreamBatch {
   epoch: string;
