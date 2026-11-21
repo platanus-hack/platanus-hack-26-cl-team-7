@@ -96,6 +96,8 @@ func (s *server) onReqHeaders(st *streamState, h *extprocv3.HttpHeaders) *extpro
 		path = path[:i]
 	}
 	st.er = &engine.Request{
+		RawTarget: m[":path"],
+		FixtureID: m["x-up-fixture-id"],
 		Method:    m[":method"],
 		Path:      path,
 		RawQuery:  rawQuery,
@@ -106,6 +108,7 @@ func (s *server) onReqHeaders(st *streamState, h *extprocv3.HttpHeaders) *extpro
 		Route:     path,
 	}
 	st.expBody = !h.EndOfStream && hasBody(m)
+	st.er.BodyIncomplete = !h.EndOfStream && !st.expBody
 	if !st.expBody {
 		if blocked := s.decide(st); blocked != nil {
 			return blocked
@@ -163,22 +166,16 @@ func (s *server) scanAndRespond(st *streamState, body []byte, ph phase) *extproc
 	eresp := &engine.Response{Status: st.respSt, Headers: st.respHdrs, Body: body, ContentType: st.respCT}
 	sd := s.eng.OnResponse(st.er, eresp, st.dec)
 
-	var finalBody []byte
-	replace := sd.Action == engine.RespReplace
-	if replace {
-		finalBody = sd.Body
-	} else {
-		finalBody = eresp.Body // may carry an injected trap
+	if sd.Action == engine.RespReplace {
+		return immediate(sd.Status, sd.Body)
 	}
 
-	if !replace && string(finalBody) == string(body) {
+	finalBody := eresp.Body // may carry an injected trap
+	if string(finalBody) == string(body) {
 		return cont(ph)
 	}
 
 	setHeaders := []*corev3.HeaderValueOption{hv("content-length", strconv.Itoa(len(finalBody)))}
-	if replace {
-		setHeaders = append(setHeaders, hv(":status", strconv.Itoa(sd.Status)), hv("content-type", "application/json"))
-	}
 	common := &extprocv3.CommonResponse{
 		Status:         extprocv3.CommonResponse_CONTINUE,
 		HeaderMutation: &extprocv3.HeaderMutation{SetHeaders: setHeaders, RemoveHeaders: []string{"content-encoding"}},
@@ -204,7 +201,11 @@ func headerMap(h *extprocv3.HttpHeaders) map[string]string {
 		if val == "" && len(hdr.RawValue) > 0 {
 			val = string(hdr.RawValue)
 		}
-		m[strings.ToLower(hdr.Key)] = val
+		key := strings.ToLower(hdr.Key)
+		if previous, exists := m[key]; exists {
+			val = previous + ", " + val
+		}
+		m[key] = val
 	}
 	return m
 }

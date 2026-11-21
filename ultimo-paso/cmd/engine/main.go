@@ -12,6 +12,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"flag"
 	"io"
@@ -43,6 +44,8 @@ func main() {
 	upstream := flag.String("upstream", "http://127.0.0.1:9001", "upstream URL (revproxy)")
 	decoy := flag.String("decoy", "", "decoy upstream URL for confirmed actors (optional)")
 	events := flag.String("events", "", "event log JSONL path (default stdout)")
+	payloadArchive := flag.String("payload-archive", "", "private JSONL path for optional request payload capture")
+	runID := flag.String("run-id", rand.Text(), "correlation label for this event log")
 	webhook := flag.String("webhook", "", "alert webhook URL (default: this process's admin /webhook)")
 	ttl := flag.Duration("ttl", 30*time.Minute, "containment rule TTL")
 	researchOn := flag.Bool("research", false, "enable the L3 research loop")
@@ -55,6 +58,17 @@ func main() {
 		log.Fatalf("event log: %v", err)
 	}
 	defer sink.Close()
+	sink.Scope(*runID, *mode)
+
+	var capture func(*engine.Request) *engine.PayloadCapture
+	if *payloadArchive != "" {
+		archive, err := eventlog.OpenArchive(*payloadArchive)
+		if err != nil {
+			log.Fatalf("payload archive: %v", err)
+		}
+		defer archive.Close()
+		capture = archive.Record
+	}
 
 	rules := engine.NewRuleStore(nil)
 
@@ -63,6 +77,7 @@ func main() {
 	var mgr *containment.Manager
 	eng := engine.New(engine.Config{
 		Events:  sink,
+		Capture: capture,
 		Contain: func(in engine.ContainInput) { mgr.Handle(in) },
 	})
 	eng.Rules = rules
@@ -79,7 +94,7 @@ func main() {
 		}
 		hookURL = "http://" + host + "/webhook"
 	}
-	mgr = containment.New(rules, hookURL, researcher, *ttl)
+	mgr = containment.New(rules, hookURL, researcher, *ttl).WithEvents(sink)
 
 	for _, c := range canaries {
 		if i := strings.IndexByte(c, '='); i > 0 {

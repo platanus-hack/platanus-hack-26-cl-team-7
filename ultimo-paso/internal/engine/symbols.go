@@ -107,6 +107,7 @@ func (a Action) String() string {
 
 // RequestDecision is returned from Engine.OnRequest.
 type RequestDecision struct {
+	Pattern string
 	Action  Action
 	Symbol  Symbol
 	Level   Level

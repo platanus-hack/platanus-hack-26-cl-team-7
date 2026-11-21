@@ -5,6 +5,8 @@ import { useReports } from "./reports/store";
 import { startMirror } from "./mirror/store";
 import { Skeleton } from "./ui";
 
+const PipelineDashboard = lazy(() => import("./ultimo-paso/PipelineDashboard").then((m) => ({ default: m.PipelineDashboard })));
+const EvidenceDashboard = lazy(() => import("./ultimo-paso/EvidenceDashboard").then((m) => ({ default: m.EvidenceDashboard })));
 const CopilotPanel = lazy(() => import("./copilot/CopilotPanel"));
 const ReportView = lazy(() => import("./reports/ReportView").then((m) => ({ default: m.ReportView })));
 
@@ -21,6 +23,16 @@ function CopilotFallback() {
 
 /** App lifecycle: connect to Sentinel, keep the chart clock and health fresh, ⌘K / Esc for the copilot. */
 export function App() {
+  if (location.pathname === "/ultimo-paso" || location.pathname === "/ultimo-paso/") {
+    const search = new URLSearchParams(location.search);
+    return <Suspense fallback={<p role="status">Cargando…</p>}>
+      {(search.get("view") === "traces" || search.has("mode") || search.has("trace")) ? <EvidenceDashboard /> : <PipelineDashboard />}
+    </Suspense>;
+  }
+  return <SentinelApp />;
+}
+
+function SentinelApp() {
   const copilotOpen = useDashboard((s) => s.copilotOpen);
   const reportIp = useReports((s) => s.ip);
 

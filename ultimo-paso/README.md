@@ -117,6 +117,14 @@ available. Each new evaluation writes to a fresh directory in
 `scoreboard/runs/` by default. To inspect another evaluation, pass its
 directory to `scoreboard.report --results` and choose an HTML path with `--out`.
 
+## Proxy defense evaluation
+
+Three fictional businesses exercise body disclosure, header disclosure, and
+normal-looking sensitive responses through Envoy and the Go fallback. The
+[defense report](scoreboard/evidence/REPORT.md) includes advisory links,
+before-and-after wire traces, request classification, upstream hit counts,
+and the OpenRouter public-catalog results.
+
 ## Limits (stated up front)
 
 - **Demand-side evidence is thin.** Palisade's honeypot logged 3 confirmed AI
@@ -144,3 +152,88 @@ targets/vulhub/       # real-CVE compose (langflow)
 attackers/            # scripted, llm_agent, benign, per-CVE drivers
 scoreboard/           # runner + HTML report
 ```
+
+## Evidence dashboard
+
+From the repository root, run `pnpm install --frozen-lockfile` and `pnpm start`,
+then open `http://127.0.0.1:8787/ultimo-paso`. Replay requires no proxy or
+provider credentials. Follow a request from its fixture label through the
+proxy's observation, client and upstream checks, containment, and alerts.
+Both Replay and Live offer JSON and HTML exports.
+
+For a fresh **Live** run, use a Linux host with Go, Python, and Docker host
+networking. Run these commands from `ultimo-paso/` (in Lima on macOS).
+
+```sh
+go build -o /tmp/ultimo-paso-dashboard ./cmd/engine
+python3 -m scoreboard.defense_eval --engine /tmp/ultimo-paso-dashboard \
+  --event-dir scoreboard/runs/live --out scoreboard/runs/dashboard-verification.json
+```
+
+Sentinel watches the shared `scoreboard/runs/live/` directory. For another
+deployment, set the server's `ULTIMO_PASO_EVENT_DIR` to an existing journal
+directory and run the engine with `-events /path/to/journal/proxy.jsonl`.
+Use distinct journal files for concurrent engine processes. The dashboard
+recognizes the three fixture route prefixes and redacts other route names.
+Live proxy-only requests display independent wire outcomes as unverified.
+
+Set `FIRECRAWL_API_KEY` in Sentinel's environment to enable background
+advisory lookups for new containment events. Optional
+`ULTIMO_PASO_PACKAGE` and `ULTIMO_PASO_VERSION` identify a trusted component
+on unmapped routes. Fixture advisories describe analogous behavior. Search
+candidates require applicability review. The dashboard displays webhook
+delivery from the proxy's existing endpoint configuration. Replay predates
+delivery and Firecrawl instrumentation.
+
+### Payload captures and related requests
+
+For the local fixtures, add `--payload-dir scoreboard/runs/private-payloads`
+to the live evaluation command. A standalone engine accepts
+`-payload-archive /path/to/private/run.jsonl`. Use a separate directory
+from the Sentinel journal. The engine creates the archive with mode 0600
+inside a directory with mode 0700, caps it at 64 MiB, and refuses to overwrite
+an existing file.
+
+Each archive record contains a trace ID, method, original target as received
+by the data plane, normalized request headers, and base64-encoded body bytes.
+Authorization, Proxy-Authorization, Cookie, and X-API-Key headers are omitted.
+Raw targets and bodies can still contain sensitive values. Capture is opt-in
+outside the fixture run. When a data plane supplies an incomplete body, the
+archive and dashboard identify the capture as partial. The dashboard and
+exports carry capture metadata only. Earlier runs cannot recover missing bytes.
+
+Related Requests labels a shared containment rule as **Rule-linked**. The
+**Inferred** label uses the same observed actor within a run and proxy path,
+plus supporting evidence such as a matching detection pattern, a matching
+nonempty body digest, or a progression from fingerprinting to suspicious
+traffic. Actor references come from what the proxy sees and may be shared
+by multiple clients. JSON and HTML exports include the related-request links
+and reasons at the time of export.
+
+### Pipeline de eficacia de detección
+
+La ruta `/ultimo-paso` abre el pipeline en español.
+**Ejecutar demo real** ejecuta las fixtures inertes de `ultimo-paso/attacks/`
+en tres servicios locales. En macOS usa la VM Lima `espejismo`, configurable
+con `ULTIMO_PASO_LIMA_VM`. En Linux usa Go, Python y Docker localmente.
+
+El brazo A recibe las solicitudes directamente. El brazo B recibe las mismas
+entradas a través de Envoy. Cada fixture distingue detección, instalación de
+la regla y ejecución de la contención. Un reintento sólo cuenta como contenido
+si el proxy registra la misma regla y el upstream recibe cero solicitudes.
+La comparación marca la detección y la contención en A como no aplicables.
+
+**Reproducir** muestra una ejecución grabada con sus resultados, tiempos y
+borradores. No inicia servicios ni llama a los proveedores. Ambos modos usan
+`POST /v1/ultimo-paso/pipeline/runs` con `{"mode":"real"}` o
+`{"mode":"reproduce","source":"<run-id>"}`. La consulta del resultado usa
+`GET /v1/ultimo-paso/pipeline/runs/<run-id>`.
+
+Sentinel carga `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY` y
+`FIRECRAWL_API_KEY` de `ultimo-paso/.env`, con prioridad para las variables
+del proceso. OpenRouter genera referencias alfanuméricas y elige por cuál
+fixture fija comenzar. Anthropic resume resultados observados. Firecrawl
+consulta avisos públicos a partir de referencias aprobadas. Los borradores
+Markdown quedan disponibles en el panel de incidentes para revisión en GitHub.
+Los errores de proveedor quedan registrados en la etapa correspondiente. Las
+mediciones locales siguen disponibles.

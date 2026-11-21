@@ -8,14 +8,18 @@ import (
 // Request is the front-end-agnostic view of an HTTP request the engine needs.
 // Both the ext_proc and reverse-proxy front ends fill this in.
 type Request struct {
-	Method    string
-	Path      string // path only, no query
-	RawQuery  string
-	Headers   map[string]string // lower-cased keys
-	Body      []byte            // may be empty if not buffered
-	RemoteIP  string
-	UserAgent string
-	Cookie    string // value of a session cookie if present
+	TraceID        string
+	FixtureID      string // optional correlation token from the local evaluation harness
+	RawTarget      string
+	BodyIncomplete bool
+	Method         string
+	Path           string // path only, no query
+	RawQuery       string
+	Headers        map[string]string // lower-cased keys
+	Body           []byte            // may be empty if not buffered
+	RemoteIP       string
+	UserAgent      string
+	Cookie         string // value of a session cookie if present
 	// Route is the matched route template (e.g. /accounts/{id}); falls back to
 	// Path when no template matches. Used for per-endpoint baselines and rules.
 	Route string

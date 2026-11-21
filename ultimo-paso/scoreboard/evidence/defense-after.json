@@ -1,0 +1,1556 @@
+{
+  "timestamp_utc": "2026-11-21T16:10:12.389174+00:00",
+  "envoy": "envoyproxy/envoy:v1.36.2",
+  "data_planes": {
+    "revproxy": {
+      "cases": {
+        "bruma": {
+          "direct": {
+            "path": "/bruma/receipt",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 77,
+            "elapsed_ms": 0.83
+          },
+          "first_protected": {
+            "path": "/bruma/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 115,
+            "elapsed_ms": 1.07
+          },
+          "repeat": {
+            "path": "/bruma/receipt",
+            "status": 500,
+            "upstream_hits": 0,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 115,
+            "elapsed_ms": 0.13
+          },
+          "other_route": {
+            "path": "/bruma/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 137,
+            "elapsed_ms": 1.26
+          },
+          "other_actor": {
+            "path": "/bruma/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 115,
+            "elapsed_ms": 0.5
+          },
+          "rule": {
+            "ID": "contain-1",
+            "ActorID": "127.0.0.1|receipt-check-bruma|",
+            "Route": "/bruma/receipt",
+            "Param": "",
+            "Action": 3,
+            "Origin": "containment",
+            "Stage": 1,
+            "CreatedAt": "2026-11-21T13:10:12.413868401-03:00",
+            "ExpiresAt": "2026-11-21T13:40:12.413868401-03:00"
+          },
+          "rule_observed_by_ms": 1.31
+        },
+        "litoral": {
+          "direct": {
+            "path": "/litoral/receipt",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": true,
+            "bytes": 59,
+            "elapsed_ms": 0.28
+          },
+          "first_protected": {
+            "path": "/litoral/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.41
+          },
+          "repeat": {
+            "path": "/litoral/receipt",
+            "status": 500,
+            "upstream_hits": 0,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.13
+          },
+          "other_route": {
+            "path": "/litoral/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 157,
+            "elapsed_ms": 0.35
+          },
+          "other_actor": {
+            "path": "/litoral/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.39
+          },
+          "rule": {
+            "ID": "contain-3",
+            "ActorID": "127.0.0.1|receipt-check-litoral|",
+            "Route": "/litoral/receipt",
+            "Param": "",
+            "Action": 3,
+            "Origin": "containment",
+            "Stage": 1,
+            "CreatedAt": "2026-11-21T13:10:12.416652477-03:00",
+            "ExpiresAt": "2026-11-21T13:40:12.416652477-03:00"
+          },
+          "rule_observed_by_ms": 0.55
+        },
+        "surco": {
+          "direct": {
+            "path": "/surco/receipt",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 73,
+            "elapsed_ms": 0.22
+          },
+          "first_protected": {
+            "path": "/surco/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 1.4
+          },
+          "repeat": {
+            "path": "/surco/receipt",
+            "status": 500,
+            "upstream_hits": 0,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.12
+          },
+          "other_route": {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.44
+          },
+          "other_actor": {
+            "path": "/surco/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.38
+          },
+          "rule": {
+            "ID": "contain-5",
+            "ActorID": "127.0.0.1|receipt-check-surco|",
+            "Route": "/surco/receipt",
+            "Param": "",
+            "Action": 3,
+            "Origin": "containment",
+            "Stage": 1,
+            "CreatedAt": "2026-11-21T13:10:12.419452865-03:00",
+            "ExpiresAt": "2026-11-21T13:40:12.419452865-03:00"
+          },
+          "rule_observed_by_ms": 21.91
+        },
+        "repeated_header": {
+          "path": "/litoral/repeated",
+          "status": 500,
+          "upstream_hits": 1,
+          "evidence_in_body": false,
+          "evidence_in_headers": false,
+          "bytes": 116,
+          "elapsed_ms": 0.39
+        },
+        "unlabelled_record": {
+          "path": "/surco/unlabelled",
+          "status": 200,
+          "upstream_hits": 1,
+          "evidence_in_body": true,
+          "evidence_in_headers": false,
+          "bytes": 48,
+          "elapsed_ms": 0.35
+        },
+        "request_observations": [
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.36
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.32
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.34
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.54
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.62
+          }
+        ]
+      },
+      "events": [
+        {
+          "ts": "2026-11-21T13:10:12.412960652-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-bruma|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/receipt",
+          "path": "/bruma/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.413756799-03:00",
+          "kind": "contain",
+          "actor": "127.0.0.1|receipt-check-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.413786546-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|receipt-check-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.414192818-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-bruma|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/receipt",
+          "path": "/bruma/receipt",
+          "action": "divert",
+          "rule_id": "contain-1",
+          "reason": "containment containment"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.414429413-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-bruma|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/service",
+          "path": "/bruma/service",
+          "action": "tag",
+          "reason": "confirmed:response-evidence"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.415401453-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|receipt-check-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.415624031-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|independent-bruma|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/receipt",
+          "path": "/bruma/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.415869179-03:00",
+          "kind": "contain",
+          "actor": "127.0.0.1|independent-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.4158726-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|independent-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.416396565-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-litoral|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/receipt",
+          "path": "/litoral/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.416636498-03:00",
+          "kind": "contain",
+          "actor": "127.0.0.1|receipt-check-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.416640128-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|receipt-check-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.416917275-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-litoral|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/receipt",
+          "path": "/litoral/receipt",
+          "action": "divert",
+          "rule_id": "contain-3",
+          "reason": "containment containment"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.417069137-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-litoral|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/service",
+          "path": "/litoral/service",
+          "action": "tag",
+          "reason": "confirmed:response-evidence"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.41726347-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|receipt-check-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.417427973-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|independent-litoral|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/receipt",
+          "path": "/litoral/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.417622639-03:00",
+          "kind": "contain",
+          "actor": "127.0.0.1|independent-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.417625059-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|independent-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.418204512-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-surco|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/receipt",
+          "path": "/surco/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.419308012-03:00",
+          "kind": "contain",
+          "actor": "127.0.0.1|receipt-check-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.419312602-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|receipt-check-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.439940094-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-surco|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/receipt",
+          "path": "/surco/receipt",
+          "action": "divert",
+          "rule_id": "contain-5",
+          "reason": "containment containment"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.440083153-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|receipt-check-surco|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "tag",
+          "reason": "confirmed:response-evidence"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.440366892-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|receipt-check-surco|",
+          "level": "confirmed",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.440541909-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|independent-surco|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/receipt",
+          "path": "/surco/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.440758437-03:00",
+          "kind": "contain",
+          "actor": "127.0.0.1|independent-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.440761232-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|independent-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.440912092-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|header-fields|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/repeated",
+          "path": "/litoral/repeated",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.441139051-03:00",
+          "kind": "contain",
+          "actor": "127.0.0.1|header-fields|",
+          "level": "confirmed",
+          "route": "/litoral/repeated",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.441142805-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|header-fields|",
+          "level": "confirmed",
+          "route": "/litoral/repeated",
+          "action": "replace",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.44129788-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|unlabelled-check|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/unlabelled",
+          "path": "/surco/unlabelled",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.441491211-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|unlabelled-check|",
+          "level": "normal",
+          "route": "/surco/unlabelled",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.441681914-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|known-indicator|",
+          "level": "confirmed",
+          "symbol": "exploit",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "tag",
+          "reason": "confirmed:exploit"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.441868821-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|known-indicator|",
+          "level": "confirmed",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.442011421-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|script-indicator|",
+          "level": "suspect",
+          "symbol": "probe",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "trap",
+          "reason": "suspect"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.44219207-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|script-indicator|",
+          "level": "suspect",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.442327744-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|query-indicator|",
+          "level": "suspect",
+          "symbol": "probe",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "trap",
+          "reason": "suspect"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.442524288-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|query-indicator|",
+          "level": "suspect",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.442675065-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|path-indicator|",
+          "level": "confirmed",
+          "symbol": "exploit",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "tag",
+          "reason": "confirmed:exploit"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.442850165-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|path-indicator|",
+          "level": "confirmed",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.443238998-03:00",
+          "kind": "request",
+          "actor": "127.0.0.1|clean-control|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.443688033-03:00",
+          "kind": "response",
+          "actor": "127.0.0.1|clean-control|",
+          "level": "normal",
+          "route": "/surco/service",
+          "action": "pass"
+        }
+      ]
+    },
+    "extproc": {
+      "cases": {
+        "bruma": {
+          "direct": {
+            "path": "/bruma/receipt",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 77,
+            "elapsed_ms": 0.3
+          },
+          "first_protected": {
+            "path": "/bruma/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 115,
+            "elapsed_ms": 1.66
+          },
+          "repeat": {
+            "path": "/bruma/receipt",
+            "status": 500,
+            "upstream_hits": 0,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 115,
+            "elapsed_ms": 0.28
+          },
+          "other_route": {
+            "path": "/bruma/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 137,
+            "elapsed_ms": 0.72
+          },
+          "other_actor": {
+            "path": "/bruma/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 115,
+            "elapsed_ms": 0.78
+          },
+          "rule": {
+            "ID": "contain-1",
+            "ActorID": "192.168.5.15|receipt-check-bruma|",
+            "Route": "/bruma/receipt",
+            "Param": "",
+            "Action": 3,
+            "Origin": "containment",
+            "Stage": 1,
+            "CreatedAt": "2026-11-21T13:10:12.609906846-03:00",
+            "ExpiresAt": "2026-11-21T13:40:12.609906846-03:00"
+          },
+          "rule_observed_by_ms": 1.85
+        },
+        "litoral": {
+          "direct": {
+            "path": "/litoral/receipt",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": true,
+            "bytes": 59,
+            "elapsed_ms": 0.18
+          },
+          "first_protected": {
+            "path": "/litoral/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.64
+          },
+          "repeat": {
+            "path": "/litoral/receipt",
+            "status": 500,
+            "upstream_hits": 0,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.38
+          },
+          "other_route": {
+            "path": "/litoral/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 157,
+            "elapsed_ms": 0.78
+          },
+          "other_actor": {
+            "path": "/litoral/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.74
+          },
+          "rule": {
+            "ID": "contain-3",
+            "ActorID": "192.168.5.15|receipt-check-litoral|",
+            "Route": "/litoral/receipt",
+            "Param": "",
+            "Action": 3,
+            "Origin": "containment",
+            "Stage": 1,
+            "CreatedAt": "2026-11-21T13:10:12.612885713-03:00",
+            "ExpiresAt": "2026-11-21T13:40:12.612885713-03:00"
+          },
+          "rule_observed_by_ms": 0.81
+        },
+        "surco": {
+          "direct": {
+            "path": "/surco/receipt",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 73,
+            "elapsed_ms": 0.3
+          },
+          "first_protected": {
+            "path": "/surco/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.82
+          },
+          "repeat": {
+            "path": "/surco/receipt",
+            "status": 500,
+            "upstream_hits": 0,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.25
+          },
+          "other_route": {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": true,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.76
+          },
+          "other_actor": {
+            "path": "/surco/receipt",
+            "status": 500,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 116,
+            "elapsed_ms": 0.72
+          },
+          "rule": {
+            "ID": "contain-5",
+            "ActorID": "192.168.5.15|receipt-check-surco|",
+            "Route": "/surco/receipt",
+            "Param": "",
+            "Action": 3,
+            "Origin": "containment",
+            "Stage": 1,
+            "CreatedAt": "2026-11-21T13:10:12.616024578-03:00",
+            "ExpiresAt": "2026-11-21T13:40:12.616024578-03:00"
+          },
+          "rule_observed_by_ms": 0.99
+        },
+        "repeated_header": {
+          "path": "/litoral/repeated",
+          "status": 500,
+          "upstream_hits": 1,
+          "evidence_in_body": false,
+          "evidence_in_headers": false,
+          "bytes": 116,
+          "elapsed_ms": 1.31
+        },
+        "unlabelled_record": {
+          "path": "/surco/unlabelled",
+          "status": 200,
+          "upstream_hits": 1,
+          "evidence_in_body": true,
+          "evidence_in_headers": false,
+          "bytes": 48,
+          "elapsed_ms": 0.83
+        },
+        "request_observations": [
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.77
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.72
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.71
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.59
+          },
+          {
+            "path": "/surco/service",
+            "status": 200,
+            "upstream_hits": 1,
+            "evidence_in_body": false,
+            "evidence_in_headers": false,
+            "bytes": 153,
+            "elapsed_ms": 0.61
+          }
+        ]
+      },
+      "events": [
+        {
+          "ts": "2026-11-21T13:10:12.606957683-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/",
+          "path": "/",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.608017127-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "route": "/",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.608962508-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-bruma|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/receipt",
+          "path": "/bruma/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.609875973-03:00",
+          "kind": "contain",
+          "actor": "192.168.5.15|receipt-check-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.610008101-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|receipt-check-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.610565149-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-bruma|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/receipt",
+          "path": "/bruma/receipt",
+          "action": "divert",
+          "rule_id": "contain-1",
+          "reason": "containment containment"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.610974467-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-bruma|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/service",
+          "path": "/bruma/service",
+          "action": "tag",
+          "reason": "confirmed:response-evidence"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.611304724-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|receipt-check-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.611699773-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|independent-bruma|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/receipt",
+          "path": "/bruma/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.612029697-03:00",
+          "kind": "contain",
+          "actor": "192.168.5.15|independent-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.612032701-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|independent-bruma|",
+          "level": "confirmed",
+          "route": "/bruma/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:bruma"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.612613781-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-litoral|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/receipt",
+          "path": "/litoral/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.612877828-03:00",
+          "kind": "contain",
+          "actor": "192.168.5.15|receipt-check-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.612880456-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|receipt-check-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.613438882-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-litoral|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/receipt",
+          "path": "/litoral/receipt",
+          "action": "divert",
+          "rule_id": "contain-3",
+          "reason": "containment containment"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.613795423-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-litoral|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/service",
+          "path": "/litoral/service",
+          "action": "tag",
+          "reason": "confirmed:response-evidence"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.614250716-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|receipt-check-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.61454718-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|independent-litoral|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/receipt",
+          "path": "/litoral/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.614925249-03:00",
+          "kind": "contain",
+          "actor": "192.168.5.15|independent-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.614930548-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|independent-litoral|",
+          "level": "confirmed",
+          "route": "/litoral/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.615662071-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-surco|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/receipt",
+          "path": "/surco/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.616016568-03:00",
+          "kind": "contain",
+          "actor": "192.168.5.15|receipt-check-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.616019279-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|receipt-check-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.61649489-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-surco|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/receipt",
+          "path": "/surco/receipt",
+          "action": "divert",
+          "rule_id": "contain-5",
+          "reason": "containment containment"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.616895154-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|receipt-check-surco|",
+          "level": "confirmed",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "tag",
+          "reason": "confirmed:response-evidence"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.617260791-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|receipt-check-surco|",
+          "level": "confirmed",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.617616998-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|independent-surco|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/receipt",
+          "path": "/surco/receipt",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.617944794-03:00",
+          "kind": "contain",
+          "actor": "192.168.5.15|independent-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.617947923-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|independent-surco|",
+          "level": "confirmed",
+          "route": "/surco/receipt",
+          "action": "replace",
+          "evidence": [
+            "canary:surco"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.618293075-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|header-fields|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/repeated",
+          "path": "/litoral/repeated",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.618656416-03:00",
+          "kind": "contain",
+          "actor": "192.168.5.15|header-fields|",
+          "level": "confirmed",
+          "route": "/litoral/repeated",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.618675149-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|header-fields|",
+          "level": "confirmed",
+          "route": "/litoral/repeated",
+          "action": "replace",
+          "evidence": [
+            "canary:litoral"
+          ],
+          "reason": "canary"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.619761252-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|unlabelled-check|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/unlabelled",
+          "path": "/surco/unlabelled",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.620132354-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|unlabelled-check|",
+          "level": "normal",
+          "route": "/surco/unlabelled",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.620481594-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|known-indicator|",
+          "level": "confirmed",
+          "symbol": "exploit",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "tag",
+          "reason": "confirmed:exploit"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.620912814-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|known-indicator|",
+          "level": "confirmed",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.621244407-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|script-indicator|",
+          "level": "suspect",
+          "symbol": "probe",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "trap",
+          "reason": "suspect"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.621633073-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|script-indicator|",
+          "level": "suspect",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.621970548-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|query-indicator|",
+          "level": "suspect",
+          "symbol": "probe",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "trap",
+          "reason": "suspect"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.622318369-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|query-indicator|",
+          "level": "suspect",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.62268096-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|path-indicator|",
+          "level": "confirmed",
+          "symbol": "exploit",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "tag",
+          "reason": "confirmed:exploit"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.622957399-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|path-indicator|",
+          "level": "confirmed",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.623269883-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|clean-control|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.623576652-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|clean-control|",
+          "level": "normal",
+          "route": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.624170373-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/bruma/service",
+          "path": "/bruma/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.624534633-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "route": "/bruma/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.625146084-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/litoral/service",
+          "path": "/litoral/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.625425485-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "route": "/litoral/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.626084999-03:00",
+          "kind": "request",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "symbol": "browse",
+          "method": "GET",
+          "route": "/surco/service",
+          "path": "/surco/service",
+          "action": "pass"
+        },
+        {
+          "ts": "2026-11-21T13:10:12.626493607-03:00",
+          "kind": "response",
+          "actor": "192.168.5.15|read-only-client|",
+          "level": "normal",
+          "route": "/surco/service",
+          "action": "pass"
+        }
+      ]
+    }
+  },
+  "openrouter": [
+    {
+      "business": "bruma",
+      "arm": "direct",
+      "status": 200,
+      "model": "openai/gpt-4o-mini",
+      "correct": true,
+      "content": "BP-425",
+      "prompt_tokens": 75,
+      "completion_tokens": 3,
+      "error": ""
+    },
+    {
+      "business": "bruma",
+      "arm": "protected",
+      "status": 200,
+      "model": "openai/gpt-4o-mini",
+      "correct": true,
+      "content": "BP-425",
+      "prompt_tokens": 75,
+      "completion_tokens": 3,
+      "error": ""
+    },
+    {
+      "business": "litoral",
+      "arm": "direct",
+      "status": 200,
+      "model": "openai/gpt-4o-mini",
+      "correct": true,
+      "content": "LF-316",
+      "prompt_tokens": 77,
+      "completion_tokens": 3,
+      "error": ""
+    },
+    {
+      "business": "litoral",
+      "arm": "protected",
+      "status": 200,
+      "model": "openai/gpt-4o-mini",
+      "correct": true,
+      "content": "LF-316",
+      "prompt_tokens": 77,
+      "completion_tokens": 3,
+      "error": ""
+    },
+    {
+      "business": "surco",
+      "arm": "direct",
+      "status": 200,
+      "model": "openai/gpt-4o-mini",
+      "correct": true,
+      "content": "SR-782",
+      "prompt_tokens": 71,
+      "completion_tokens": 3,
+      "error": ""
+    },
+    {
+      "business": "surco",
+      "arm": "protected",
+      "status": 200,
+      "model": "openai/gpt-4o-mini",
+      "correct": true,
+      "content": "SR-782",
+      "prompt_tokens": 71,
+      "completion_tokens": 3,
+      "error": ""
+    }
+  ]
+}

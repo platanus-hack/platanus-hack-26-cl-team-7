@@ -134,7 +134,9 @@ func (p *Proxy) modifyResponse(resp *http.Response) error {
 	case engine.RespReplace:
 		finalBody = sd.Body
 		resp.StatusCode = sd.Status
+		resp.Header = make(http.Header)
 		resp.Header.Set("Content-Type", "application/json")
+		resp.Trailer = nil
 	default:
 		// Pass: body may have had a trap injected by the engine.
 		finalBody = eresp.Body
@@ -151,8 +153,9 @@ func (p *Proxy) modifyResponse(resp *http.Response) error {
 // reading and restoring the body so it can still be forwarded.
 func buildRequest(r *http.Request) *engine.Request {
 	var body []byte
+	var truncated bool
 	if r.Body != nil {
-		body, _ = readCapped(r.Body, bodyCap)
+		body, truncated = readCapped(r.Body, bodyCap)
 		r.Body.Close()
 		r.Body = io.NopCloser(bytes.NewReader(body))
 	}
@@ -161,15 +164,18 @@ func buildRequest(r *http.Request) *engine.Request {
 		cookie = c.Value
 	}
 	return &engine.Request{
-		Method:    r.Method,
-		Path:      r.URL.Path,
-		RawQuery:  r.URL.RawQuery,
-		Headers:   flattenHeaders(r.Header),
-		Body:      body,
-		RemoteIP:  clientIP(r),
-		UserAgent: r.UserAgent(),
-		Cookie:    cookie,
-		Route:     r.URL.Path,
+		RawTarget:      r.RequestURI,
+		BodyIncomplete: truncated,
+		FixtureID:      r.Header.Get("X-Up-Fixture-Id"),
+		Method:         r.Method,
+		Path:           r.URL.Path,
+		RawQuery:       r.URL.RawQuery,
+		Headers:        flattenHeaders(r.Header),
+		Body:           body,
+		RemoteIP:       clientIP(r),
+		UserAgent:      r.UserAgent(),
+		Cookie:         cookie,
+		Route:          r.URL.Path,
 	}
 }
 
@@ -196,11 +202,11 @@ func flattenHeaders(h http.Header) map[string]string {
 }
 
 func readCapped(r io.Reader, cap int) ([]byte, bool) {
-	buf, _ := io.ReadAll(io.LimitReader(r, int64(cap)+1))
+	buf, err := io.ReadAll(io.LimitReader(r, int64(cap)+1))
 	if len(buf) > cap {
 		return buf[:cap], true
 	}
-	return buf, false
+	return buf, err != nil
 }
 
 func writeJSON(w http.ResponseWriter, status int, body []byte) {

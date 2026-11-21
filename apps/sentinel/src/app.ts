@@ -6,7 +6,15 @@ import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
-import { CopilotRequest, IngestBody, IngestEvent, Range, type CopilotEvent, type Health } from "@sentinel/contracts";
+import {
+  CopilotRequest,
+  IngestBody,
+  IngestEvent,
+  Range,
+  type CopilotEvent,
+  type Health,
+} from "@sentinel/contracts";
+import { evidenceRoutes, type EvidenceDeps } from "./ultimo-paso/routes.ts";
 import { MODEL, type Ai } from "./ai.ts";
 import type { Bus, EncodedFrame } from "./bus.ts";
 import { reportRoutes } from "./reports/routes.ts";
@@ -18,6 +26,7 @@ import type { Store } from "./store.ts";
 
 export interface AppDeps {
   store: Store;
+  evidence?: EvidenceDeps;
   bus: Bus;
   ai: Ai;
   deception: DeceptionStore;
@@ -40,7 +49,7 @@ const MAX_QUEUED_FRAMES = 1000;
 const MAX_QUEUED_BYTES = 16 * 1024 * 1024;
 const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
 
-export function createApp({ store, bus, ai, deception, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null }: AppDeps) {
+export function createApp({ store, bus, ai, deception, evidence, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
@@ -229,6 +238,7 @@ export function createApp({ store, bus, ai, deception, version = "0.1.0", starte
 
   app.route("/", deceptionRoutes({ deception, ingestToken }));
   app.route("/reports", reportRoutes(reports));
+  if (evidence) app.route("/ultimo-paso", evidenceRoutes(evidence));
 
   // Unknown API paths answer in the API's error shape, never with the web app.
   app.all("/*", (c) => fail(c, 404, "not_found", "No such route"));

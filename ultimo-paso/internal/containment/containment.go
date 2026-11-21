@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -23,13 +24,15 @@ type Researcher interface {
 
 // Alert is one notification record (also written to the event log by the proxy).
 type Alert struct {
-	TS       time.Time `json:"ts"`
-	ActorID  string    `json:"actor"`
-	Route    string    `json:"route"`
-	Method   string    `json:"method"`
-	Path     string    `json:"path"`
-	Evidence []string  `json:"evidence"`
-	RuleID   string    `json:"rule_id"`
+	TraceID    string    `json:"trace_id,omitempty"`
+	IncidentID string    `json:"incident_id,omitempty"`
+	TS         time.Time `json:"ts"`
+	ActorID    string    `json:"actor"`
+	Route      string    `json:"route"`
+	Method     string    `json:"method"`
+	Path       string    `json:"path"`
+	Evidence   []string  `json:"evidence"`
+	RuleID     string    `json:"rule_id"`
 }
 
 // Manager implements engine.ContainFunc via Handle.
@@ -39,6 +42,7 @@ type Manager struct {
 	researcher Researcher
 	ttl        time.Duration
 	client     *http.Client
+	events     engine.EventSink
 
 	mu     sync.Mutex
 	alerts []Alert
@@ -54,6 +58,11 @@ func New(rules *engine.RuleStore, webhookURL string, r Researcher, ttl time.Dura
 		client: &http.Client{Timeout: 3 * time.Second}}
 }
 
+func (m *Manager) WithEvents(events engine.EventSink) *Manager {
+	m.events = events
+	return m
+}
+
 // Handle is the engine.ContainFunc. It writes a narrow enforce rule scoped to
 // the exact actor+route, alerts, and queues research. Target: rule active in
 // well under 100 ms (it is an in-memory insert).
@@ -66,45 +75,70 @@ func (m *Manager) Handle(in engine.ContainInput) {
 	now := time.Now()
 	// Divert (not bare block) so the already-confirmed actor keeps getting
 	// believable fake errors instead of a detection signal.
+	expiresAt := now.Add(m.ttl)
 	m.rules.Add(&engine.Rule{
 		ID: id, ActorID: in.ActorID, Route: in.Route, Action: engine.Divert,
 		Origin: "containment", Stage: engine.Enforce,
-		CreatedAt: now, ExpiresAt: now.Add(m.ttl),
+		CreatedAt: now, ExpiresAt: expiresAt,
 	})
 
-	al := Alert{TS: now, ActorID: in.ActorID, Route: in.Route, Evidence: in.Evidence, RuleID: id}
+	event := engine.Event{TS: now, ActorID: in.ActorID, Route: in.Route, Evidence: in.Evidence,
+		RuleID: id, IncidentID: in.IncidentID, ExpiresAt: &expiresAt}
+	if !in.ObservedAt.IsZero() {
+		elapsed := float64(now.Sub(in.ObservedAt)) / float64(time.Millisecond)
+		event.ElapsedMS = &elapsed
+	}
+	al := Alert{TS: now, ActorID: in.ActorID, Route: in.Route, Evidence: in.Evidence, RuleID: id, IncidentID: in.IncidentID}
 	if in.Request != nil {
 		al.Method = in.Request.Method
 		al.Path = in.Request.Path
+		al.TraceID = in.Request.TraceID
+		event.TraceID = al.TraceID
+		event.FixtureID = in.Request.FixtureID
 	}
+	m.emit(event, "rule_installed", "actor-and-route")
 	m.mu.Lock()
 	m.alerts = append(m.alerts, al)
 	m.mu.Unlock()
 
 	log.Printf("[contain] rule=%s actor=%s route=%s evidence=%v ttl=%s", id, in.ActorID, in.Route, in.Evidence, m.ttl)
-	m.postWebhook(al)
+	m.emit(event, "alert_created", "local-alert")
 
 	if m.researcher != nil {
 		go m.researcher.Investigate(in)
 	}
+	m.emit(event, "alert_delivery", m.postWebhook(al))
 }
 
-func (m *Manager) postWebhook(al Alert) {
+func (m *Manager) emit(event engine.Event, kind, reason string) {
+	if m.events != nil {
+		event.TS = time.Now()
+		event.Kind = kind
+		event.Reason = reason
+		m.events.Emit(event)
+	}
+}
+
+func (m *Manager) postWebhook(al Alert) string {
 	if m.webhookURL == "" {
-		return
+		return "not-configured"
 	}
 	b, _ := json.Marshal(al)
 	req, err := http.NewRequest(http.MethodPost, m.webhookURL, bytes.NewReader(b))
 	if err != nil {
-		return
+		return "failed"
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := m.client.Do(req)
 	if err != nil {
 		log.Printf("[contain] webhook error: %v", err)
-		return
+		return "failed"
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "failed-http-" + strconv.Itoa(resp.StatusCode)
+	}
+	return "delivered-http-" + strconv.Itoa(resp.StatusCode)
 }
 
 // Alerts returns a snapshot (for the admin/scoreboard UI).

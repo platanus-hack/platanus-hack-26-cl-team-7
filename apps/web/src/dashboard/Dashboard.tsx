@@ -35,7 +35,8 @@ function TitleBar() {
           Sentinel is offline
         </span>
       )}
-      <button type="button" className="ask ml-auto" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
+      <a className="ml-auto text-xs underline" href="/ultimo-paso">Último Paso</a>
+      <button type="button" className="ask" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
         <Orb size={20} />
         Copilot
         <kbd className="kbd">⌘K</kbd>

@@ -1,0 +1,24 @@
+go version go1.26.0 linux/arm64
+?   	github.com/platanus/ultimo-paso/cmd/engine	[no test files]
+?   	github.com/platanus/ultimo-paso/internal/containment	[no test files]
+=== RUN   TestBenignPasses
+--- PASS: TestBenignPasses (0.00s)
+=== RUN   TestCanaryWithheldAndContained
+--- PASS: TestCanaryWithheldAndContained (0.02s)
+=== RUN   TestRFDoSSafe
+--- PASS: TestRFDoSSafe (0.00s)
+=== RUN   TestHeaderEvidence
+--- PASS: TestHeaderEvidence (0.00s)
+=== RUN   TestContainmentRuleBlocks
+--- PASS: TestContainmentRuleBlocks (0.00s)
+=== RUN   TestAdaptivity
+--- PASS: TestAdaptivity (0.00s)
+=== RUN   TestTokenLineage
+--- PASS: TestTokenLineage (0.00s)
+PASS
+ok  	github.com/platanus/ultimo-paso/internal/engine	0.022s
+?   	github.com/platanus/ultimo-paso/internal/eventlog	[no test files]
+?   	github.com/platanus/ultimo-paso/internal/extproc	[no test files]
+?   	github.com/platanus/ultimo-paso/internal/research	[no test files]
+?   	github.com/platanus/ultimo-paso/internal/revproxy	[no test files]
+?   	github.com/platanus/ultimo-paso/targets/mock-bank	[no test files]

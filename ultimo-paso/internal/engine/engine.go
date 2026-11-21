@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"crypto/rand"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -9,20 +10,38 @@ import (
 
 // Event is one structured record emitted to the event log for the scoreboard.
 type Event struct {
-	TS        time.Time `json:"ts"`
-	Kind      string    `json:"kind"` // request|response|contain
-	ActorID   string    `json:"actor"`
-	Level     string    `json:"level"`
-	Symbol    string    `json:"symbol,omitempty"`
-	Method    string    `json:"method,omitempty"`
-	Route     string    `json:"route,omitempty"`
-	Path      string    `json:"path,omitempty"`
-	Action    string    `json:"action,omitempty"`
-	Evidence  []string  `json:"evidence,omitempty"`
-	RuleID    string    `json:"rule_id,omitempty"`
-	Narrowing float64   `json:"narrowing,omitempty"`
-	Adaptive  float64   `json:"adaptive,omitempty"`
-	Reason    string    `json:"reason,omitempty"`
+	HasPayload bool            `json:"has_payload,omitempty"`
+	Payload    *PayloadCapture `json:"payload_capture,omitempty"`
+	RunID      string          `json:"run_id,omitempty"`
+	DataPlane  string          `json:"data_plane,omitempty"`
+	TraceID    string          `json:"trace_id,omitempty"`
+	FixtureID  string          `json:"fixture_id,omitempty"`
+	IncidentID string          `json:"incident_id,omitempty"`
+	Pattern    string          `json:"pattern,omitempty"`
+	Status     int             `json:"status,omitempty"`
+	ExpiresAt  *time.Time      `json:"expires_at,omitempty"`
+	ElapsedMS  *float64        `json:"elapsed_ms,omitempty"`
+	TS         time.Time       `json:"ts"`
+	Kind       string          `json:"kind"` // request|response|contain
+	ActorID    string          `json:"actor"`
+	Level      string          `json:"level"`
+	Symbol     string          `json:"symbol,omitempty"`
+	Method     string          `json:"method,omitempty"`
+	Route      string          `json:"route,omitempty"`
+	Path       string          `json:"path,omitempty"`
+	Action     string          `json:"action,omitempty"`
+	Evidence   []string        `json:"evidence,omitempty"`
+	RuleID     string          `json:"rule_id,omitempty"`
+	Narrowing  float64         `json:"narrowing,omitempty"`
+	Adaptive   float64         `json:"adaptive,omitempty"`
+	Reason     string          `json:"reason,omitempty"`
+}
+
+// PayloadCapture contains only metadata safe to include in the evidence journal.
+type PayloadCapture struct {
+	State     string `json:"state"`
+	BodyBytes int    `json:"body_bytes"`
+	SHA256    string `json:"sha256,omitempty"`
 }
 
 // EventSink receives engine events. Implementations must be safe for concurrent
@@ -37,11 +56,13 @@ func (nopSink) Emit(Event) {}
 // ContainInput is handed to the containment callback when a response confirms
 // exploitation. The callback runs asynchronously, off the hot path.
 type ContainInput struct {
-	ActorID  string
-	Route    string
-	Request  *Request
-	Response *Response
-	Evidence []string
+	IncidentID string
+	ObservedAt time.Time
+	ActorID    string
+	Route      string
+	Request    *Request
+	Response   *Response
+	Evidence   []string
 }
 
 // ContainFunc writes a TTL containment rule, alerts, and kicks the research
@@ -58,6 +79,7 @@ type Engine struct {
 	now     func() time.Time
 	events  EventSink
 	contain ContainFunc
+	capture func(*Request) *PayloadCapture
 
 	trapSeq uint64
 }
@@ -67,6 +89,7 @@ type Config struct {
 	Clock   func() time.Time
 	Events  EventSink
 	Contain ContainFunc
+	Capture func(*Request) *PayloadCapture
 }
 
 // New builds an engine with default pattern/scanner databases.
@@ -87,6 +110,7 @@ func New(cfg Config) *Engine {
 		now:      clock,
 		events:   ev,
 		contain:  cfg.Contain,
+		capture:  cfg.Capture,
 	}
 }
 
@@ -95,6 +119,7 @@ func New(cfg Config) *Engine {
 // standing rule. New exploits are deliberately allowed through so the engine
 // can confirm them and deny feedback at the response.
 func (e *Engine) OnRequest(r *Request) RequestDecision {
+	r.TraceID = rand.Text()
 	if r.Route == "" {
 		r.Route = r.Path
 	}
@@ -117,6 +142,7 @@ func (e *Engine) OnRequest(r *Request) RequestDecision {
 	}
 
 	d := RequestDecision{Symbol: sym, Level: a.Level, ActorID: a.ID}
+	d.Pattern = name
 	switch {
 	case a.Level == Confirmed:
 		// Let it proceed but mark; response path will deny feedback. A standing
@@ -174,12 +200,14 @@ func (e *Engine) OnResponse(r *Request, resp *Response, reqDec RequestDecision) 
 		}
 	}
 
+	e.emitResp(r, a, rd, resp.Status)
 	if rd.Contain && e.contain != nil {
-		in := ContainInput{ActorID: a.ID, Route: r.Route, Request: r, Response: resp, Evidence: evidence}
+		in := ContainInput{IncidentID: rand.Text(), ObservedAt: e.now(), ActorID: a.ID, Route: r.Route, Request: r, Response: resp, Evidence: evidence}
+		e.events.Emit(Event{TS: in.ObservedAt, Kind: "contain", ActorID: a.ID, Level: a.Level.String(),
+			TraceID: r.TraceID, FixtureID: r.FixtureID, IncidentID: in.IncidentID, Route: r.Route, Evidence: evidence, Reason: rd.Reason})
 		go e.contain(in) // off the hot path
 	}
 
-	e.emitResp(r, a, rd)
 	return rd
 }
 
@@ -214,17 +242,24 @@ func (e *Engine) injectTrap(a *Actor, resp *Response) {
 }
 
 func (e *Engine) emitReq(r *Request, a *Actor, sym Symbol, d RequestDecision) {
+	var payload *PayloadCapture
+	if e.capture != nil {
+		payload = e.capture(r)
+	}
 	e.events.Emit(Event{TS: e.now(), Kind: "request", ActorID: a.ID, Level: a.Level.String(),
+		Payload:    payload,
+		HasPayload: len(r.Body) > 0 || r.RawQuery != "" || sym >= SymProbe || r.Headers["x-catalog-note"] != "" || r.Headers["x-middleware-subrequest"] != "" || r.Headers["next-action"] != "",
+		TraceID:    r.TraceID, FixtureID: r.FixtureID, Pattern: d.Pattern,
 		Symbol: sym.String(), Method: r.Method, Route: r.Route, Path: r.Path, Action: d.Action.String(),
 		RuleID: d.RuleID, Narrowing: a.Narrowing, Adaptive: a.Adaptive, Reason: d.Reason})
 }
 
-func (e *Engine) emitResp(r *Request, a *Actor, d ResponseDecision) {
-	if d.Contain {
-		e.events.Emit(Event{TS: e.now(), Kind: "contain", ActorID: a.ID, Level: a.Level.String(),
-			Route: r.Route, Evidence: d.Evidence, Reason: d.Reason})
+func (e *Engine) emitResp(r *Request, a *Actor, d ResponseDecision, status int) {
+	if d.Action == RespReplace {
+		status = d.Status
 	}
 	e.events.Emit(Event{TS: e.now(), Kind: "response", ActorID: a.ID, Level: a.Level.String(),
+		TraceID: r.TraceID, FixtureID: r.FixtureID, Status: status,
 		Route: r.Route, Action: d.Action.String(), Evidence: d.Evidence, Reason: d.Reason})
 }
 

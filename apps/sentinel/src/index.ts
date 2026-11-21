@@ -14,6 +14,10 @@ import { FixProposer } from "./fixes.ts";
 import { createMastraReportModel } from "./reports/mastra.ts";
 import { ReportService } from "./reports/service.ts";
 import { accessLogSource, engineSource, sentinelSource } from "./reports/sources.ts";
+import { Pipeline, fixtureWorker } from "./ultimo-paso/pipeline.ts";
+import { pipelineProviders, providerEnvironment } from "./ultimo-paso/providers.ts";
+import { EvidenceJournal } from "./ultimo-paso/journal.ts";
+import { inventoryOf } from "./ultimo-paso/research.ts";
 import { Store } from "./store.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -53,7 +57,16 @@ const reports = reportModel
   ? new ReportService({ store, db, model: reportModel, sources: { sen: sentinelSource(store), acc: accessLogSource(accessLogPath), eng: engineSource(verdictsDbPath) } })
   : null;
 
-const app = createApp({ store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
+const upRoot = resolve(repoRoot, "ultimo-paso");
+const upEnvironment = providerEnvironment(resolve(upRoot, ".env"));
+const replayDirectory = resolve(upRoot, "scoreboard/evidence");
+const eventDirectory = process.env.ULTIMO_PASO_EVENT_DIR || resolve(upRoot, "scoreboard/runs/live");
+if (!process.env.ULTIMO_PASO_EVENT_DIR) mkdirSync(eventDirectory, { recursive: true });
+const inventory = inventoryOf({ package: process.env.ULTIMO_PASO_PACKAGE, version: process.env.ULTIMO_PASO_VERSION });
+const journal = new EvidenceJournal(db, eventDirectory, upEnvironment.FIRECRAWL_API_KEY, inventory);
+const pipeline = new Pipeline(db, { ...pipelineProviders(upEnvironment),
+  evaluate: fixtureWorker(upRoot, eventDirectory, upEnvironment.ULTIMO_PASO_LIMA_VM) });
+const app = createApp({ evidence: { replayDirectory, journal, pipeline }, store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
   console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
@@ -63,6 +76,8 @@ function shutdown() {
   ai.stop();
   fixes.stop();
   bus.stop();
+  pipeline.stop();
+  journal.stop();
   store.close();
   db.close();
   server.close(() => process.exit(0));

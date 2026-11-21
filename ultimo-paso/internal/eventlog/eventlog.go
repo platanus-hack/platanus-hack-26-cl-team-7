@@ -13,9 +13,16 @@ import (
 
 // Sink writes engine.Event records as JSON lines.
 type Sink struct {
-	mu sync.Mutex
-	w  *bufio.Writer
-	f  *os.File
+	mu        sync.Mutex
+	w         *bufio.Writer
+	f         *os.File
+	runID     string
+	dataPlane string
+}
+
+// Scope sets the run and proxy path before the sink is used by any goroutine.
+func (s *Sink) Scope(runID, dataPlane string) {
+	s.runID, s.dataPlane = runID, dataPlane
 }
 
 // Open creates/truncates path and returns a Sink. If path is "", events go to
@@ -33,6 +40,7 @@ func Open(path string) (*Sink, error) {
 
 // Emit writes one event. Errors are dropped (the proxy must not block on logs).
 func (s *Sink) Emit(e engine.Event) {
+	e.RunID, e.DataPlane = s.runID, s.dataPlane
 	b, err := json.Marshal(e)
 	if err != nil {
 		return
