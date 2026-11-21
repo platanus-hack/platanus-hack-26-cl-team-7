@@ -22,10 +22,10 @@ import { animate } from "motion";
 import { LockSimple, Robot, ShieldCheck, Storefront } from "@phosphor-icons/react";
 import type { Track } from "@sentinel/contracts";
 import { cn } from "../ui";
-import { disguises, numEs, type Moment, type MomentKind } from "./moments";
+import { agentName, disguises, numEs, shortIp, type Moment, type MomentKind } from "./moments";
 import "@xyflow/react/dist/style.css";
 
-export const KIND_COLOR: Record<MomentKind, string> = { fooled: "var(--color-green)", win: "var(--color-ember)", none: "var(--color-mid)" };
+export const KIND_COLOR: Record<MomentKind, string> = { fooled: "var(--c-ok)", win: "var(--c-danger)", none: "var(--color-mid)" };
 
 const HOP = 0.4; // seconds for one edge
 const NODE_W = 168; // .ag-node width
@@ -48,7 +48,7 @@ const CardNodeView = memo(function CardNodeView({ data }: NodeProps<CardNode>) {
     if (data.icon !== "decoy" || !data.shot || !box.current || reducedMotion()) return;
     const a = animate(
       box.current,
-      { boxShadow: ["0 0 0 0 rgba(0,245,117,0)", "0 0 0 6px rgba(0,245,117,0.22)", "0 0 0 0 rgba(0,245,117,0)"] },
+      { boxShadow: ["0 0 0 0 rgba(34,197,94,0)", "0 0 0 6px rgba(34,197,94,0.22)", "0 0 0 0 rgba(34,197,94,0)"] },
       { duration: 0.7, delay: 2 * HOP - 0.1 },
     );
     return () => a.stop();
@@ -134,7 +134,7 @@ function PacketEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
 /** The path Sentinel keeps closed: to the real shop. */
 function BlockedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }: EdgeProps) {
   const [path] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
-  return <BaseEdge id={id} path={path} style={{ stroke: "var(--color-ember)", strokeOpacity: 0.45, strokeDasharray: "3 5", strokeWidth: 1.25 }} />;
+  return <BaseEdge id={id} path={path} style={{ stroke: "var(--c-danger)", strokeOpacity: 0.45, strokeDasharray: "3 5", strokeWidth: 1.25 }} />;
 }
 
 const FIT = { padding: 0.08 };
@@ -159,19 +159,19 @@ export function AttackGraph({ track, moment, shot, decoys }: { track: Track; mom
   const disguise = disguises(track);
   const nodes = useMemo<CardNode[]>(
     () => [
-      { id: "agent", type: "card", position: { x: 0, y: 60 }, data: { icon: "agent", title: track.ip, sub: disguise || "1 identidad", mono: true } },
+      { id: "agent", type: "card", position: { x: 0, y: 60 }, data: { icon: "agent", title: agentName(track.userAgent), sub: disguise ? `${shortIp(track.ip)} · ${disguise}` : shortIp(track.ip) } },
       { id: "sentinel", type: "card", position: { x: 250, y: 60 }, data: { icon: "sentinel", title: "Sentinel", sub: "lo desvió" } },
       { id: "decoy", type: "card", position: { x: 500, y: 0 }, data: { icon: "decoy", title: "Copia falsa", sub: `${numEs(decoys)} respuestas falsas`, shot } },
       { id: "real", type: "card", position: { x: 500, y: 125 }, data: { icon: "real", title: "Tienda real", sub: "0 visitas desde la captura" } },
     ],
-    [track.ip, disguise, decoys, shot],
+    [track.ip, track.userAgent, disguise, decoys, shot],
   );
   const back = moment ? KIND_COLOR[moment.kind] : "var(--color-text)";
   const count = moment?.count ?? 0;
   const edges = useMemo<Edge[]>(
     () => [
       { id: "e-in", source: "agent", target: "sentinel", type: "packet", data: { hop: 0, shot, count, back }, style: { stroke: "var(--color-iron)", strokeWidth: 1.5 } },
-      { id: "e-decoy", source: "sentinel", target: "decoy", type: "packet", animated: !reducedMotion(), data: { hop: 1, shot, count, back }, style: { stroke: "var(--color-green)", strokeOpacity: 0.6, strokeWidth: 1.5 } },
+      { id: "e-decoy", source: "sentinel", target: "decoy", type: "packet", animated: !reducedMotion(), data: { hop: 1, shot, count, back }, style: { stroke: "var(--c-ok)", strokeOpacity: 0.6, strokeWidth: 1.5 } },
       { id: "e-real", source: "sentinel", target: "real", type: "blocked" },
     ],
     [shot, count, back],

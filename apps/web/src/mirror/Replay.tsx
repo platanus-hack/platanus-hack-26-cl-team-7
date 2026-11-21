@@ -13,7 +13,7 @@ import { AttackGraph, KIND_COLOR } from "./AttackGraph";
 import { OUTCOME, kindOf, numEs, type Moment } from "./moments";
 import "./replay.css";
 
-function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "ember" | "green" }) {
+function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "danger" | "ok" }) {
   return (
     <div className="kpi">
       <span className="kpi-l">{label}</span>
@@ -57,8 +57,8 @@ export function Replay({ detail, moments, onFinding }: { detail: TrackDetail; mo
       <div className="kpis">
         <Stat label="Intentos" value={numEs(track.actions)} sub={partial ? `${numEs(actions.length)} en esta vista` : undefined} />
         <Stat label="Respuestas falsas creídas" value={numEs(fooled)} sub={partial ? "en esta vista" : undefined} />
-        <Stat label="Vulnerabilidades" value={numEs(findings.length)} tone={findings.length > 0 ? "ember" : undefined} />
-        <Stat label="Tienda real" value="0 visitas" sub="desde la captura" tone="green" />
+        <Stat label="Vulnerabilidades" value={numEs(findings.length)} tone={findings.length > 0 ? "danger" : undefined} />
+        <Stat label="Tienda real" value="0 visitas" sub="desde la captura" tone="ok" />
       </div>
       <div className="rp-box">
         <AttackGraph track={track} moment={m} shot={shot} decoys={fooled} />

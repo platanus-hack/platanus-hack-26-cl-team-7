@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Finding, TrackAction, TrackKey } from "@sentinel/contracts";
-import { answerOf, buildMoments, category, chainTo, disguises, headline, kindOf, vulnOf } from "../src/mirror/moments";
+import { agentName, answerOf, buildMoments, category, chainTo, disguises, headline, kindOf, shortIp, vulnOf } from "../src/mirror/moments";
 
 let seq = 0;
 function action(p: Partial<TrackAction>): TrackAction {
@@ -165,5 +165,24 @@ describe("disguises", () => {
     expect(disguises({ keys: ipUa(4) })).toBe("3 disfraces");
     expect(disguises({ keys: ipUa(16) })).toBe("15 disfraces");
     expect(disguises({ keys: ipUa(64) })).toBe("más de 63 disfraces");
+  });
+});
+
+describe("agentName and shortIp", () => {
+  it("names an agent by its browser or tool", () => {
+    expect(agentName("curl/8.7.1")).toBe("curl 8.7.1");
+    expect(agentName("python-httpx/0.28")).toBe("python-httpx 0.28");
+    expect(agentName("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6280.45 Safari/537.36")).toBe("Chrome 142 · Windows");
+    expect(agentName("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0")).toBe("Firefox 135 · macOS");
+    expect(agentName("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/120.0 Safari/537.36 Edg/120.0")).toBe("Edge 120 · Windows");
+    expect(agentName("")).toBe("Agente sin nombre");
+    expect(agentName("() { :; }; echo x")).toBe("Agente sin nombre");
+  });
+
+  it("makes local and mapped addresses readable", () => {
+    expect(shortIp("::1")).toBe("localhost");
+    expect(shortIp("127.0.0.1")).toBe("localhost");
+    expect(shortIp("::ffff:203.0.113.7")).toBe("203.0.113.7");
+    expect(shortIp("198.51.100.20")).toBe("198.51.100.20");
   });
 });

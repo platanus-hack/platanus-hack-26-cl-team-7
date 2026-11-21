@@ -42,6 +42,31 @@ function readable(s: string): string {
   }
 }
 
+/** An address people can read: loopback is "localhost", an IPv4 address mapped into IPv6 is plain IPv4. */
+export function shortIp(ip: string): string {
+  if (ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1") return "localhost";
+  return ip.replace(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/, "$1");
+}
+
+/** The agent's name from its user agent: "Chrome 142 · Windows", "curl 8.7.1", "python-httpx 0.28". */
+export function agentName(ua: string): string {
+  const u = ua.trim();
+  if (!u) return "Agente sin nombre";
+  if (u.startsWith("Mozilla/")) {
+    const os = /Windows/.test(u) ? "Windows" : /iPhone|iPad/.test(u) ? "iOS" : /Mac OS X|Macintosh/.test(u) ? "macOS" : /Android/.test(u) ? "Android" : /Linux/.test(u) ? "Linux" : "";
+    const b =
+      /Edg\/(\d+)/.exec(u)?.[1] !== undefined ? `Edge ${/Edg\/(\d+)/.exec(u)![1]}`
+      : /Firefox\/(\d+)/.exec(u) ? `Firefox ${/Firefox\/(\d+)/.exec(u)![1]}`
+      : /Chrome\/(\d+)/.exec(u) ? `Chrome ${/Chrome\/(\d+)/.exec(u)![1]}`
+      : /Version\/(\d+).*Safari/.exec(u) ? `Safari ${/Version\/(\d+)/.exec(u)![1]}`
+      : "Navegador";
+    return os ? `${b} · ${os}` : b;
+  }
+  const tool = /^([\w.-]+)\/([\w.]+)/.exec(u);
+  if (tool) return `${tool[1]} ${tool[2]}`.slice(0, 32);
+  return u.split(/[\s;(]/)[0]!.slice(0, 32) || "Agente sin nombre";
+}
+
 /** Why the router caught an agent, in plain Spanish. */
 export function caughtFor(t: Pick<Track, "rule" | "reason">): string {
   if (t.rule === "R1") return "Buscó páginas que no existen";

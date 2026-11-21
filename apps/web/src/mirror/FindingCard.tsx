@@ -39,7 +39,7 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
       <header className="vc-h">
         <span className="vc-sev">{v.severity}</span>
         <h4>{v.name}</h4>
-        <time className="vc-time mono tnum">{clock(f.ts)}</time>
+        <time className="vc-time mono tnum">{clock(f.ts, false)}</time>
       </header>
       <p className="vc-meta">
         <code>{f.endpoint}</code>
@@ -49,7 +49,7 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
         <ol className="log">
           {steps.map((s, i) => (
             <li key={`${s.kind}-${s.ts ?? "gap"}-${i}`} className={cn("log-row", s.kind)}>
-              <time className="mono tnum">{s.ts === null ? "" : clock(s.ts)}</time>
+              <time className="mono tnum">{s.ts === null ? "" : clock(s.ts, false)}</time>
               <span className="log-dot" aria-hidden />
               <div className="log-body">
                 <div className="log-line">

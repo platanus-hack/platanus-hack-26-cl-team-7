@@ -7,11 +7,12 @@
 import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
 import { FileSearch } from "lucide-react";
 import type { Track, TrackAction } from "@sentinel/contracts";
+import { useDashboard } from "../dashboard/store";
 import { useReports } from "../reports/store";
 import { Skeleton, clock, cn } from "../ui";
 import { FindingCard } from "./FindingCard";
 import { Replay } from "./Replay";
-import { buildMoments, caughtFor, numEs as num } from "./moments";
+import { agentName, buildMoments, caughtFor, numEs as num, shortIp } from "./moments";
 import { useMirror } from "./store";
 import "./mirror.css";
 
@@ -27,7 +28,7 @@ const RequestRow = memo(function RequestRow({ a }: { a: TrackAction }) {
   return (
     <>
       <button type="button" className="trow ma-cols w-full text-left" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <span className="mono dim tnum">{clock(a.ts)}</span>
+        <span className="mono dim tnum">{clock(a.ts, false)}</span>
         <span className="mono truncate pr-4">
           {a.method} {a.query ? `${a.path}?${a.query}` : a.path}
         </span>
@@ -74,12 +75,12 @@ function AgentView() {
   const t = detail.track;
   const rows = all ? detail.actions : detail.actions.slice(0, FIRST_ROWS);
   return (
-    <section className="sect" aria-label={`Agente atrapado ${t.ip}`}>
+    <section className="sect" aria-label={`Agente atrapado ${agentName(t.userAgent)}`}>
       <div className="dh mv-head">
         <div className="min-w-0">
-          <div className="ip">{t.ip}</div>
-          <div className="sub">
-            {caughtFor(t)}. Atrapado a las {clock(t.openedAt)}.
+          <div className="mv-name">{agentName(t.userAgent)}</div>
+          <div className="sub mono tnum">
+            {shortIp(t.ip)} · {clock(t.openedAt, false)}
           </div>
         </div>
         <button type="button" className="ask" onClick={() => investigate(t.ip)} onMouseEnter={preloadReport} onFocus={preloadReport}>
@@ -116,17 +117,22 @@ function AgentView() {
 
 const AgentRow = memo(function AgentRow({ t, selected, onSelect }: { t: Track; selected: boolean; onSelect: (id: string) => void }) {
   return (
-    <button type="button" role="option" aria-selected={selected} className="att-row mt-row" onClick={() => onSelect(t.trackId)}>
-      <span className="mt-line">
-        <span className={t.findings > 0 ? "dot hot" : "dot"} />
-        <span className="mono truncate">{t.ip}</span>
-        {t.findings > 0 && <span className="mt-vuln">{count(t.findings, "vulnerabilidad", "vulnerabilidades")}</span>}
-        <span className="mono dim tnum ml-auto">{clock(t.lastSeen, false)}</span>
-      </span>
-      <span className="mt-line mt-why">
-        <span className="truncate">{caughtFor(t)}</span>
-        <span className="dim tnum ml-auto">{count(t.actions, "intento", "intentos")}</span>
-      </span>
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      aria-label={`${agentName(t.userAgent)}, ${shortIp(t.ip)}, ${caughtFor(t)}, ${count(t.findings, "vulnerabilidad", "vulnerabilidades")}, ${clock(t.lastSeen, false)}`}
+      className="att-row mt-row"
+      onClick={() => onSelect(t.trackId)}
+    >
+      <span className={t.findings > 0 ? "dot hot" : "dot"} />
+      <span className="truncate">{agentName(t.userAgent)}</span>
+      {t.findings > 0 && (
+        <span className="mt-vuln" title={count(t.findings, "vulnerabilidad", "vulnerabilidades")}>
+          {num(t.findings)}
+        </span>
+      )}
+      <span className="mono dim tnum ml-auto">{clock(t.lastSeen, false)}</span>
     </button>
   );
 });
@@ -137,19 +143,12 @@ function Agents() {
   const select = useMirror((s) => s.select);
   const more = useMirror((s) => s.tracksCursor !== null);
   const loadOlder = useMirror((s) => s.loadOlder);
-  const vulns = tracks.reduce((n, t) => n + t.findings, 0);
-  const tries = tracks.reduce((n, t) => n + t.actions, 0);
   return (
     <section className="sect" aria-label="Agentes atrapados">
       <div className="hd mt-hd">
         <h2>Agentes atrapados</h2>
         <span className="r cap">{num(tracks.length)}</span>
       </div>
-      <p className="mt-sum">
-        {vulns > 0 ? <b>{count(vulns, "vulnerabilidad encontrada", "vulnerabilidades encontradas")}</b> : "Sin vulnerabilidades encontradas"}
-        {" · "}
-        {count(tries, "intento", "intentos")} en la copia falsa
-      </p>
       <div className="scroll">
         <div role="listbox" aria-label="Agentes atrapados, los más recientes primero">
           {tracks.map((t) => (
@@ -169,11 +168,13 @@ function Agents() {
 /** The main area. `sidebarOverlay` (the copilot) covers the right column. */
 export function MirrorPanel({ sidebarOverlay }: { sidebarOverlay?: ReactNode }) {
   const error = useMirror((s) => s.error);
+  // The agents list is narrow; the copilot needs the full column when it covers it.
+  const copilot = useDashboard((s) => s.copilotOpen);
   return (
-    <main className="main">
+    <main className={cn("main mirror-main", copilot && "wide")}>
       <div className="mirror-left">
         {error && (
-          <p role="alert" className="m-0 px-8 py-2 text-sm text-ember">
+          <p role="alert" className="mv-err m-0 px-8 py-2 text-sm">
             {error}
           </p>
         )}
