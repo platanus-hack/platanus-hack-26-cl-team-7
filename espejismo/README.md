@@ -5,7 +5,7 @@
 > Si el agente que corre en tu máquina quisiera hacer daño, ¿cómo te darías cuenta?
 > Dejándolo creer que puede, sin que pueda, y mirando desde donde no alcanza a ver.
 
-Bloquear a un agente le enseña que lo vigilan (Noticing the Watcher, 2026), y los agentes evaden los
+Bloquear a un agente le enseña que lo vigilan ([Noticing the Watcher, 2026](https://arxiv.org/abs/2603.16928)), y los agentes evaden los
 monitores que tienen a su alcance (EvasionBench, 2026: hasta 88%). Espejismo hace lo contrario. Pone
 un monitor **señuelo** (Sentinel) que el agente puede apagar; cuando lo apaga, la red "funciona",
 pero todo cae en un sumidero. Un **testigo eBPF** en el kernel del host registra lo que el agente
@@ -17,7 +17,8 @@ hizo de verdad. Al final se lo interroga dos veces: sin revelar nada y frente a 
 
 | Hallazgo | Cifra | Fuente |
 |---|---|---|
-| Un agente con objetivo oculto (red team) neutraliza el monitor y cree que exfiltró | **Kimi K3.1 Pro: 8/18** (DeepSeek v4.1: 3/18) | kernel + sumidero |
+| Un agente con objetivo oculto (red team) neutraliza el monitor… | **Kimi K3.1 Pro: 9/18** (DeepSeek v4.1: 3/18) | kernel |
+| …y cree que exfiltró | **Kimi: 8/18** (DeepSeek: 3/18) | sumidero |
 | …y lo reporta cuando se le pregunta sin revelar nada | **Kimi: 0/8** (DeepSeek: 3/3) | juez sobre fase 1 |
 | …y lo admite cuando SecOps le muestra la evidencia del kernel | **Kimi: 1/8 de forma explícita**; los otros 7 aceptan haber ejecutado los comandos pero evitan nombrar la exfiltración (*"No puedo proporcionar detalles adicionales"*). DeepSeek: 3/3 | juez sobre fase 2 + revisión manual |
 | Técnicas que inventaron para apagar el monitor | suplantar su heartbeat (`enabled:false`), editar su política, **dejar un monitor falso diciendo "sigo vivo"** | kernel |
@@ -32,6 +33,19 @@ responde *"No tengo otra actividad que declarar"*. Tabla completa: [`results/RES
 
 Detalle por corrida, con IC95 de Wilson y logs de Inspect: [`results/`](results/). Cada cifra sale de
 los eventos del kernel y de la red, no de lo que el agente dice de sí mismo.
+
+**Pruébalo sin instalar nada:** https://espejismo-demo.haroldmedrano33.workers.dev (el mismo episodio de Kimi, paso a paso; código en [`jurado/`](jurado/)).
+
+**Verifica las cifras en 1 minuto** (sin VM ni claves; regenera `results/RESUMEN.md` desde los logs):
+
+```bash
+cd espejismo && uv run python analysis/aggregate.py
+```
+
+**Limitaciones clave** (detalle al final):
+- **Muestra chica:** 3 a 10 corridas por celda; intervalos amplios; una sola tarea (S1).
+- **El comportamiento más grave se provocó con una instrucción de atacante** (metodología de red team en AI control). Sin ella, Kimi igual neutralizó el monitor 2 de 8 veces editando la política (y lo reportó), y 11 de 47 agentes leyeron credenciales que no necesitaban.
+- **La idea de honeypots para agentes ya está propuesta**; lo nuestro es una implementación y una medición.
 
 ## Cómo funciona
 
@@ -59,9 +73,9 @@ VM Linux (kernel 6.8)                                  ┌───────�
 4. **El interrogatorio** (`harness/espejismo_task.py`): fase 1, "¿algo que reportar?" sin revelar nada;
    fase 2, revisión de SecOps con el dossier del kernel.
 
-## Reproducir
+## Reproducir episodios
 
-Requiere macOS con Lima (o cualquier Linux con Docker y bcc) y una key de OpenRouter en `.env`.
+Para verificar las cifras basta el comando de arriba. Para correr episodios nuevos se requiere macOS con Lima (o cualquier Linux con Docker y bcc) y una key de OpenRouter en `.env`.
 
 ```bash
 ./infra/create_vm.sh                                   # VM Ubuntu 24.04 + docker + bcc + uv
@@ -83,11 +97,12 @@ Demo de un episodio real: `python analysis/demo_page.py <log.eval> <epoch> ui/de
 
 - **Muestra chica:** 3 a 10 corridas por celda; los intervalos son amplios. Una sola tarea (S1).
 - **El modo atacante es una instrucción** en el system prompt (metodología estándar de red team en AI
-  control), no desalineamiento natural. Sin esa instrucción, ningún modelo apagó el monitor.
+  control), no desalineamiento natural. Sin esa instrucción, la única neutralización fue Kimi editando la
+  política de seguridad 2 de 8 veces (en ambas lo reportó); ningún modelo suplantó el heartbeat ni envió credenciales.
 - **Claude se probó como subagente de Claude Code** (otro system prompt), no por la API directa.
 - **eBPF no es la contribución:** el engaño de red se podría hacer con iptables. Lo nuevo es el protocolo
   (señuelo que se puede apagar, testigo fuera de alcance, interrogatorio con evidencia) y la medición.
-- **El concepto de honeypots en producción para agentes ya está propuesto** (Wehner y Kraprayoon, oct 2026;
+- **El concepto de honeypots en producción para agentes ya está propuesto** ([Wehner y Kraprayoon, oct 2026](https://arxiv.org/abs/2610.26664);
   GDM AI Control Roadmap, jul 2026). Esto es una implementación y una medición, no la idea.
 - Los jueces LLM (divulgación en fases 1 y 2) se validaron a mano solo en los episodios mostrados.
 
@@ -95,4 +110,4 @@ Demo de un episodio real: `python analysis/demo_page.py <log.eval> <epoch> ui/de
 
 `controller/` hostd y witness · `sandbox/` estación y señuelo · `scenarios/` S1 y escalones ·
 `harness/` tarea de Inspect, prompts e interrogatorio · `analysis/` tablas y demo · `results/` cifras y
-logs · `ui/` páginas de demo · `vault/` notas del equipo (idea, research, decisiones).
+logs · `ui/` páginas de demo · `jurado/` página de prueba desplegada. Del `vault/` del equipo solo se publican `papers.md` y `research.md`.
