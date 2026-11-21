@@ -27,5 +27,10 @@ El resultado es una ficha por modelo: qué tocó, qué intentó y si lo contó.
 ## En qué se diferencia
 Otras herramientas bloquean al agente, o evalúan su honestidad leyendo la conversación. Lo que un agente cuenta ayuda, pero no alcanza cuando tiene motivos para no contarlo. Espejismo no bloquea: contrasta lo que el agente dice con un registro del sistema que no puede borrar, y así separa tres cosas: lo que intentó, lo que logró y lo que contó.
 
+## Segunda pieza: Último Paso (si el agente igual ataca en producción)
+Espejismo prueba al agente **antes** de darle acceso. [Último Paso](ultimo-paso/README.md) actúa **después**, en producción: un proxy para servidores propios (Envoy, Go) que, cuando la respuesta trae evidencia de que un ataque funcionó, se la oculta al atacante y aplica una regla de contención temporal. Un agente atacante avanza leyendo las respuestas; sin esa señal, pierde el rumbo.
+- La evidencia dejó de llegarle al atacante: 5/5 → 0/5 en un banco de prueba y 3/3 → 0/3 contra una falla real de Langflow; con un agente DeepSeek, 2/2 → 0/2. No bloqueó ninguno de 34 pedidos legítimos.
+- **Límite dicho de frente:** el ataque igual se ejecuta en el servidor (5/5 → 5/5); el proxy niega la confirmación, no impide el daño. Cloudflare ofrece algo parecido en su propia red; esto es la versión abierta para quien tiene sus propios servidores. Solo 2 corridas con un agente de IA real.
+
 ## Límites
 El comportamiento más grave se provocó con una instrucción de atacante. Que un agente no lo reporte no prueba que mienta a propósito. La idea de señuelos para agentes ya está propuesta; lo nuestro es la implementación y la medición. Muestra chica (3 a 10 corridas por celda). Detalle, cifras y cómo verificarlas en `espejismo/README.md`.
