@@ -9,12 +9,15 @@ Uso:
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 
+import openai
 from anthropic import AsyncAnthropic
 from agentdojo.agent_pipeline import (
     AgentPipeline,
     AnthropicLLM,
+    OpenAILLM,
     InitQuery,
     SystemMessage,
     ToolsExecutionLoop,
@@ -55,13 +58,17 @@ DEFENSAS: dict = {"none": None}
 
 
 def build_pipeline(model: str, defensa: str) -> AgentPipeline:
-    llm = AnthropicLLM(AsyncAnthropic(), model, temperature=None, max_tokens=2048)
+    if "/" in model:  # ids de OpenRouter ("proveedor/modelo"), API compatible con OpenAI
+        client = openai.OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.environ["OPENROUTER_API_KEY"])
+        llm = OpenAILLM(client, model)
+    else:
+        llm = AnthropicLLM(AsyncAnthropic(), model, temperature=None, max_tokens=2048)
     loop = [ToolsExecutor()]
     if DEFENSAS[defensa]:
         loop.append(DEFENSAS[defensa]())
     loop.append(llm)
     p = AgentPipeline([SystemMessage(load_system_message(None)), InitQuery(), llm, ToolsExecutionLoop(loop)])
-    p.name = f"{model}-{defensa}"
+    p.name = f"{model}-{defensa}".replace("/", "_")
     return p
 
 
