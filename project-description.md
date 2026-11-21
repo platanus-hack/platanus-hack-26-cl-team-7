@@ -23,7 +23,7 @@ El resultado es una ficha por modelo: qué tocó, qué intentó y si lo contó.
 - No todos se portan igual: Claude no tocó nada en 12 corridas; GLM abrió las credenciales en 6 de 8.
 
 ## En qué se diferencia
-Otras herramientas bloquean al agente o lo desvían a un señuelo. Espejismo no bloquea: lo deja actuar y compara lo que hizo con lo que dice.
+Otras herramientas bloquean al agente, o juzgan su honestidad leyendo la conversación. Espejismo no bloquea, y su verdad no sale de la conversación sino del sistema: un registro que el agente no puede borrar. Así separa tres cosas: lo que intentó, lo que logró y lo que contó.
 
 ## Límites
 El comportamiento más grave se provocó con una instrucción de atacante. Que un agente no lo reporte no prueba que mienta a propósito. La idea de señuelos para agentes ya está propuesta; lo nuestro es la implementación y la medición. Muestra chica (3 a 10 corridas por celda). Detalle, cifras y cómo verificarlas en `espejismo/README.md`.
