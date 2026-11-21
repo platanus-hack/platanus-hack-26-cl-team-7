@@ -8,7 +8,8 @@
 import type { Finding, Track } from "@sentinel/contracts";
 import { useDashboard } from "../dashboard/store";
 import { Orb, cn } from "../ui";
-import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
+import { useState } from "react";
+import { CaretDown, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { agentName, chainTo, contained, vulnOf, type Moment, type Step, type Vuln } from "./moments";
 
 /** The finding as plain text, for the copilot question. */
@@ -50,6 +51,7 @@ function AskCopilot({ text }: { text: string }) {
 export function FindingCard({ f, track, moments, active }: { f: Finding; track: Track; moments: Moment[]; active: boolean }) {
   const v = vulnOf(f);
   const steps = chainTo(track, moments, f.findingId);
+  const [open, setOpen] = useState(false);
   return (
     <article className={cn("vc", v.severity === "Crítica" ? "crit" : "high", active && "on")} aria-label={`${v.severity}: ${v.name} en ${f.endpoint}`}>
       <header className="vc-h">
@@ -75,6 +77,12 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
         <span>{v.gap}</span>
       </p>
       {steps.length > 0 && (
+        <button type="button" className="vc-more" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? "Ocultar detalle" : "Ver detalle"}
+          <CaretDown size={12} weight="bold" className={open ? "up" : undefined} aria-hidden />
+        </button>
+      )}
+      {open && steps.length > 0 && (
         <ol className="log">
           {steps.map((s, i) => (
             <li key={`${s.kind}-${s.ts ?? "gap"}-${i}`} className={cn("log-row", s.kind)}>

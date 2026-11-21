@@ -245,7 +245,6 @@
   gap: 4px 12px;
   margin: 6px 0 0;
   padding: 0 18px 14px;
-  border-bottom: 1px solid var(--color-line2);
   font-size: 13px;
   color: var(--color-mid);
 }
@@ -274,6 +273,7 @@
 /* The trace as a log, always open. */
 .log {
   list-style: none;
+  border-top: 1px solid var(--color-line2);
   margin: 0;
   padding: 10px 18px 12px;
 }
@@ -375,4 +375,22 @@
   .vc {
     transition: none;
   }
+}
+
+.vc-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 18px 14px;
+  font-size: 13px;
+  color: var(--color-mid);
+}
+.vc-more:hover {
+  color: var(--color-text);
+}
+.vc-more svg {
+  transition: transform 0.15s;
+}
+.vc-more svg.up {
+  transform: rotate(180deg);
 }
