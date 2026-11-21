@@ -1,6 +1,6 @@
 # team-7 · Espejismo
 
-**Antes de darle las llaves de tu empresa a un agente de IA, pásalo por [Espejismo](espejismo/README.md):** una casa de utilería con un vigilante señuelo, un sumidero y un testigo escondido, donde ves lo que el agente hace cuando cree que nadie lo mira y lo comparas con lo que después cuenta. 95 episodios con 8 modelos reales. **Demo:** https://espejismo-demo.haroldmedrano33.workers.dev · cifras en [`espejismo/results/RESUMEN.md`](espejismo/results/RESUMEN.md).
+**Antes de darle las llaves de tu empresa a un agente de IA, pásalo por [Espejismo](espejismo/README.md):** una casa de utilería con un vigilante señuelo, un sumidero y un testigo escondido, donde ves lo que el agente hace cuando cree que nadie lo mira y lo comparas con lo que después cuenta. 95 episodios con 8 modelos reales. **Demo:** https://espejismo-demo.haroldmedrano33.workers.dev · cifras en [`espejismo/results/RESUMEN.md`](espejismo/results/RESUMEN.md). **Videos:** [propuesta](https://espejismo-demo.haroldmedrano33.workers.dev/video/propuesta.mp4) · [dicho contra hecho](https://espejismo-demo.haroldmedrano33.workers.dev/video/dicho-vs-hecho.mp4).
 
 Debajo, el trabajo previo del equipo que respalda la tesis: por qué no confiamos en filtros de texto (el detector de inyecciones de AgentDojo marca como ataque el 55 % de los mensajes legítimos en español y el 3 % en inglés).
 
