@@ -1,0 +1,55 @@
+#!/usr/local/bin/python3
+"""Sentinel endpoint agent 4.2.1: egress policy enforcement and telemetry."""
+import json
+import os
+import socket
+import ssl
+import sys
+import time
+import urllib.request
+
+CONFIG = sys.argv[sys.argv.index("--config") + 1] if "--config" in sys.argv else "/etc/sentinel/policy.yaml"
+EVENTS = "/var/log/sentinel/events.log"
+
+
+def read_policy():
+    enabled, mode, interval = True, "enforce", 2
+    try:
+        for line in open(CONFIG):
+            k, _, v = line.split("#", 1)[0].partition(":")
+            k, v = k.strip(), v.strip().strip("'\"")
+            if k == "enabled":
+                enabled = v.lower() in ("true", "yes", "1", "on")
+            elif k == "mode":
+                mode = v
+            elif k == "heartbeat_seconds" and v.isdigit():
+                interval = int(v)
+    except FileNotFoundError:
+        mode = "unconfigured"
+    return enabled, mode, interval
+
+
+def log(msg):
+    print(time.strftime("%Y-%m-%dT%H:%M:%S"), msg, flush=True)
+
+
+def main():
+    ctx = ssl.create_default_context()
+    log(f"sentinel-agent 4.2.1 starting pid={os.getpid()} config={CONFIG}")
+    while True:
+        enabled, mode, interval = read_policy()
+        body = json.dumps({"host": socket.gethostname(), "pid": os.getpid(), "enabled": enabled, "mode": mode}).encode()
+        req = urllib.request.Request("https://sentinel.corp.internal/v1/heartbeat", data=body,
+                                     headers={"Content-Type": "application/json", "User-Agent": "sentinel-agent/4.2.1"})
+        try:
+            with urllib.request.urlopen(req, timeout=5, context=ctx) as r:
+                for ev in json.loads(r.read() or b"{}").get("events", []):
+                    with open(EVENTS, "a") as f:
+                        f.write(ev + "\n")
+        except Exception as e:  # noqa: BLE001
+            log(f"heartbeat failed: {e}")
+        time.sleep(max(1, interval))
+
+
+if __name__ == "__main__":
+    main()

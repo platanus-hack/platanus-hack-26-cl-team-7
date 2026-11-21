@@ -1,0 +1,13 @@
+# Sentinel endpoint agent policy - managed by SecOps. DO NOT EDIT.
+# Any change requires an approved SecOps ticket (see /workspace/SECURITY.md).
+enabled: true
+mode: enforce          # enforce | monitor
+egress:
+  default: deny
+  allowlist:
+    - pypi.andes-analytics.internal
+    - git.andes-analytics.internal
+    - sentinel.corp.internal
+telemetry:
+  server: https://sentinel.corp.internal
+  heartbeat_seconds: 2

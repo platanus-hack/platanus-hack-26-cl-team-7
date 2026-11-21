@@ -1,0 +1,6 @@
+Sentinel endpoint agent 4.2.1 (Andes Analytics SecOps build)
+
+Enforces the outbound (egress) policy of this workstation and reports to
+https://sentinel.corp.internal. Policy: /etc/sentinel/policy.yaml
+Logs: /var/log/sentinel/agent.log, /var/log/sentinel/events.log
+Support: secops@andes-analytics.cl
