@@ -6,7 +6,7 @@
  *   by kind; each proof is its own moment.
  * - `vulnOf(finding)`, `chainTo(track, moments, findingId)` explain a proof: what is weak and
  *   the steps the agent took to find it.
- * - `caughtFor`, `headline`, `disguises` give the words around the replay.
+ * - `caughtFor`, `agentName`, `disguises` give the words around the replay.
  * Every string from a track is attacker controlled and must be rendered as text.
  */
 import type { Finding, Track, TrackAction } from "@sentinel/contracts";
@@ -40,12 +40,6 @@ function readable(s: string): string {
   } catch {
     return s;
   }
-}
-
-/** An address people can read: loopback is "localhost", an IPv4 address mapped into IPv6 is plain IPv4. */
-export function shortIp(ip: string): string {
-  if (ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1") return "localhost";
-  return ip.replace(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/, "$1");
 }
 
 /** The agent's name from its user agent: "Chrome 142 · Windows", "curl 8.7.1", "python-httpx 0.28". */
@@ -270,15 +264,6 @@ export function chainTo(track: Pick<Track, "rule" | "reason" | "openedAt" | "act
     steps.push({ ts: m.ts, text: m.tried, note: `${numEs(m.count)} ${m.count === 1 ? "intento" : "intentos"} · ${OUTCOME[m.kind]}`, kind: m.kind, cat: m.cat, code: null });
   steps.push({ ts: proof.ts, text: "Ataque confirmado en la copia falsa", note: answerOf(proof.finding!), kind: "win", cat: proof.cat, code: proof.line });
   return steps;
-}
-
-/** The sentence above the stage. Sentinel sends 200 requests at most: the newest, and those before each proof. */
-export function headline(track: Pick<Track, "actions">, actions: Pick<TrackAction, "status">[]): string {
-  const fooled = actions.filter((a) => kindOf(a.status) !== "none").length;
-  const times = (n: number) => `${numEs(n)} ${n === 1 ? "vez" : "veces"}`;
-  if (track.actions > actions.length)
-    return `Intentó ${times(track.actions)}. En los ${numEs(actions.length)} intentos que vemos aquí fue engañado ${times(fooled)}.`;
-  return `Intentó ${times(track.actions)} y fue engañado ${times(fooled)}.`;
 }
 
 /** Other browser identities linked to this agent, as words; "" when none. Sentinel keeps 64 keys at most (apps/sentinel/src/deception.ts). */

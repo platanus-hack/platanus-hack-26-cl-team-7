@@ -22,7 +22,7 @@ import { animate } from "motion";
 import { LockSimple, Robot, ShieldCheck, Storefront } from "@phosphor-icons/react";
 import type { Track } from "@sentinel/contracts";
 import { cn } from "../ui";
-import { agentName, disguises, numEs, shortIp, type Moment, type MomentKind } from "./moments";
+import { agentName, disguises, numEs, type Moment, type MomentKind } from "./moments";
 import "@xyflow/react/dist/style.css";
 
 export const KIND_COLOR: Record<MomentKind, string> = { fooled: "var(--c-ok)", win: "var(--c-danger)", none: "var(--color-mid)" };
@@ -159,12 +159,12 @@ export function AttackGraph({ track, moment, shot, decoys }: { track: Track; mom
   const disguise = disguises(track);
   const nodes = useMemo<CardNode[]>(
     () => [
-      { id: "agent", type: "card", position: { x: 0, y: 60 }, data: { icon: "agent", title: agentName(track.userAgent), sub: disguise ? `${shortIp(track.ip)} · ${disguise}` : shortIp(track.ip) } },
+      { id: "agent", type: "card", position: { x: 0, y: 60 }, data: { icon: "agent", title: agentName(track.userAgent), sub: disguise || "Agente atrapado" } },
       { id: "sentinel", type: "card", position: { x: 250, y: 60 }, data: { icon: "sentinel", title: "Sentinel", sub: "lo desvió" } },
       { id: "decoy", type: "card", position: { x: 500, y: 0 }, data: { icon: "decoy", title: "Copia falsa", sub: `${numEs(decoys)} respuestas falsas`, shot } },
       { id: "real", type: "card", position: { x: 500, y: 125 }, data: { icon: "real", title: "Tienda real", sub: "0 visitas desde la captura" } },
     ],
-    [track.ip, track.userAgent, disguise, decoys, shot],
+    [track.userAgent, disguise, decoys, shot],
   );
   const back = moment ? KIND_COLOR[moment.kind] : "var(--color-text)";
   const count = moment?.count ?? 0;

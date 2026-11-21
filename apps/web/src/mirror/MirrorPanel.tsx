@@ -5,14 +5,12 @@
  * Every string from a track is attacker-controlled; React renders it as text only.
  */
 import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
-import { FileSearch } from "lucide-react";
 import type { Track, TrackAction } from "@sentinel/contracts";
 import { useDashboard } from "../dashboard/store";
-import { useReports } from "../reports/store";
 import { Skeleton, clock, cn } from "../ui";
 import { FindingCard } from "./FindingCard";
 import { Replay } from "./Replay";
-import { agentName, buildMoments, caughtFor, numEs as num, shortIp } from "./moments";
+import { agentName, buildMoments, caughtFor, numEs as num } from "./moments";
 import { useMirror } from "./store";
 import "./mirror.css";
 
@@ -21,7 +19,6 @@ const FIRST_ROWS = 25;
 
 const count = (n: number, one: string, many: string) => `${num(n)} ${n === 1 ? one : many}`;
 const statusClass = (status: number) => (status >= 500 ? "s5" : status >= 400 ? "s4" : status >= 300 ? "s3" : "s2");
-const preloadReport = () => void import("../reports/ReportView");
 
 const RequestRow = memo(function RequestRow({ a }: { a: TrackAction }) {
   const [open, setOpen] = useState(false);
@@ -54,7 +51,6 @@ function AgentView() {
   const detail = useMirror((s) => s.detail);
   const selected = useMirror((s) => s.selected);
   const loading = useMirror((s) => s.loading);
-  const investigate = useReports((s) => s.open);
   const [all, setAll] = useState(false);
   const moments = useMemo(() => (detail ? buildMoments(detail.actions, detail.findings) : []), [detail]);
   const [activeFinding, setActiveFinding] = useState<string | null>(null);
@@ -77,16 +73,7 @@ function AgentView() {
   return (
     <section className="sect" aria-label={`Agente atrapado ${agentName(t.userAgent)}`}>
       <div className="dh mv-head">
-        <div className="min-w-0">
-          <div className="mv-name">{agentName(t.userAgent)}</div>
-          <div className="sub mono tnum">
-            {shortIp(t.ip)} · {clock(t.openedAt, false)}
-          </div>
-        </div>
-        <button type="button" className="ask" onClick={() => investigate(t.ip)} onMouseEnter={preloadReport} onFocus={preloadReport}>
-          <FileSearch size={16} />
-          Investigar
-        </button>
+        <div className="mv-name">{agentName(t.userAgent)}</div>
       </div>
       <div className="scroll">
         <Replay key={t.trackId} detail={detail} moments={moments} onFinding={onFinding} />
@@ -121,17 +108,12 @@ const AgentRow = memo(function AgentRow({ t, selected, onSelect }: { t: Track; s
       type="button"
       role="option"
       aria-selected={selected}
-      aria-label={`${agentName(t.userAgent)}, ${shortIp(t.ip)}, ${caughtFor(t)}, ${count(t.findings, "vulnerabilidad", "vulnerabilidades")}, ${clock(t.lastSeen, false)}`}
+      aria-label={`${agentName(t.userAgent)}, ${caughtFor(t)}, ${count(t.findings, "vulnerabilidad", "vulnerabilidades")}, ${clock(t.lastSeen, false)}`}
       className="att-row mt-row"
       onClick={() => onSelect(t.trackId)}
     >
       <span className={t.findings > 0 ? "dot hot" : "dot"} />
       <span className="truncate">{agentName(t.userAgent)}</span>
-      {t.findings > 0 && (
-        <span className="mt-vuln" title={count(t.findings, "vulnerabilidad", "vulnerabilidades")}>
-          {num(t.findings)}
-        </span>
-      )}
       <span className="mono dim tnum ml-auto">{clock(t.lastSeen, false)}</span>
     </button>
   );
