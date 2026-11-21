@@ -1,0 +1,110 @@
+# Lane rules shared by deploy/Caddyfile (compose) and deploy/Caddyfile.local, so both edges route
+# the same way. Use inside a site block: `import lanes <socket dir>`, where the directory holds
+# lane.sock (router lane endpoint), tap.sock (router tap) and real.sock (real shop).
+#
+# Per request, in order:
+#   1. delete the client's copies of the lane headers, then set X-Client-Ip and X-Request-Id;
+#   2. ask the router's lane endpoint (GET /lane) which lane the request takes;
+#   3. the mirror lane and every login POST go to the tap, the rest to the real shop;
+#   4. delete response headers that name the software or could tell the lanes apart.
+# The router is down when the lane endpoint cannot be reached or does not answer in time: the
+# request then fails OPEN to the real shop, and so does a real-lane login POST whose tap cannot be
+# reached. A mirror-lane tap failure keeps its error, so a mirror-lane request never reaches real
+# data. A shop failure keeps its error on both lanes.
+
+# Response headers that name the software, or that the tap (a proxy in front of the twin) could
+# send differently from the real shop. Date is set again by Caddy, so both lanes send one Date
+# from the same clock.
+(normalize_response) {
+	header {
+		-Server
+		-Via
+		-X-Powered-By
+		-X-Lane
+		-X-Track-Id
+		-Date
+	}
+}
+
+# A refused dial is tried again for a short while before it counts as a failure: a burst of new
+# connections can fill a socket's listen queue, and a refused lane dial would fail open. When the
+# router is down, this is how much later a request fails open. Only a dial is retried: Caddy
+# would also send a GET again after it reached its upstream, under the same X-Request-Id (so the
+# same event ids), unless lb_retry_match matches nothing.
+(dial_retry) {
+	lb_try_duration 250ms
+	lb_try_interval 10ms
+	lb_retry_match {
+		expression false
+	}
+}
+
+# The real shop does not need the lane headers; they never reach it, so it cannot echo them.
+(real_shop) {
+	reverse_proxy unix/{args[0]}/real.sock {
+		import dial_retry
+		header_up -X-Lane
+		header_up -X-Track-Id
+	}
+}
+
+(tap) {
+	reverse_proxy {args[0]} unix/{args[1]}/tap.sock {
+		import dial_retry
+	}
+}
+
+(lanes) {
+	route {
+		request_header -X-Lane
+		request_header -X-Track-Id
+		request_header -X-Client-Ip
+		request_header -X-Request-Id
+		request_header X-Client-Ip {remote_host}
+		request_header X-Request-Id {http.request.uuid}
+		import normalize_response
+
+		# edge_stage tells handle_errors which step failed: lane (the lane endpoint), login (the
+		# tap, for a real-lane login POST) or routed (anything after the lane was picked).
+		vars edge_stage lane
+		# "/lane?" drops the original query; the lane endpoint reads X-Forwarded-Uri instead.
+		forward_auth unix/{args[0]}/lane.sock {
+			uri /lane?
+			copy_headers X-Lane X-Track-Id
+			# A non-2xx lane answer is never shown to the client: the request goes on without
+			# X-Lane, which is the real lane.
+			@lane_refused status 1xx 3xx 4xx 5xx
+			handle_response @lane_refused {
+				vars edge_stage routed
+			}
+			import dial_retry
+			transport http {
+				dial_timeout 1s
+				response_header_timeout 2s
+			}
+		}
+		vars edge_stage routed
+
+		@mirror header X-Lane mirror
+		import tap @mirror {args[0]}
+
+		# The shop serves these paths with or without one trailing slash (engine.routes), so the
+		# tap sees every form of a login.
+		@login {
+			method POST
+			path /login /login/ /api/session /api/session/
+		}
+		vars @login edge_stage login
+		import tap @login {args[0]}
+
+		import real_shop {args[0]}
+	}
+
+	handle_errors {
+		import normalize_response
+		@fail_open vars edge_stage lane login
+		handle @fail_open {
+			import real_shop {args[0]}
+		}
+	}
+}

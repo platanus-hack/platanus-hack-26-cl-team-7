@@ -19,7 +19,6 @@ class Request:
     method: str
     path: str  # raw path, no query string
     query: str  # raw query string without the leading "?", "" when absent
-    status: int
 
     @property
     def session_id(self) -> str:

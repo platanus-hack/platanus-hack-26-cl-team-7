@@ -9,7 +9,7 @@ warn-only mode. `make check` runs every "Each edit" and "Task end" row except Ac
 | File size | 200 lines for each source file, 300 for each test file. Blank lines and comments count. | `make size` (`uv run python scripts/check_size.py`) | Each edit |
 | Floor | No added line that breaks the floor (below). | `make floor` (`scripts/check_floor.py` on the diff) | Each edit |
 | Lint | Zero errors. | `make lint` (`uv run ruff check .`) | Each edit |
-| Types | Zero errors (`strict = true`). | `make types` (`uv run mypy engine eval dashboard scripts demo`) | Each edit |
+| Types | Zero errors (`strict = true`). | `make types` (`uv run mypy engine eval dashboard scripts demo mirror`) | Each edit |
 | Secrets | Zero findings. | `make secrets` (`gitleaks dir . --redact`) | Each edit |
 | Tests | All pass. Changed lines 80% covered. | `make test` (`uv run pytest --cov`, then `diff-cover --fail-under=80`) | Task end |
 | Accuracy | Precision and recall do not fall more than 0.5 points below `eval/baseline.json`. The test set matches `eval/testset.lock`. The baseline was recorded on the test split and the current lock. | `make eval-ci` (`uv run python -m eval run`, `verify-lock`, `check-baseline`) | Task end and CI |
@@ -88,3 +88,4 @@ and in the row differ. On the review date the owner renews or removes the except
 | Rule | Files | Owner | Reason | Review date |
 | --- | --- | --- | --- | --- |
 | `S311` | `eval/synthetic.py`, `eval/tail.py`, `eval/base_rate.py`, `eval/convert/csic.py` | team-7 | Seeded, non-cryptographic `random.Random` makes the synthetic data reproducible; it never makes secrets. | 2027-05-21 |
+| `S608` | `demo/auth.py` | team-7 | The demo shop's planted SQL injection login flaw (the deception twin's bait) builds its SQL from text on purpose. It runs on a read-only, authorizer-guarded connection (`demo/db.py`). | 2027-05-21 |

@@ -57,7 +57,7 @@ def classify(req: Request) -> str:
 
 def human_request(i: int) -> Request:
     ip = f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"
-    return Request(1_000_000.0 + i * 3.0, ip, "Mozilla/5.0 test", "GET", "/", "", 200)
+    return Request(1_000_000.0 + i * 3.0, ip, "Mozilla/5.0 test", "GET", "/", "")
 
 
 def probe_pool(size: int = 30) -> list[list[Request]]:
@@ -66,7 +66,7 @@ def probe_pool(size: int = 30) -> list[list[Request]]:
         ip = f"198.18.0.{n}"
         offsets = (0.0, 0.25, 0.75, 2.0)
         session = [
-            Request(50.0 + off, ip, "ffuf/2.1", "GET", f"/p{k}", "", 404)
+            Request(50.0 + off, ip, "ffuf/2.1", "GET", f"/p{k}", "")
             for k, off in enumerate(offsets)
         ]
         pool.append(session)

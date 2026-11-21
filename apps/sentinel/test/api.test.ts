@@ -4,33 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { CopilotEvent, Snapshot } from "@sentinel/contracts";
 import { createApp } from "../src/app.ts";
-import { ev, fakeClient, setup, tick } from "./helpers.ts";
-
-async function readSSE(res: Response, until: (events: { event: string; data: string; id?: string }[]) => boolean, ms = 1500) {
-  const reader = res.body!.getReader();
-  const dec = new TextDecoder();
-  const out: { event: string; data: string; id?: string }[] = [];
-  let buf = "";
-  const deadline = Date.now() + ms;
-  while (Date.now() < deadline && !until(out)) {
-    const r = await Promise.race([reader.read(), tick(ms).then(() => ({ done: true, value: undefined }))]);
-    if (r.done) break;
-    buf += dec.decode(r.value, { stream: true });
-    let i: number;
-    while ((i = buf.indexOf("\n\n")) >= 0) {
-      const block = buf.slice(0, i);
-      buf = buf.slice(i + 2);
-      const m: Record<string, string> = {};
-      for (const line of block.split("\n")) {
-        const k = line.indexOf(":");
-        if (k > 0) m[line.slice(0, k)] = line.slice(k + 1).trim();
-      }
-      if (m.event) out.push({ event: m.event, data: m.data ?? "", id: m.id });
-    }
-  }
-  await reader.cancel();
-  return out;
-}
+import { ev, fakeClient, readSSE, setup, tick } from "./helpers.ts";
 
 describe("HTTP API", () => {
   it("serves health with AI off when no client is configured", async () => {
@@ -87,8 +61,8 @@ describe("HTTP API", () => {
   });
 
   it("allows only configured cross-origin callers", async () => {
-    const { store, bus, ai } = setup();
-    const app = createApp({ store, bus, ai, allowedOrigins: ["https://soc.example"] });
+    const { store, bus, ai, deception } = setup();
+    const app = createApp({ store, bus, ai, deception, allowedOrigins: ["https://soc.example"] });
     const ok = await app.request("/v1/health", { headers: { Origin: "https://soc.example" } });
     expect(ok.headers.get("Access-Control-Allow-Origin")).toBe("https://soc.example");
     const no = await app.request("/v1/health", { headers: { Origin: "https://evil.example" } });
@@ -126,8 +100,8 @@ describe("HTTP API", () => {
     mkdirSync(join(dir, "assets"));
     writeFileSync(join(dir, "index.html"), "<!doctype html><title>Sentinel</title>");
     writeFileSync(join(dir, "assets", "app-abc123.js"), "console.log(1)");
-    const { store, bus, ai } = setup();
-    const app = createApp({ store, bus, ai, webRoot: dir });
+    const { store, bus, ai, deception } = setup();
+    const app = createApp({ store, bus, ai, deception, webRoot: dir });
     const home = await app.request("/");
     expect(await home.text()).toContain("<title>Sentinel</title>");
     const deep = await app.request("/attackers/203.0.113.42");
@@ -166,8 +140,8 @@ describe("HTTP API", () => {
   });
 
   it("requires the ingest token when one is configured", async () => {
-    const { store, bus, ai } = setup();
-    const app = createApp({ store, bus, ai, ingestToken: "s3cret" });
+    const { store, bus, ai, deception } = setup();
+    const app = createApp({ store, bus, ai, deception, ingestToken: "s3cret" });
     const post = (auth?: string) =>
       app.request("/v1/events", {
         method: "POST",

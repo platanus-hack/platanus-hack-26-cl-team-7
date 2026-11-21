@@ -5,11 +5,10 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from engine.models import Request
 from engine.routes import RouteTable
-from eval.caddylog import caddy_line, write_pair
+from eval.caddylog import LoggedRequest, caddy_line, write_pair
 
-__all__ = ["BROWSER_UAS", "caddy_line", "synthetic_humans", "write_pair"]
+__all__ = ["BROWSER_UAS", "LoggedRequest", "caddy_line", "synthetic_humans", "write_pair"]
 
 BROWSER_UAS = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -46,8 +45,8 @@ class _Visitor:
     ip: str
     user_agent: str
 
-    def request(self, ts: float, method: str, path: str, query: str, status: int) -> Request:
-        return Request(ts, self.ip, self.user_agent, method, path, query, status)
+    def request(self, ts: float, method: str, path: str, query: str, status: int) -> LoggedRequest:
+        return LoggedRequest(ts, self.ip, self.user_agent, method, path, query, status)
 
 
 def synthetic_humans(
@@ -56,7 +55,7 @@ def synthetic_humans(
     seed: int,
     start_ts: float = 1_700_000_000.0,
     ip_block: int | None = None,
-) -> list[list[Request]]:
+) -> list[list[LoggedRequest]]:
     """Sessions use 10.<block>.x.y, block = seed % 256 unless given, so two runs with other
     seeds (a tune and a test set) never share an "ip|ua" session; a run above 65,536 sessions
     continues into the next block."""
@@ -65,7 +64,7 @@ def synthetic_humans(
         raise ValueError(f"ip_block must be in 0..255, got {block}")
     rng = random.Random(seed)
     site = _site(patterns)
-    sessions: list[list[Request]] = []
+    sessions: list[list[LoggedRequest]] = []
     ts = start_ts
     for index in range(count):
         visitor = _Visitor(_ip(block * BLOCK_SIZE + index), rng.choice(BROWSER_UAS))
@@ -85,8 +84,8 @@ def _ip(number: int) -> str:
     return f"10.{(number >> 16) & 255}.{(number >> 8) & 255}.{number & 255}"
 
 
-def _session(rng: random.Random, site: _Site, visitor: _Visitor, ts: float) -> list[Request]:
-    requests: list[Request] = []
+def _session(rng: random.Random, site: _Site, visitor: _Visitor, ts: float) -> list[LoggedRequest]:
+    requests: list[LoggedRequest] = []
     exits = 0
     for view in range(1 + min(int(rng.expovariate(1 / 3.0)), MAX_VIEWS - 1)):
         page = _page(rng, site, visitor, ts)
@@ -103,7 +102,7 @@ def _session(rng: random.Random, site: _Site, visitor: _Visitor, ts: float) -> l
     return requests
 
 
-def _page(rng: random.Random, site: _Site, visitor: _Visitor, ts: float) -> Request:
+def _page(rng: random.Random, site: _Site, visitor: _Visitor, ts: float) -> LoggedRequest:
     route = rng.choice(site.pages)
     path = _fill(rng, str(route["pattern"]), asset=False)
     query = f"q={rng.choice(SEARCH_WORDS)}" if "search" in path else ""
@@ -112,9 +111,9 @@ def _page(rng: random.Random, site: _Site, visitor: _Visitor, ts: float) -> Requ
 
 def _assets(
     rng: random.Random, site: _Site, visitor: _Visitor, ts: float, *, cold: bool
-) -> list[Request]:
+) -> list[LoggedRequest]:
     count = (rng.randint(1, 4) if cold else rng.randint(0, 2)) if site.assets else 0
-    assets: list[Request] = []
+    assets: list[LoggedRequest] = []
     offset = 0.0
     for _ in range(count):
         offset += rng.uniform(0.02, 0.8)

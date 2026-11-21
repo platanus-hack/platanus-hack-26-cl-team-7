@@ -21,9 +21,10 @@ def parse_line(line: str) -> Request | None:
         return None
     if not isinstance(entry, dict) or not _is_access(entry):
         return None
-    request = entry.get("request")
-    ts, status = _number(entry.get("ts")), _number(entry.get("status"))
-    if not isinstance(request, dict) or ts is None or status is None:
+    request, ts = entry.get("request"), _number(entry.get("ts"))
+    # Every handled-request entry carries a numeric status; a line without one is not an access
+    # entry, even though no rule reads the status.
+    if not isinstance(request, dict) or ts is None or _number(entry.get("status")) is None:
         return None
     method, uri = request.get("method"), request.get("uri")
     if not isinstance(method, str) or not isinstance(uri, str):
@@ -36,7 +37,6 @@ def parse_line(line: str) -> Request | None:
         method=method,
         path=path,
         query=query,
-        status=int(status),
     )
 
 

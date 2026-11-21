@@ -1,7 +1,9 @@
-# Compose proxy: forwards everything to the site and writes one JSON access-log line per request.
-# The engine (another user) follows /var/log/caddy/access.log on the shared volume, hence mode 0644.
+# Compose edge: one public site for both lanes, the lane rules from lanes.caddy (mounted beside
+# this file). The shops and the router listen on Unix sockets in the shared edge-sockets volume,
+# mounted at /run/edge. One JSON access-log line per request goes to /var/log/caddy/access.log
+# (mode 0644, so the eval replay job, another user, can read it).
 # Credential headers are deleted before the line is written, and so are the password query
-# values of Juice Shop's GET /rest/user/change-password?current=&new=&repeat=.
+# values of GET /rest/user/change-password?current=&new=&repeat=.
 # max_header_size pins Caddy's default; dashboard/app.py MAX_BODY assumes it.
 {
 	admin off
@@ -10,6 +12,8 @@
 		max_header_size 16KiB
 	}
 }
+
+import lanes.caddy
 
 :80 {
 	log {
@@ -35,5 +39,6 @@
 			}
 		}
 	}
-	reverse_proxy site:3000
+
+	import lanes /run/edge
 }

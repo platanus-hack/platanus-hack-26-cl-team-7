@@ -17,7 +17,7 @@ from engine.models import Label, Request, Verdict
 from engine.routes import RouteTable
 from eval.dataset import Split, load_split
 from eval.metrics import POSITIVE
-from eval.synthetic import synthetic_humans
+from eval.synthetic import LoggedRequest, synthetic_humans
 from eval.tail import tail_humans
 
 __all__ = [
@@ -82,7 +82,7 @@ class BaseRateRun:
 
 def base_rate_humans(
     patterns: list[dict[str, object]], count: int, seed: int, tail_share: float = TAIL_SHARE
-) -> list[list[Request]]:
+) -> list[list[LoggedRequest]]:
     """`count` synthetic humans: ordinary visits plus round(count * tail_share) tail visits."""
     if not 0.0 <= tail_share <= 1.0:
         raise ValueError(f"tail_share must be in 0..1, got {tail_share}")

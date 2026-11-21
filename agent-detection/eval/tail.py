@@ -19,7 +19,7 @@ import random
 
 from engine.models import Request
 from engine.routes import RouteTable
-from eval.synthetic import BROWSER_UAS, synthetic_humans
+from eval.synthetic import BROWSER_UAS, LoggedRequest, synthetic_humans
 
 HABITS = ("devtools", "touch-icon", "tabs")
 DEVTOOLS_PATH = "/.well-known/appspecific/com.chrome.devtools.json"
@@ -35,7 +35,7 @@ def tail_humans(
     seed: int,
     start_ts: float = 1_700_000_000.0,
     ip_block: int | None = None,
-) -> list[list[Request]]:
+) -> list[list[LoggedRequest]]:
     """`count` heavy-tail sessions; IPs default to block (seed + 128) % 256 so they never share
     an "ip|ua" session with synthetic_humans(seed=seed)."""
     block = (seed + 128) % 256 if ip_block is None else ip_block
@@ -49,14 +49,14 @@ def tail_humans(
 
 
 def _reshape(
-    rng: random.Random, table: RouteTable, habit: str, session: list[Request]
-) -> list[Request]:
+    rng: random.Random, table: RouteTable, habit: str, session: list[LoggedRequest]
+) -> list[LoggedRequest]:
     if habit == "tabs":
         return _tabs(rng, table, session)
     agent = CHROME_UA if habit == "devtools" else IPHONE_UA
     reshaped = [dataclasses.replace(req, user_agent=agent) for req in session]
     pages = [req for req in reshaped if _is_page(table, req)]
-    extra: list[Request] = []
+    extra: list[LoggedRequest] = []
     for number, page in enumerate(pages):
         if habit == "devtools":
             extra.append(_fetch(table, page, DEVTOOLS_PATH, rng.uniform(0.05, 0.4)))
@@ -65,8 +65,10 @@ def _reshape(
     return sorted([*reshaped, *extra], key=lambda req: req.ts)
 
 
-def _tabs(rng: random.Random, table: RouteTable, session: list[Request]) -> list[Request]:
-    reshaped: list[Request] = []
+def _tabs(
+    rng: random.Random, table: RouteTable, session: list[LoggedRequest]
+) -> list[LoggedRequest]:
+    reshaped: list[LoggedRequest] = []
     shift = 0.0
     previous: Request | None = None
     for req in session:
@@ -83,7 +85,7 @@ def _is_page(table: RouteTable, req: Request) -> bool:
     return match is not None and not match.asset
 
 
-def _fetch(table: RouteTable, page: Request, path: str, delay: float) -> Request:
+def _fetch(table: RouteTable, page: LoggedRequest, path: str, delay: float) -> LoggedRequest:
     status = 200 if table.match("GET", path) is not None else 404
     return dataclasses.replace(
         page, ts=page.ts + delay, method="GET", path=path, query="", status=status
