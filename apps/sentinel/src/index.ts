@@ -33,7 +33,7 @@ const ai = new Ai(store, bus, { client });
 // Attackers without a location hint get one from ip-api.com, off the ingest path.
 const geo = new GeoResolver((ip, g) => store.setGeo(ip, g));
 bus.subscribe((b) => {
-  for (const c of b.batch.changes) if (c.kind === "attacker" && !c.attacker.country) geo.request(c.attacker.ip);
+  for (const c of b.changes) if (c.kind === "attacker" && !c.attacker.country) geo.request(c.attacker.ip);
 });
 
 const app = createApp({ store, bus, ai, webRoot, allowedOrigins, allowedHosts, ingestToken });

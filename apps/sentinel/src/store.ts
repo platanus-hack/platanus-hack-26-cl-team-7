@@ -156,6 +156,7 @@ export class Store {
   private eventSeq = 0;
   private dirtyEvents = new Map<string, AttackEvent>();
   private dirtyAttackers = new Set<string>();
+  private dirtyBuckets = new Set<number>();
   private flushTimer: NodeJS.Timeout | null = null;
   private readonly pruneTimer: NodeJS.Timeout | null = null;
   private closed = false;
@@ -174,9 +175,9 @@ export class Store {
     if (db) {
       migrate(db);
       this.load(db);
-      this.pruneTimer = setInterval(() => this.prune(), 60_000);
-      this.pruneTimer.unref();
     }
+    this.pruneTimer = setInterval(() => this.prune(), 60_000);
+    this.pruneTimer.unref();
   }
 
   /* ----------------------------- writes ----------------------------- */
@@ -289,7 +290,7 @@ export class Store {
 
   setReport(report: AttackerReport): void {
     this.reports.set(report.ip, report);
-    this.db
+    this.liveDb
       ?.prepare("INSERT OR REPLACE INTO reports (ip, summary, generated_at, model) VALUES (?, ?, ?, ?)")
       .run(report.ip, report.summary, report.generatedAt, report.model);
     this.bus.publish({ kind: "report", report });
@@ -406,8 +407,11 @@ export class Store {
     this.pruneBuckets();
     if (!this.db || this.closed) return;
     this.flushWrites();
-    this.db.prepare("DELETE FROM events WHERE ts < ? OR seq <= ?").run(cutoff, this.eventSeq - MAX_EVENTS);
-    this.db.exec("DELETE FROM attackers WHERE ip NOT IN (SELECT DISTINCT ip FROM events) AND ip NOT IN (SELECT ip FROM blocks)");
+    // Event rows are capped for the feed; counters live in their own small tables and keep 24 h.
+    this.db.prepare("DELETE FROM events WHERE seq <= ?").run(this.eventSeq - MAX_EVENTS);
+    this.db.prepare("DELETE FROM events WHERE ts < ?").run(cutoff);
+    this.db.prepare("DELETE FROM buckets WHERE t < ?").run(cutoff - BASE_BUCKET);
+    this.db.prepare("DELETE FROM attackers WHERE last_seen < ? AND ip NOT IN (SELECT ip FROM blocks)").run(cutoff);
     this.db.exec("DELETE FROM reports WHERE ip NOT IN (SELECT ip FROM attackers)");
   }
 
@@ -492,6 +496,10 @@ export class Store {
       this.buckets.set(t, b);
       if (this.buckets.size % 64 === 0) this.pruneBuckets();
     }
+    if (this.db) {
+      this.dirtyBuckets.add(t);
+      this.scheduleFlush();
+    }
     return b;
   }
 
@@ -530,22 +538,28 @@ export class Store {
   private flushWrites(): void {
     this.flushTimer = null;
     const db = this.closed ? null : this.db;
-    if (!db || (this.dirtyEvents.size === 0 && this.dirtyAttackers.size === 0)) return;
+    if (!db || (this.dirtyEvents.size === 0 && this.dirtyAttackers.size === 0 && this.dirtyBuckets.size === 0)) return;
     const evStmt = db.prepare(
       `INSERT OR REPLACE INTO events (id, seq, ts, ip, method, path, payload, attack_type, status, source, confidence)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     const atStmt = db.prepare(
-      `INSERT OR REPLACE INTO attackers (ip, user_agent, country, country_code, city, network, first_seen)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT OR REPLACE INTO attackers (ip, user_agent, country, country_code, city, network, first_seen, last_seen, events, killed, not_killed, types)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
+    const bkStmt = db.prepare("INSERT OR REPLACE INTO buckets (t, received, killed) VALUES (?, ?, ?)");
     db.exec("BEGIN");
     try {
       for (const e of this.dirtyEvents.values())
         evStmt.run(e.id, e.seq, e.ts, e.ip, e.method, e.path, e.payload, e.attackType, e.status, e.source, e.confidence);
       for (const ip of this.dirtyAttackers) {
         const a = this.attackers_.get(ip);
-        if (a) atStmt.run(a.ip, a.userAgent, a.country, a.countryCode, a.city, a.network, a.firstSeen);
+        if (a)
+          atStmt.run(a.ip, a.userAgent, a.country, a.countryCode, a.city, a.network, a.firstSeen, a.lastSeen, a.events, a.killed, a.notKilled, JSON.stringify(a.types));
+      }
+      for (const t of this.dirtyBuckets) {
+        const b = this.buckets.get(t);
+        if (b) bkStmt.run(t, b.received, b.killed);
       }
       db.exec("COMMIT");
     } catch (err) {
@@ -554,11 +568,12 @@ export class Store {
     }
     this.dirtyEvents = new Map();
     this.dirtyAttackers = new Set();
+    this.dirtyBuckets = new Set();
   }
 
+  /** Rebuilds memory from disk: counters from their own tables, the feed from the newest event rows. */
   private load(db: DatabaseSync): void {
     const since = this.now() - RETAIN_MS;
-    db.prepare("DELETE FROM events WHERE ts < ?").run(since);
     for (const r of db.prepare("SELECT ip, blocked_at FROM blocks").all() as { ip: string; blocked_at: number }[])
       this.blocks_.set(r.ip, r.blocked_at);
     for (const r of db.prepare("SELECT ip, summary, generated_at, model FROM reports").all() as {
@@ -568,13 +583,39 @@ export class Store {
       model: string;
     }[])
       this.reports.set(r.ip, { ip: r.ip, summary: r.summary, generatedAt: r.generated_at, model: r.model });
-    const meta = new Map<string, Record<string, string | number | null>>();
-    for (const r of db.prepare("SELECT * FROM attackers").all() as Record<string, string | number | null>[])
-      meta.set(String(r.ip), r);
+    for (const r of db.prepare("SELECT t, received, killed FROM buckets WHERE t >= ?").all(since - BASE_BUCKET) as {
+      t: number;
+      received: number;
+      killed: number;
+    }[])
+      this.buckets.set(r.t, { received: r.received, killed: r.killed });
+    for (const r of db.prepare("SELECT * FROM attackers WHERE last_seen >= ? OR ip IN (SELECT ip FROM blocks)").all(since) as Record<
+      string,
+      string | number | null
+    >[]) {
+      const ua = String(r.user_agent ?? "");
+      this.attackers_.set(String(r.ip), {
+        ip: String(r.ip),
+        userAgent: ua,
+        fingerprint: fingerprint(ua),
+        ...parseClient(ua),
+        country: (r.country as string) ?? null,
+        countryCode: (r.country_code as string) ?? null,
+        city: (r.city as string) ?? null,
+        network: (r.network as string) ?? null,
+        firstSeen: Number(r.first_seen),
+        lastSeen: Number(r.last_seen),
+        events: Number(r.events),
+        killed: Number(r.killed),
+        notKilled: Number(r.not_killed),
+        types: JSON.parse(String(r.types ?? "{}")) as Partial<Record<AttackType, number>>,
+      });
+    }
     const rows = db
       .prepare("SELECT * FROM (SELECT * FROM events WHERE ts >= ? ORDER BY seq DESC LIMIT ?) ORDER BY seq ASC")
       .all(since, MAX_EVENTS) as Record<string, string | number>[];
     for (const r of rows) {
+      const waiting = r.status === "analyzing";
       const e: AttackEvent = {
         id: String(r.id),
         seq: Number(r.seq),
@@ -585,48 +626,31 @@ export class Store {
         payload: String(r.payload),
         attackType: r.attack_type as AttackType,
         // An event that was waiting for the AI when the process stopped stays visible as active.
-        status: r.status === "analyzing" ? "active" : (r.status as EventStatus),
+        status: waiting ? "active" : (r.status as EventStatus),
         source: r.source as VerdictSource,
         confidence: Number(r.confidence),
       };
       this.events_.push(e);
       this.byId.set(e.id, e);
       this.eventSeq = Math.max(this.eventSeq, e.seq);
-      const m = meta.get(e.ip);
-      let a = this.attackers_.get(e.ip);
-      if (!a) {
-        const ua = String(m?.user_agent ?? "");
-        a = {
-          ip: e.ip,
-          userAgent: ua,
-          fingerprint: fingerprint(ua),
-          ...parseClient(ua),
-          country: (m?.country as string) ?? null,
-          countryCode: (m?.country_code as string) ?? null,
-          city: (m?.city as string) ?? null,
-          network: (m?.network as string) ?? null,
-          firstSeen: Number(m?.first_seen ?? e.ts),
-          lastSeen: e.ts,
-          events: 0,
-          killed: 0,
-          notKilled: 0,
-          types: {},
-        };
-        this.attackers_.set(e.ip, a);
+      const a = this.attackers_.get(e.ip);
+      if (waiting && a) {
+        a.notKilled++;
+        this.markDirty(e, e.ip);
       }
-      a.lastSeen = Math.max(a.lastSeen, e.ts);
-      a.events++;
-      a.types[e.attackType] = (a.types[e.attackType] ?? 0) + 1;
-      if (e.status === "killed") a.killed++;
-      else a.notKilled++;
-      const b = this.bucket(e.ts);
-      b.received++;
-      if (e.status === "killed") b.killed++;
     }
   }
 }
 
+const SCHEMA_VERSION = 2;
+
 function migrate(db: DatabaseSync): void {
+  // Version 1 kept no counters. Its rows cannot rebuild them, so start fresh.
+  const { user_version: version } = db.prepare("PRAGMA user_version").get() as { user_version: number };
+  if (version < SCHEMA_VERSION) {
+    db.exec("DROP TABLE IF EXISTS events; DROP TABLE IF EXISTS attackers; DROP TABLE IF EXISTS buckets; DROP TABLE IF EXISTS reports;");
+    db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+  }
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA synchronous = NORMAL;
@@ -636,9 +660,14 @@ function migrate(db: DatabaseSync): void {
       status TEXT NOT NULL, source TEXT NOT NULL, confidence REAL NOT NULL
     );
     CREATE INDEX IF NOT EXISTS events_ts ON events (ts);
+    CREATE INDEX IF NOT EXISTS events_seq ON events (seq);
     CREATE TABLE IF NOT EXISTS attackers (
-      ip TEXT PRIMARY KEY, user_agent TEXT, country TEXT, country_code TEXT, city TEXT, network TEXT, first_seen INTEGER
+      ip TEXT PRIMARY KEY, user_agent TEXT, country TEXT, country_code TEXT, city TEXT, network TEXT,
+      first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL, events INTEGER NOT NULL, killed INTEGER NOT NULL,
+      not_killed INTEGER NOT NULL, types TEXT NOT NULL
     );
+    CREATE INDEX IF NOT EXISTS attackers_last_seen ON attackers (last_seen);
+    CREATE TABLE IF NOT EXISTS buckets (t INTEGER PRIMARY KEY, received INTEGER NOT NULL, killed INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS blocks (ip TEXT PRIMARY KEY, blocked_at INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS reports (ip TEXT PRIMARY KEY, summary TEXT NOT NULL, generated_at INTEGER NOT NULL, model TEXT NOT NULL);
   `);

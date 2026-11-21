@@ -147,6 +147,9 @@ export function applyBatches(data: LiveData, batches: StreamBatch[]): LiveData {
           }
           break;
         }
+        case "counts":
+          for (const b of c.buckets) series = bump(series, bucketOf(b.t, data.bucketMs), b.received, b.killed);
+          break;
         case "attacker":
           attackerMap().set(c.attacker.ip, c.attacker);
           break;

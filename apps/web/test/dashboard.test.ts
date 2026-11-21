@@ -176,3 +176,13 @@ describe("optimistic blocks", () => {
     expect(confirmedBlocks([batch(12, [{ kind: "block", ip: "203.0.113.42", blocked: true }])]).get("203.0.113.42")).toBe(true);
   });
 });
+
+describe("counts changes", () => {
+  it("adds folded event counts to the chart buckets", () => {
+    const d = fromSnapshot(snap());
+    const next = applyBatches(d, [batch(11, [{ kind: "counts", buckets: [{ t: NOW - 5_000, received: 700, killed: 350 }] }])]);
+    expect(at(next).received).toBe(1 + 700);
+    expect(at(next).killed).toBe(1 + 350);
+    expect(next.events).toHaveLength(0);
+  });
+});

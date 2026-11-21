@@ -7,6 +7,7 @@ import {
   RANGE_MS,
   Range,
   type AttackEvent,
+  type Attacker,
   type AttackType,
   type ChartBlock,
   type CopilotEvent,
@@ -95,7 +96,7 @@ export class Ai {
   }
 
   private onFrame(frame: Frame): void {
-    for (const c of frame.batch.changes) {
+    for (const c of frame.changes) {
       if (c.kind === "event" && c.event.status === "analyzing") this.enqueue(c.event);
       else if (c.kind === "attacker") this.attackerChanged(c.attacker.ip);
     }
@@ -199,7 +200,9 @@ export class Ai {
 
   private async report(ip: string): Promise<void> {
     const a = this.store.profile(ip);
-    if (!this.client || !a) return;
+    // The cap is checked again here: several reports can be scheduled inside one debounce window.
+    // A skipped report is not marked done, so the attacker's next change schedules it again.
+    if (!this.client || !a || this.reportsRunning >= REPORT_CONCURRENCY) return;
     if (this.reportedAt.size > 10_000) for (const k of this.reportedAt.keys()) if (!this.store.profile(k)) this.reportedAt.delete(k);
     this.reportedAt.set(ip, a.events);
     this.reportsRunning++;
@@ -218,8 +221,8 @@ export class Ai {
               role: "user",
               content: `<attacker>\n${promptJson({
                 ip,
-                client: [a.device, a.os, a.browser].filter(Boolean).join(", "),
-                network: a.network,
+                untrusted_client: [a.device, a.os, a.browser].filter(Boolean).join(", "),
+                untrusted_network: a.network,
                 events: a.events,
                 killed: a.killed,
                 recent: recent.map((e) => ({
@@ -479,12 +482,30 @@ function queryEvents(store: Store, a: z.infer<typeof TOOL_INPUTS.query_events>):
   };
 }
 
+/** Counts and verdicts as plain fields; location and client text come from gateways or ip-api.com, so they are labeled. */
+function stats(a: Attacker) {
+  return {
+    ip: a.ip,
+    events: a.events,
+    killed: a.killed,
+    not_killed: a.notKilled,
+    top_type: a.topType,
+    risk: a.risk,
+    blocked: a.blocked,
+    first_seen: new Date(a.firstSeen).toISOString(),
+    last_seen: new Date(a.lastSeen).toISOString(),
+    untrusted_location: [a.city, a.country].filter(Boolean).join(", ") || null,
+    untrusted_network: a.network,
+    untrusted_client: [a.device, a.os, a.browser].filter(Boolean).join(", ") || null,
+  };
+}
+
 function getAttacker(store: Store, a: z.infer<typeof TOOL_INPUTS.get_attacker>): ToolOutput {
   const d = store.detail(a.ip);
   if (!d) return { content: JSON.stringify({ error: "not_found", ip: a.ip }), summary: "not found" };
   return {
     content: JSON.stringify({
-      ...d.attacker,
+      ...stats(d.attacker),
       fingerprint: store.profile(a.ip)?.fingerprint ?? null,
       untrusted_report: d.report?.summary ?? null,
       recent: d.recent.slice(0, 10).map((e) => ({
@@ -500,10 +521,10 @@ function getAttacker(store: Store, a: z.infer<typeof TOOL_INPUTS.get_attacker>):
 }
 
 function groupAttackers(store: Store, a: z.infer<typeof TOOL_INPUTS.group_attackers>): ToolOutput {
-  const groups = new Map<string, { key: string; ips: string[]; attacks: number; not_killed: number }>();
+  const groups = new Map<string, { untrusted_key: string; ips: string[]; attacks: number; not_killed: number }>();
   for (const s of store.profiles(a.range)) {
     const key = a.by === "fingerprint" ? s.fingerprint : a.by === "network" ? (s.network ?? "unknown") : (s.country ?? "unknown");
-    const g = groups.get(key) ?? { key, ips: [], attacks: 0, not_killed: 0 };
+    const g = groups.get(key) ?? { untrusted_key: key, ips: [], attacks: 0, not_killed: 0 };
     g.ips.push(s.ip);
     g.attacks += s.events;
     g.not_killed += s.notKilled;

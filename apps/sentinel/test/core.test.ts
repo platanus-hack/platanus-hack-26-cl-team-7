@@ -215,6 +215,33 @@ describe("store", () => {
     expect(store.series("5m").reduce((n, p) => n + p.killed, 0)).toBe(1);
   });
 
+  it("keeps 24 h counters across a restart even when event rows are capped", () => {
+    const db = new DatabaseSync(":memory:");
+    const store = new Store(new Bus(5), { db });
+    store.ingest(Array.from({ length: 300 }, () => ev({ path: "/a?id=1 UNION SELECT a FROM b" })));
+    store.close();
+    db.exec("DELETE FROM events WHERE seq <= 250"); // what the row cap does
+    const again = new Store(new Bus(5), { db });
+    expect(again.series("1h").reduce((n, p) => n + p.received, 0)).toBe(300);
+    expect(again.attacker("203.0.113.42")).toMatchObject({ events: 300, killed: 300 });
+    expect(again.events("1h")).toHaveLength(50);
+    again.close();
+  });
+
+  it("folds events beyond the frame cap into exact chart counts", async () => {
+    const bus = new Bus(1);
+    const store = new Store(bus);
+    const got: { kind: string; buckets?: { received: number; killed: number }[] }[] = [];
+    bus.subscribe((f) => got.push(...(f.batch.changes as typeof got)));
+    store.ingest(Array.from({ length: 1200 }, (_, i) => ev({ ip: "192.0.2.1", path: i % 2 ? "/x?id=1 UNION SELECT a FROM b" : "/hello" })));
+    bus.flush();
+    const events = got.filter((c) => c.kind === "event").length;
+    const counts = got.filter((c) => c.kind === "counts").flatMap((c) => c.buckets!);
+    expect(events).toBe(500);
+    expect(counts.reduce((n, b) => n + b.received, 0)).toBe(700);
+    expect(counts.reduce((n, b) => n + b.killed, 0)).toBe(350);
+  });
+
   it("persists to SQLite and rebuilds the same state", async () => {
     const db = new DatabaseSync(":memory:");
     const store = new Store(new Bus(5), { db });

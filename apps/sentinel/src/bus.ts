@@ -1,13 +1,19 @@
 import { randomBytes } from "node:crypto";
-import type { StreamBatch, StreamChange } from "@sentinel/contracts";
+import { MAX_EVENTS_PER_FRAME, type SeriesPoint, type StreamBatch, type StreamChange } from "@sentinel/contracts";
 
-/** A flushed batch, encoded once and shared by every subscriber and the replay history. */
-export interface Frame {
+/** What the replay history keeps: the SSE id and the encoded batch. */
+export interface EncodedFrame {
   seq: number;
   /** `${epoch}-${seq}`, the SSE event id. */
   id: string;
+  /** The client batch, encoded once and shared by every connection. */
   json: string;
+}
+
+/** A flushed frame. In-process listeners read `changes`, which is never folded. */
+export interface Frame extends EncodedFrame {
   batch: StreamBatch;
+  changes: StreamChange[];
 }
 
 type Listener = (frame: Frame) => void;
@@ -22,6 +28,8 @@ function keyOf(c: StreamChange): string {
       return `r:${c.report.ip}`;
     case "block":
       return `b:${c.ip}`;
+    case "counts":
+      return "c";
   }
 }
 
@@ -39,7 +47,7 @@ export class Bus {
   private pending = new Map<string, StreamChange>();
   private timer: NodeJS.Timeout | null = null;
   private readonly listeners = new Set<Listener>();
-  private readonly history: Frame[] = [];
+  private readonly history: EncodedFrame[] = [];
   private historyBytes = 0;
   private seq = 0;
   private readonly frameMs: number;
@@ -71,10 +79,11 @@ export class Bus {
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
     if (this.pending.size === 0) return;
-    const batch: StreamBatch = { epoch: this.epoch, seq: ++this.seq, now: Date.now(), changes: [...this.pending.values()] };
+    const changes = [...this.pending.values()];
     this.pending = new Map();
-    const frame: Frame = { seq: batch.seq, id: `${this.epoch}-${batch.seq}`, json: JSON.stringify(batch), batch };
-    this.history.push(frame);
+    const batch: StreamBatch = { epoch: this.epoch, seq: ++this.seq, now: Date.now(), changes: foldEvents(changes) };
+    const frame: Frame = { seq: batch.seq, id: `${this.epoch}-${batch.seq}`, json: JSON.stringify(batch), batch, changes };
+    this.history.push({ seq: frame.seq, id: frame.id, json: frame.json });
     this.historyBytes += frame.json.length;
     while (this.history.length > this.historyFrames || this.historyBytes > this.historyMaxBytes) {
       this.historyBytes -= this.history.shift()!.json.length;
@@ -92,7 +101,7 @@ export class Bus {
    * epoch). Returns null when the client must reload: another epoch, a position
    * ahead of this process, or a gap older than the kept history.
    */
-  since(position: string): Frame[] | null {
+  since(position: string): EncodedFrame[] | null {
     const dash = position.lastIndexOf("-");
     const epoch = dash >= 0 ? position.slice(0, dash) : this.epoch;
     const seq = Number(dash >= 0 ? position.slice(dash + 1) : position);
@@ -108,4 +117,37 @@ export class Bus {
     this.timer = null;
     this.listeners.clear();
   }
+}
+
+const COUNT_BUCKET_MS = 10_000;
+
+/**
+ * Keeps at most MAX_EVENTS_PER_FRAME event changes (the newest) and turns the
+ * rest into chart count deltas. Clients only show the newest 500 events, so a
+ * flood costs a small frame instead of megabytes, and the chart stays exact.
+ */
+export function foldEvents(changes: StreamChange[]): StreamChange[] {
+  let events = 0;
+  for (const c of changes) if (c.kind === "event") events++;
+  let fold = events - MAX_EVENTS_PER_FRAME;
+  if (fold <= 0) return changes;
+  const buckets = new Map<number, SeriesPoint>();
+  const kept: StreamChange[] = [];
+  for (const c of changes) {
+    if (c.kind !== "event" || fold <= 0) {
+      kept.push(c);
+      continue;
+    }
+    fold--;
+    const t = Math.floor(c.event.ts / COUNT_BUCKET_MS) * COUNT_BUCKET_MS;
+    const b = buckets.get(t) ?? { t, received: 0, killed: 0 };
+    const killed = c.event.status === "killed";
+    if (c.prev === undefined) {
+      b.received++;
+      if (killed) b.killed++;
+    } else if (c.prev !== "killed" && killed) b.killed++;
+    buckets.set(t, b);
+  }
+  kept.push({ kind: "counts", buckets: [...buckets.values()] });
+  return kept;
 }

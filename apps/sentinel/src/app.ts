@@ -17,7 +17,7 @@ import {
 } from "@sentinel/contracts";
 import type { Ai } from "./ai.ts";
 import { timingSafeEqual } from "node:crypto";
-import type { Bus, Frame } from "./bus.ts";
+import type { Bus, EncodedFrame } from "./bus.ts";
 import type { Store } from "./store.ts";
 
 export interface AppDeps {
@@ -38,6 +38,7 @@ export interface AppDeps {
 }
 
 const MAX_QUEUED_FRAMES = 1000;
+const MAX_QUEUED_BYTES = 16 * 1024 * 1024;
 const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
 
 function fail(c: Context, status: 400 | 401 | 403 | 404 | 413 | 415 | 500 | 503, code: string, message: string) {
@@ -159,13 +160,19 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     c.header("Cache-Control", "no-store");
     c.header("X-Accel-Buffering", "no");
     return streamSSE(c, async (stream) => {
-      const queue: (Frame | "reset" | "ping")[] = [];
+      const queue: (EncodedFrame | "reset" | "ping")[] = [];
+      let queuedBytes = 0;
       let wake: (() => void) | null = null;
       let open = true;
-      const push = (item: Frame | "reset" | "ping") => {
+      const push = (item: EncodedFrame | "reset" | "ping") => {
         // A client that cannot keep up is told to reload instead of holding memory without limit.
-        if (queue.length >= MAX_QUEUED_FRAMES) queue.splice(0, queue.length, "reset");
-        else queue.push(item);
+        if (queue.length >= MAX_QUEUED_FRAMES || queuedBytes > MAX_QUEUED_BYTES) {
+          queue.splice(0, queue.length, "reset");
+          queuedBytes = 0;
+        } else {
+          queue.push(item);
+          if (typeof item === "object") queuedBytes += item.json.length;
+        }
         wake?.();
       };
 
@@ -188,10 +195,12 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
         wake = null;
         while (open && queue.length) {
           const item = queue.shift()!;
+          if (typeof item === "object") queuedBytes -= item.json.length;
           if (item === "ping") await stream.write(": ping\n\n");
           else if (item === "reset") {
             await stream.writeSSE({ event: "reset", data: "{}" });
             queue.length = 0;
+            queuedBytes = 0;
           } else await stream.writeSSE({ event: "batch", id: item.id, data: item.json });
         }
       }

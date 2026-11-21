@@ -175,6 +175,11 @@ export type StreamChange =
    * analyzing → killed). Without `prev` the event is new: count it as received.
    */
   | { kind: "event"; event: AttackEvent; prev?: EventStatus }
+  /**
+   * Chart counts for events left out of a busy frame (a frame carries at most
+   * MAX_EVENTS_PER_FRAME events). `t` is a 10 s bucket start; add the deltas.
+   */
+  | { kind: "counts"; buckets: SeriesPoint[] }
   | { kind: "attacker"; attacker: Attacker }
   | { kind: "report"; report: AttackerReport }
   | { kind: "block"; ip: string; blocked: boolean };
@@ -184,6 +189,8 @@ export type StreamChange =
  * with ids `${epoch}-${seq}`. `event: reset` means the client missed more than the
  * server kept (or the server restarted): reload the snapshot and reconnect.
  */
+export const MAX_EVENTS_PER_FRAME = 500;
+
 export interface StreamBatch {
   epoch: string;
   seq: number;
