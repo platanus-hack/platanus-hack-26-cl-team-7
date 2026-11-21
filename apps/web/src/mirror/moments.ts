@@ -286,10 +286,13 @@ export function chainTo(track: Pick<Track, "rule" | "reason" | "openedAt" | "act
   return steps;
 }
 
-/** Other browser identities linked to this agent, as words; "" when none. Sentinel keeps 64 keys at most (apps/sentinel/src/deception.ts). */
+/**
+ * The browser or tool identities (user agents) seen for this agent, as words; "" for just one.
+ * Each is a different user agent the router linked to this agent; Sentinel keeps 64 keys at most
+ * (apps/sentinel/src/deception.ts), so a full list means there were more.
+ */
 export function disguises(track: Pick<Track, "keys">, maxKeys = 64): string {
-  const n = track.keys.filter((k) => k.kind === "ip_ua").length - 1;
-  if (n < 1) return "";
-  if (track.keys.length >= maxKeys) return `más de ${n} disfraces`;
-  return n === 1 ? "1 disfraz" : `${n} disfraces`;
+  const n = track.keys.filter((k) => k.kind === "ip_ua").length;
+  if (n < 2) return "";
+  return track.keys.length >= maxKeys ? `más de ${n} identidades` : `${n} identidades`;
 }

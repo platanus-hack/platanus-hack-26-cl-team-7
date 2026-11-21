@@ -150,12 +150,11 @@ describe("chainTo", () => {
 
 describe("disguises", () => {
   const ipUa = (n: number): TrackKey[] => Array.from({ length: n }, (_, i) => ({ kind: "ip_ua", value: `1.2.3.4|ua${i}` }));
-  it("counts other browser identities", () => {
+  it("counts the browser or tool identities seen for the agent", () => {
     expect(disguises({ keys: ipUa(1) })).toBe("");
-    expect(disguises({ keys: ipUa(2) })).toBe("1 disfraz");
-    expect(disguises({ keys: ipUa(4) })).toBe("3 disfraces");
-    expect(disguises({ keys: ipUa(16) })).toBe("15 disfraces");
-    expect(disguises({ keys: ipUa(64) })).toBe("más de 63 disfraces");
+    expect(disguises({ keys: ipUa(2) })).toBe("2 identidades");
+    expect(disguises({ keys: ipUa(12) })).toBe("12 identidades");
+    expect(disguises({ keys: ipUa(64) })).toBe("más de 64 identidades");
   });
 });
 
