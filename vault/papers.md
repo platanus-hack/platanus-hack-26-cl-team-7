@@ -10,7 +10,8 @@
 2. **El 0/12 adaptativo mide a nuestro atacante, no a los modelos.** Un atacante en enjambre de DeepMind rompe DeepSeek v4.1 Flash (uno de nuestros seis) en 99 % de los escenarios con 320 consultas. Hay que decirlo así: «cota de nuestro atacante», nunca «el modelo es robusto».
 3. **El hueco es real y más preciso de lo que creíamos:** no encontramos ninguna evaluación de Prompt Guard 2, ProtectAI ni PIGuard sobre español escrito de forma nativa con más de 32 ejemplos, ni de sus falsos positivos con español coloquial. Español peruano: cero trabajos en seguridad de LLM. Lo más cercano es de otro detector (Horizon-Labs, 800 prompts humanos) o traducción automática.
 4. **La tesis que la evidencia sostiene no es «el peruano rompe la seguridad»** (tres trabajos dan resultado nulo o «el dialecto no es necesario ni suficiente»). Es: **«el punto de operación calibrado en inglés no se transfiere, y el costo lo paga el cliente legítimo»**. Hay indicios en otros idiomas, todos autorreportados: Prompt Guard 2 detecta 30 % en inglés y 7 % en hindi al mismo umbral; ProtectAI marca 47–59 % de benignos en hindi y turco, y 10,6 % contra 1,0 % en español traducido.
-5. **Experimento mínimo:** 150 ataques + 150 gemelos benignos en cuatro brazos (inglés, español neutro, español peruano y su retraducción al inglés), más benignos externos; 4 clasificadores en la laptop; McNemar pareado; dos hipótesis primarias registradas antes de correr. Con 150 pares se ve una brecha de 15 pp en cualquier escenario. Costo de API: ~0,45 M de tokens (1,25 M con el opcional); el cuello es la revisión nativa de 300 textos (~2 h de una persona).
+5. **El frente del clasificador ya midió ProtectAI (3 % vs 49 % de benignos marcados) y coincide con tres fuentes.** Le faltan controles, no casos: un detector que sí declare español, benignos no generados y español neutro (§4.0).
+6. **Diseño completo del experimento:** 150 ataques + 150 gemelos benignos en cuatro brazos (inglés, español neutro, español peruano y su retraducción al inglés), más benignos externos; 4 clasificadores en la laptop; McNemar pareado; dos hipótesis primarias registradas antes de correr. Con 150 pares se ve una brecha de 15 pp en cualquier escenario. Costo de API: ~0,45 M de tokens (1,25 M con el opcional); el cuello es la revisión nativa de 300 textos (~2 h de una persona).
 
 ### Correcciones a notas anteriores del vault
 
@@ -177,6 +178,30 @@ Los huecos 1–4 son los que ocupamos. El 5 ya lo tocamos con el 0/288 y sus lim
 ## 4. Experimento mínimo defendible
 
 Esta versión ya incorpora la crítica de la segunda pasada (§6): cambió la línea base de la potencia, la hipótesis primaria pasó a ser doble y se sumaron un control de paráfrasis y benignos que no escribimos nosotros.
+
+### 4.0 Lo que ya se midió y qué le falta (actualización)
+
+Mientras se escribía esta revisión, el frente del clasificador publicó su primer resultado en [[resultados]]: ProtectAI v2 a umbral 0,5, textos pareados inglés / español peruano.
+
+| | Inglés | Español peruano | Lo que predecía la literatura |
+|---|---|---|---|
+| Benignos marcados (150) | 3 % | 49 % | 1,0 % → 10,6 % en español traducido (B27); 0,8 % → 59,2 % en turco (B6); 2 % → 47 % en hindi (A19) |
+| Inyecciones marcadas (134) | 51 % | 95 % | 90,6 % → 97,8 % en español traducido (B27): detecta más, no menos |
+
+- **El n ya alcanza.** Con 69 pares discordantes en una sola dirección no hace falta más muestra; la tabla de potencia de abajo queda como justificación, no como tarea.
+- **El resultado coincide con la hipótesis H2 de esta sección y con tres fuentes independientes.** Eso lo vuelve creíble; lo que falta son controles, no casos.
+- **La objeción que lo tumba hoy:** «probaron en español un detector cuya ficha dice que no maneja otros idiomas» (B3). Respuesta a medias: es el detector que AgentDojo trae como defensa. Respuesta completa: correr sobre los mismos textos un detector que sí declara español (Prompt Guard 2 86M) y uno multilingüe (Horizon-Labs). Son minutos de CPU.
+
+Qué agregar, en orden de cuánto cambia el veredicto por hora invertida:
+
+1. **Prompt Guard 2 86M, PIGuard y Horizon-Labs sobre el mismo `data/textos.jsonl`.** Convierte «un detector solo-inglés falla en español» en una comparación de la categoría.
+2. **Benignos que no generó un LLM nuestro:** 400 turnos `es` y 400 `en` de OASST2. Hoy los 150 benignos son generados; una tasa sobre ellos no es una tasa de molestia.
+3. **El sesgo de traducción va al revés que en el diseño de abajo:** aquí el original es el peruano y el inglés es la traducción del LLM, que puede haber suavizado el ataque (51 % de detección en inglés es bajo). Control: retraducir el inglés al español neutro y comparar los tres.
+4. **Las 44 inyecciones descartadas** porque ningún modelo quiso traducirlas son un sesgo de selección: eran, probablemente, las más explícitas. Decirlo, y puntuarlas al menos en español.
+5. **Español neutro** (ya anotado como faltante en [[resultados]]) y **el texto dentro de la salida de tool**.
+6. **Revisión nativa** de los textos peruanos y regla de etiqueta por canal (abajo).
+
+El resto de esta sección es el diseño completo, escrito antes de conocer ese resultado; sirve como lista de controles y como justificación del tamaño de muestra.
 
 **Pregunta.** El detector de inyección que un banco puede descargar hoy, con el umbral con el que viene, ¿detecta lo mismo y molesta lo mismo cuando el cliente escribe en español peruano que en inglés?
 
