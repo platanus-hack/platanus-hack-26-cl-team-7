@@ -11,6 +11,15 @@ from .targets import Target
 def run(target: Target, base: str) -> RunOutcome:
     target.reset_state()
     out = RunOutcome()
+    # Multi-step/dynamic targets (e.g. Langflow poll) provide a custom attack.
+    if target.custom_attack is not None:
+        leaked, reqs, transcript = target.custom_attack(base)
+        out.evidence_leaked = leaked
+        out.requests = reqs
+        out.transcript = transcript
+        out.backend_executed = target.check_state()
+        out.blocked_pre_exec = (not out.backend_executed) and (not leaked)
+        return out
     for step in target.scripted:
         r: HTTPResult = http_request(base, step.method, step.path, step.headers, step.body)
         out.requests += 1

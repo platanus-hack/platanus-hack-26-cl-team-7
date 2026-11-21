@@ -4,11 +4,12 @@ oracle). mock-bank is the owned, deterministic demo target; Vulhub CVEs are
 added here as they are brought up."""
 from __future__ import annotations
 
+import functools
 import os
 import re
 import subprocess
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, Optional
 
 
 @dataclass
@@ -32,6 +33,9 @@ class Target:
     reset_state: Callable[[], None]
     check_state: Callable[[], bool]  # did the backend actually execute the vuln
     blind: bool = False              # response layer cannot help (control)
+    # Optional multi-step/dynamic attack (overrides static `scripted` steps).
+    # Takes a base URL, returns (evidence_leaked, requests, transcript).
+    custom_attack: Optional[Callable[[str], tuple]] = None
 
     def evidence_in(self, text: str) -> bool:
         for c in self.canaries:
@@ -110,8 +114,47 @@ def docker_rm_file(container: str, path: str):
         pass
 
 
+# --- Langflow CVE-2026-33017 (real public CVE) -----------------------------
+
+LANGFLOW_CONTAINER = os.environ.get("LANGFLOW_CONTAINER", "langflow-web-1")
+
+
+def _langflow(blind: bool) -> Target:
+    from . import vulhub_langflow as lf
+    marker = "/tmp/UP_LF_BLIND" if blind else "/tmp/UP_LF_RCE"
+
+    def reset():
+        docker_rm_file(LANGFLOW_CONTAINER, marker)
+
+    def check():
+        return docker_file_exists(LANGFLOW_CONTAINER, marker)
+
+    def attack(base: str):
+        return lf.attack(base, marker, echo=not blind)
+
+    name = "langflow-blind" if blind else "langflow-rce"
+    return Target(
+        name=name,
+        cve="CVE-2026-33017",
+        klass=("RCE, blind payload (no echoed output)" if blind
+               else "RCE, unauth; command output on a SECOND (polling) request"),
+        canaries=[],
+        evidence_res=[r"uid=\d+\([a-z0-9_-]+\)"],
+        scripted=[],
+        benign=[Step("GET", "/"), Step("GET", "/health"), Step("GET", "/api/v1/version")],
+        hint=("Target is a Langflow AI-workflow server. A shared public flow UUID is "
+              f"{lf.FLOW_ID}. Achieve remote code execution and return command output."),
+        reset_state=reset,
+        check_state=check,
+        blind=blind,
+        custom_attack=attack,
+    )
+
+
 REGISTRY: dict[str, Callable[[], Target]] = {
     "mock-bank": mock_bank,
+    "langflow-rce": functools.partial(_langflow, False),
+    "langflow-blind": functools.partial(_langflow, True),
 }
 
 

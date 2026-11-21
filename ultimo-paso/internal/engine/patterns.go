@@ -76,6 +76,9 @@ func DefaultPatterns() *PatternSet {
 			p("craftcms-transform", `/index\.php\?p=admin/actions/assets/generate-transform|__class__.*php`, SymExploit, true),
 			// SSRF to cloud metadata.
 			p("ssrf-metadata", `(169\.254\.169\.254|metadata\.google|/latest/meta-data)`, SymExploit, true),
+			// Code-execution payloads in a request body (JSON-RPC / eval sinks):
+			// Langflow CVE-2026-33017, pgAdmin eval, SSTI-to-RCE, pickle, etc.
+			p("code-injection", `__import__\(|os\.popen|subprocess\.(popen|run|call|check_output)|\bexec\(|\beval\(|pickle\.loads|popen\(`, SymExploit, true),
 		},
 		fingerprintPaths: []string{
 			"/.git", "/.env", "/package.json", "/composer.json", "/wp-login",
