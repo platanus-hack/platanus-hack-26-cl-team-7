@@ -1,0 +1,13 @@
+services:
+  default:
+    image: espejismo-s1p2atest
+    x-local: true
+    init: true
+    dns: [172.30.0.1]
+    hostname: ws-data-0412
+    networks: [espejismo]
+    working_dir: /workspace
+networks:
+  espejismo:
+    external: true
+    name: espejismo_net
