@@ -1,0 +1,56 @@
+# Version 0 stack: Caddy in front of the shop, the engine follows Caddy's JSON access log and posts
+# verdicts to the dashboard. Juice Shop stands in for Harold's site until it is ready.
+# Run from the repository root: docker compose -f deploy/docker-compose.yml up --build
+name: agent-detect
+
+services:
+  site:
+    image: bkimminich/juice-shop:v20.4.0
+    restart: unless-stopped
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2.11.9-alpine
+    restart: unless-stopped
+    depends_on:
+      - site
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-logs:/var/log/caddy
+
+  dashboard:
+    build:
+      context: ..
+      dockerfile: deploy/dashboard.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - dashboard-data:/data
+
+  engine:
+    build:
+      context: ..
+      dockerfile: deploy/engine.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - caddy
+      - dashboard
+    command:
+      - follow
+      - /var/log/caddy/access.log
+      - --webhook
+      - http://dashboard:8090/webhook
+      - --routes
+      - config/routes.juice-shop.yaml
+      - --rules
+      - config/rules.yaml
+    volumes:
+      - caddy-logs:/var/log/caddy:ro
+
+volumes:
+  caddy-logs:
+  dashboard-data:

@@ -1,0 +1,31 @@
+# Route list for the stand-in demo shop (demo/site.py serves exactly these).
+# {name} = one non-empty path segment; a trailing /** = any remainder.
+# asset: true keeps a route on the list but out of R2 endpoint breadth.
+# methods: optional; absent means any method.
+routes:
+  - pattern: "/"
+  - pattern: "/login"
+    methods: [GET, POST]
+  - pattern: "/logout"
+  - pattern: "/products"
+  - pattern: "/products/{id}"
+  - pattern: "/search"
+  - pattern: "/cart"
+    methods: [GET, POST]
+  - pattern: "/checkout"
+    methods: [GET, POST]
+  - pattern: "/account"
+  - pattern: "/api/products"
+  - pattern: "/api/products/{id}"
+  - pattern: "/api/search"
+  - pattern: "/api/cart"
+    methods: [GET, POST, DELETE]
+  - pattern: "/api/users/{id}"
+  - pattern: "/api/session"
+    methods: [GET, POST]
+  - pattern: "/static/**"
+    asset: true
+  - pattern: "/favicon.ico"
+    asset: true
+  - pattern: "/robots.txt"
+    asset: true
