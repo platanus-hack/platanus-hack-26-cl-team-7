@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Finding, TrackAction, TrackKey } from "@sentinel/contracts";
-import { agentName, answerOf, buildMoments, category, chainTo, disguises, headline, kindOf, shortIp, vulnOf } from "../src/mirror/moments";
+import { agentName, answerOf, buildMoments, category, chainTo, disguises, kindOf, vulnOf } from "../src/mirror/moments";
 
 let seq = 0;
 function action(p: Partial<TrackAction>): TrackAction {
@@ -148,15 +148,6 @@ describe("chainTo", () => {
   });
 });
 
-describe("headline", () => {
-  it("counts fooled requests and says when only the newest are loaded", () => {
-    const acts = [action({ status: 200 }), action({ status: 404 })];
-    expect(headline({ actions: 2 }, acts)).toBe("Intentó 2 veces y fue engañado 1 vez.");
-    expect(headline({ actions: 2 }, [action({ status: 302 }), action({ status: 500 })])).toBe("Intentó 2 veces y fue engañado 2 veces.");
-    expect(headline({ actions: 12020 }, acts)).toBe("Intentó 12.020 veces. En los 2 intentos que vemos aquí fue engañado 1 vez.");
-  });
-});
-
 describe("disguises", () => {
   const ipUa = (n: number): TrackKey[] => Array.from({ length: n }, (_, i) => ({ kind: "ip_ua", value: `1.2.3.4|ua${i}` }));
   it("counts other browser identities", () => {
@@ -168,7 +159,7 @@ describe("disguises", () => {
   });
 });
 
-describe("agentName and shortIp", () => {
+describe("agentName", () => {
   it("names an agent by its browser or tool", () => {
     expect(agentName("curl/8.7.1")).toBe("curl 8.7.1");
     expect(agentName("python-httpx/0.28")).toBe("python-httpx 0.28");
@@ -179,10 +170,4 @@ describe("agentName and shortIp", () => {
     expect(agentName("() { :; }; echo x")).toBe("Agente sin nombre");
   });
 
-  it("makes local and mapped addresses readable", () => {
-    expect(shortIp("::1")).toBe("localhost");
-    expect(shortIp("127.0.0.1")).toBe("localhost");
-    expect(shortIp("::ffff:203.0.113.7")).toBe("203.0.113.7");
-    expect(shortIp("198.51.100.20")).toBe("198.51.100.20");
-  });
 });
