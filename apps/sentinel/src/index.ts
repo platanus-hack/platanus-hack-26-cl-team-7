@@ -8,7 +8,9 @@ import { DEFAULT_PORT } from "@sentinel/contracts";
 import { Ai } from "./ai.ts";
 import { createApp } from "./app.ts";
 import { Bus } from "./bus.ts";
+import { DeceptionStore } from "./deception.ts";
 import { GeoResolver } from "./enrich.ts";
+import { FixProposer } from "./fixes.ts";
 import { createMastraReportModel } from "./reports/mastra.ts";
 import { ReportService } from "./reports/service.ts";
 import { accessLogSource, engineSource, sentinelSource } from "./reports/sources.ts";
@@ -34,8 +36,10 @@ const client = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN
 
 const db = new DatabaseSync(dbPath);
 const bus = new Bus();
-const store = new Store(bus, { db, aiVerdicts: !!client });
+const deception = new DeceptionStore(db, bus);
+const store = new Store(bus, { db, aiVerdicts: !!client, retained: [deception] });
 const ai = new Ai(store, bus, { client });
+const fixes = new FixProposer(deception, bus, { client });
 
 // Attackers without a location hint get one from ip-api.com, off the ingest path.
 const geo = new GeoResolver((ip, g) => store.setGeo(ip, g));
@@ -49,7 +53,7 @@ const reports = reportModel
   ? new ReportService({ store, db, model: reportModel, sources: { sen: sentinelSource(store), acc: accessLogSource(accessLogPath), eng: engineSource(verdictsDbPath) } })
   : null;
 
-const app = createApp({ store, bus, ai, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
+const app = createApp({ store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
   console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
@@ -57,6 +61,7 @@ const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
 
 function shutdown() {
   ai.stop();
+  fixes.stop();
   bus.stop();
   store.close();
   db.close();

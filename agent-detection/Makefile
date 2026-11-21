@@ -7,7 +7,7 @@ HAS_BASE = git rev-parse --verify --quiet '$(BASE)^{commit}' >/dev/null 2>&1
 # CI sets REQUIRE_BASE=1: there a missing base fails floor and test instead of narrowing them.
 REQUIRE_BASE ?=
 GIT_DIFF = git diff --no-color --no-ext-diff --relative
-TYPED_PACKAGES = engine eval dashboard scripts demo
+TYPED_PACKAGES = engine eval dashboard scripts demo mirror
 
 .PHONY: check size require-base floor lint types secrets test eval eval-ci lock baseline deps demo-up
 

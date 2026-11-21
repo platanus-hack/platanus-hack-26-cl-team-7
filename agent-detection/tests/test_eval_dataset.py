@@ -16,12 +16,13 @@ Interface the implementer must meet (eval/dataset.py):
 from __future__ import annotations
 
 import json
+from dataclasses import fields
 from pathlib import Path
 
 import pytest
 from helpers import caddy_line, caddy_runtime_line
 
-from engine.models import Label
+from engine.models import Label, Request
 from eval.dataset import DatasetError, Split, load_dataset, load_split
 from eval.synthetic import synthetic_humans
 from eval.synthetic import write_pair as write_synthetic_pair
@@ -183,7 +184,9 @@ def test_synthetic_pair_round_trips_through_load_split(tmp_path: Path) -> None:
     sessions = synthetic_humans(patterns, 12, seed=4)
     write_synthetic_pair(tmp_path, "synthetic_humans", sessions, "generated")
     split = load_split(tmp_path)
-    expected = sorted((r for s in sessions for r in s), key=lambda r: r.ts)
+    logged = sorted((r for s in sessions for r in s), key=lambda r: r.ts)
+    # The log line keeps the status; the parsed Request drops it, because no rule reads it.
+    expected = [Request(**{f.name: getattr(r, f.name) for f in fields(Request)}) for r in logged]
     assert split.requests == expected
     assert set(split.labels.values()) == {"human"}
     assert len(split.labels) == 12

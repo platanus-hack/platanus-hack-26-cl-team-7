@@ -75,7 +75,7 @@ def make_detector(enabled: bool = True) -> Detector:
 
 
 def req(path: str, query: str = "", ts: float = 100.0, ip: str = IP) -> Request:
-    return Request(ts=ts, ip=ip, user_agent=UA, method="GET", path=path, query=query, status=200)
+    return Request(ts=ts, ip=ip, user_agent=UA, method="GET", path=path, query=query)
 
 
 def r3_of(verdicts: list[Verdict]) -> list[Verdict]:

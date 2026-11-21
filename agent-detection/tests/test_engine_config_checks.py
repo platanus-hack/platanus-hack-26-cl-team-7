@@ -120,6 +120,6 @@ def test_dot_segment_probe_session_gets_a_verdict() -> None:
     names = ["admin", "debug", "graphql", "internal", "metrics", "console", "swagger"]
     rules: list[str] = []
     for n, name in enumerate(names):
-        req = Request(1000.0 + n, "192.0.2.5", "agent/1.0", "GET", f"/static/../{name}", "", 404)
+        req = Request(1000.0 + n, "192.0.2.5", "agent/1.0", "GET", f"/static/../{name}", "")
         rules.extend(v.rule for v in detector.process(req))
     assert rules == ["R1"]

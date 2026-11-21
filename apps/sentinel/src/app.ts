@@ -6,26 +6,21 @@ import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
-import {
-  CopilotRequest,
-  IngestBody,
-  IngestEvent,
-  Range,
-  type ApiError,
-  type CopilotEvent,
-  type Health,
-} from "@sentinel/contracts";
-import type { Ai } from "./ai.ts";
-import { timingSafeEqual } from "node:crypto";
+import { CopilotRequest, IngestBody, IngestEvent, Range, type CopilotEvent, type Health } from "@sentinel/contracts";
+import { MODEL, type Ai } from "./ai.ts";
 import type { Bus, EncodedFrame } from "./bus.ts";
 import { reportRoutes } from "./reports/routes.ts";
 import type { ReportService } from "./reports/service.ts";
+import type { DeceptionStore } from "./deception.ts";
+import { deceptionRoutes } from "./deception-routes.ts";
+import { fail, requireToken } from "./http.ts";
 import type { Store } from "./store.ts";
 
 export interface AppDeps {
   store: Store;
   bus: Bus;
   ai: Ai;
+  deception: DeceptionStore;
   version?: string;
   startedAt?: number;
   heartbeatMs?: number;
@@ -35,7 +30,7 @@ export interface AppDeps {
   webRoot?: string;
   /** Host names the API answers besides localhost. Anything else is refused, which stops DNS rebinding. */
   allowedHosts?: string[];
-  /** When set, POST /v1/events needs `Authorization: Bearer <token>`. */
+  /** When set, POST /v1/events and POST /v1/deception/events need `Authorization: Bearer <token>`. */
   ingestToken?: string;
   /** Incident reports. Absent or null: every /v1/reports route answers 503 AI_DISABLED. */
   reports?: ReportService | null;
@@ -45,11 +40,7 @@ const MAX_QUEUED_FRAMES = 1000;
 const MAX_QUEUED_BYTES = 16 * 1024 * 1024;
 const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
 
-function fail(c: Context, status: 400 | 401 | 403 | 404 | 413 | 415 | 500 | 503, code: string, message: string) {
-  return c.json<ApiError>({ error: { code, message } }, status);
-}
-
-export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null }: AppDeps) {
+export function createApp({ store, bus, ai, deception, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
@@ -96,7 +87,7 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
   const rangeOf = (c: Context) => Range.safeParse(c.req.query("range") ?? "1h");
 
   app.get("/health", (c) =>
-    c.json<Health>({ ok: true, version, ai: { enabled: ai.enabled, model: ai.enabled ? "claude-opus-5-5" : null }, uptimeMs: Date.now() - startedAt }),
+    c.json<Health>({ ok: true, version, ai: { enabled: ai.enabled, model: ai.enabled ? MODEL : null }, uptimeMs: Date.now() - startedAt }),
   );
 
   /** Everything the dashboard needs for first paint, in one response. */
@@ -142,9 +133,7 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
   });
 
   /** Gateways post one event or a batch of up to 500. The rules verdict comes back in the response. */
-  app.post("/events", bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => fail(c, 413, "too_large", "Body over 2 MB") }), async (c) => {
-    if (ingestToken && !tokenMatches(c.req.header("Authorization"), ingestToken))
-      return fail(c, 401, "unauthorized", "Missing or wrong ingest token");
+  app.post("/events", requireToken(ingestToken), bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => fail(c, 413, "too_large", "Body over 2 MB") }), async (c) => {
     const body = await c.req.json().catch(() => undefined);
     const parsed = IngestBody.safeParse(body);
     if (!parsed.success) {
@@ -238,6 +227,7 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     });
   });
 
+  app.route("/", deceptionRoutes({ deception, ingestToken }));
   app.route("/reports", reportRoutes(reports));
 
   // Unknown API paths answer in the API's error shape, never with the web app.
@@ -260,10 +250,4 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     root.get("*", serveStatic({ root: webRoot, path: "index.html", precompressed: true }));
   }
   return root;
-}
-
-function tokenMatches(header: string | undefined, token: string): boolean {
-  const given = Buffer.from(header?.replace(/^Bearer\s+/i, "") ?? "");
-  const want = Buffer.from(token);
-  return given.length === want.length && timingSafeEqual(given, want);
 }

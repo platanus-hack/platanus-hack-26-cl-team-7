@@ -1,0 +1,52 @@
+# Allow list for the twin's data (python -m demo.mask and python -m demo.sync).
+#
+# Only the tables listed here reach the twin; an unlisted table (sessions) stays empty there.
+# In a listed table a column copies only when it is marked:
+#   public                       the real value is copied as it is
+#   {mask: <kind>, person: <col>} a realistic value of <kind> (name, username, email, phone or
+#                                address) for the person whose id is in column <col>. The same
+#                                person gets the same values in every table, a masked value is
+#                                never equal to any real value of that kind, and masked usernames
+#                                and emails are unique.
+# Every column that is not marked becomes NULL in the twin (password_hash, avatar_url).
+key: twin-mask-v1 # where masked people come from; a new key gives everyone a new identity
+canaries:
+  admin_role: admin # the admin's masked email, phone and address are canaries
+  recent_orders: 3 # and so are the masked ship-to addresses of the newest orders
+tables:
+  products:
+    id: public
+    name: public
+    description: public
+    price_cents: public
+    stock: public
+    created_at: public
+  users:
+    id: public
+    username: { mask: username, person: id }
+    name: { mask: name, person: id }
+    email: { mask: email, person: id }
+    phone: { mask: phone, person: id }
+    address: { mask: address, person: id }
+    role: public
+    created_at: public
+  orders:
+    id: public
+    user_id: public
+    status: public
+    total_cents: public
+    ship_name: { mask: name, person: user_id }
+    ship_address: { mask: address, person: user_id }
+    created_at: public
+    updated_at: public
+  order_items:
+    id: public
+    order_id: public
+    product_id: public
+    quantity: public
+    price_cents: public
+  order_events:
+    id: public
+    order_id: public
+    status: public
+    at: public

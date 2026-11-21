@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { REPORT_LIMITS, type CaseFile, type Hypothesis, type Report, type ReportScope, type RequestRow } from "@sentinel/contracts";
+import { DeceptionStore } from "../src/deception.ts";
 import { Ai } from "../src/ai.ts";
 import { createApp } from "../src/app.ts";
 import { Bus } from "../src/bus.ts";
@@ -225,7 +226,8 @@ export function reportsSetup(model: ReportModel, now: () => number = () => NOW) 
 
 export function reportsApp(bus: Bus, store: Store, reports: ReportService | null) {
   const ai = new Ai(store, bus, { client: null });
-  return createApp({ store, bus, ai, heartbeatMs: 50, ...(reports ? { reports } : {}) });
+  const deception = new DeceptionStore(new DatabaseSync(":memory:"), bus);
+  return createApp({ store, bus, ai, deception, heartbeatMs: 50, ...(reports ? { reports } : {}) });
 }
 
 /** Narrows a `decide` result in tests. A Report has an `id`; an error result does not. */

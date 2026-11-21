@@ -4,15 +4,25 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from engine.models import Request
 
 HEADERS = {"Accept": ["text/html,*/*;q=0.8"], "Accept-Language": ["en-US,en;q=0.9"]}
+NOT_MODIFIED = 304
 
 
-def caddy_line(req: Request, host: str = "shop.localhost") -> str:
+@dataclass(frozen=True, slots=True)
+class LoggedRequest(Request):
+    """A generated Request plus the response status its access-log line records. The rules never
+    read the status, so it lives here, with the log writer, and not on engine.models.Request."""
+
+    status: int
+
+
+def caddy_line(req: LoggedRequest, host: str = "shop.localhost") -> str:
     uri = f"{req.path}?{req.query}" if req.query else req.path
     request: dict[str, Any] = {
         "remote_ip": req.ip,
@@ -33,7 +43,7 @@ def caddy_line(req: Request, host: str = "shop.localhost") -> str:
         "bytes_read": 0,
         "user_id": "",
         "duration": 0.0011,
-        "size": 0 if req.status == 304 else 2048,
+        "size": 0 if req.status == NOT_MODIFIED else 2048,
         "status": req.status,
         "resp_headers": {"Server": ["Caddy"]},
     }
@@ -41,7 +51,7 @@ def caddy_line(req: Request, host: str = "shop.localhost") -> str:
 
 
 def write_pair(
-    directory: Path, name: str, sessions: Sequence[Sequence[Request]], notes: str
+    directory: Path, name: str, sessions: Sequence[Sequence[LoggedRequest]], notes: str
 ) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     requests = sorted((req for session in sessions for req in session), key=lambda r: r.ts)

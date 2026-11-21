@@ -1,4 +1,5 @@
-# Engine image: follows the Caddy access log and posts verdicts. Build context is the repo root.
+# Engine image: replays a Caddy access log into verdicts (compose `replay`, eval profile); the
+# router runs the live detector. Build context is the repo root.
 FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.9 /uv /bin/uv

@@ -1,5 +1,7 @@
-# Local no-Docker proxy (scripts/stack_local.sh): :8080 -> demo site on 127.0.0.1:8081.
-# Paths are relative to the repository root, where the script starts Caddy.
+# Local edge without Docker (scripts/stack_local.sh): one public site on :8080 for both lanes
+# (STACK_EDGE_PORT moves it; tests use a free port). The lane rules live in deploy/lanes.caddy.
+# Paths are relative to the repository root, where the script starts Caddy; the shops and the
+# router listen on Unix sockets in run/. tests/test_edge_caddy.py runs this file against stubs.
 # Same log redaction and header limit as deploy/Caddyfile.
 {
 	admin off
@@ -9,7 +11,9 @@
 	}
 }
 
-:8080 {
+import lanes.caddy
+
+:{$STACK_EDGE_PORT:8080} {
 	log {
 		output file run/access.log {
 			roll_size 100MiB
@@ -31,5 +35,6 @@
 			}
 		}
 	}
-	reverse_proxy 127.0.0.1:8081
+
+	import lanes run
 }

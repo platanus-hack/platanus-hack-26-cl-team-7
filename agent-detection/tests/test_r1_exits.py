@@ -34,7 +34,7 @@ def make_detector(min_exits: int = 5, window: float = 300.0) -> Detector:
 
 
 def req(ts: float, path: str, method: str = "GET", ip: str = IP, ua: str = UA) -> Request:
-    return Request(ts=ts, ip=ip, user_agent=ua, method=method, path=path, query="", status=404)
+    return Request(ts=ts, ip=ip, user_agent=ua, method=method, path=path, query="")
 
 
 def exits(times: list[float]) -> list[Request]:

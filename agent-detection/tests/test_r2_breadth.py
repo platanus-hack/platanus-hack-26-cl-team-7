@@ -58,7 +58,7 @@ def make_detector(max_endpoints: int = 10, window: float = 60.0) -> Detector:
 
 
 def req(ts: float, path: str, method: str = "GET", ip: str = IP) -> Request:
-    return Request(ts=ts, ip=ip, user_agent=UA, method=method, path=path, query="", status=200)
+    return Request(ts=ts, ip=ip, user_agent=UA, method=method, path=path, query="")
 
 
 def spaced(paths: list[str], step: float = 1.0, start: float = 0.0) -> list[Request]:

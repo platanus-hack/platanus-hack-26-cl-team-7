@@ -1,0 +1,82 @@
+{
+  "limits": {
+    "batch": 500,
+    "body": 8192,
+    "text": 512,
+    "uri": 2048,
+    "method": 16,
+    "keyValue": 1024,
+    "keys": 16
+  },
+  "batch": [
+    {
+      "type": "track.opened",
+      "eventId": "track.opened:5f0c7c1e-3b9a-4d21-9a43-7c2b1e9f0a11",
+      "trackId": "trk_0123456789abcdef",
+      "ts": 1763700000000,
+      "ip": "203.0.113.7",
+      "userAgent": "python-httpx/0.27.0",
+      "rule": "R3",
+      "reason": "critical flag: sql injection in query",
+      "keys": [
+        {
+          "kind": "ip_ua",
+          "value": "203.0.113.7|python-httpx/0.27.0"
+        },
+        {
+          "kind": "ip",
+          "value": "203.0.113.7"
+        }
+      ]
+    },
+    {
+      "type": "track.linked",
+      "eventId": "track.linked:5f0c7c1e-3b9a-4d21-9a43-7c2b1e9f0a11:twin_born-0",
+      "trackId": "trk_0123456789abcdef",
+      "ts": 1763700000001,
+      "key": {
+        "kind": "twin_born",
+        "value": "5441c5e19d8cf0b1b6f73fa1cddfda4ccfe85b19603736c6b2d9121921cdb5a1"
+      }
+    },
+    {
+      "type": "track.action",
+      "eventId": "track.action:5f0c7c1e-3b9a-4d21-9a43-7c2b1e9f0a11",
+      "trackId": "trk_0123456789abcdef",
+      "ts": 1763700000002,
+      "method": "POST",
+      "path": "/login",
+      "query": "next=%2Faccount",
+      "status": 401,
+      "durationMs": 12,
+      "requestBody": "username=admin'--&pw=guess",
+      "responseBody": "<p>Wrong user name or password — try again 🔒</p>"
+    },
+    {
+      "type": "finding.confirmed",
+      "eventId": "finding.confirmed:5f0c7c1e-3b9a-4d21-9a43-7c2b1e9f0a11:auth_flip",
+      "trackId": "trk_0123456789abcdef",
+      "ts": 1763700000003,
+      "findingId": "fnd_fedcba9876543210",
+      "kind": "auth_flip",
+      "endpoint": "POST /login",
+      "evidence": "401 for this track, then 200 with signature 'sql comment'"
+    },
+    {
+      "type": "track.opened",
+      "eventId": "track.opened:req-2",
+      "trackId": "trk_0123456789abcdef",
+      "ts": 1763700000000,
+      "ip": "2001:db8::7",
+      "userAgent": "",
+      "rule": "R3",
+      "reason": "critical flag: sql injection in query",
+      "keys": [
+        {
+          "kind": "ip",
+          "value": "2001:db8::7"
+        }
+      ]
+    }
+  ]
+}
