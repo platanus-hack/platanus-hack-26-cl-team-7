@@ -45,7 +45,7 @@ const RULES: Rule[] = [
 
 /** Weaker signals that only mark a request as suspicious. AI (or a human) decides. */
 const SOFT: Rule[] = [
-  { type: "prompt_injection", confidence: 0.55, test: /\b(other users?|all users?|every (user|employee))('s)? (data|records|salar(y|ies)|payroll|emails?)\b|\bact as (the )?admin\b|\bbase64\b.*\bdecode\b/i },
+  { type: "prompt_injection", confidence: 0.55, test: /\b(other users?|all users?|every (user|employee))('s)? (data|records|salar(y|ies)|payroll|emails?)\b|\bact as (the )?admin\b|\bbase64\b.*\bdecode\b|\bdecode\b.*\bbase64\b/i },
   { type: "sql_injection", confidence: 0.5, test: /('|%27)\s*(or|and)\s|\bselect\b.+\bfrom\b/i },
 ];
 

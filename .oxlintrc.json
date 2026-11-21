@@ -1,4 +1,4 @@
 {
-  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "**/src-tauri/target/**"],
+  "ignorePatterns": ["**/dist/**", "**/node_modules/**"],
   "rules": {}
 }

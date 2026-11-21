@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
@@ -15,6 +15,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.SENTINEL_PORT ?? DEFAULT_PORT);
 const host = process.env.SENTINEL_HOST ?? "127.0.0.1";
 const dbPath = resolve(process.env.SENTINEL_DB ?? resolve(here, "../data/sentinel.db"));
+const webRoot = resolve(process.env.SENTINEL_WEB ?? resolve(here, "../../web/dist"));
+const allowedOrigins = (process.env.SENTINEL_ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
 mkdirSync(dirname(dbPath), { recursive: true });
 // The SDK resolves ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN. Without either, AI stays off.
@@ -31,9 +33,10 @@ bus.subscribe((b) => {
   for (const c of b.changes) if (c.kind === "attacker" && !c.attacker.country) geo.request(c.attacker.ip);
 });
 
-const app = createApp({ store, bus, ai });
+const app = createApp({ store, bus, ai, webRoot, allowedOrigins });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
-  console.log(`[sentinel] http://${host}:${info.port}/v1  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  db=${dbPath}`);
+  const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
+  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
 });
 
 function shutdown() {

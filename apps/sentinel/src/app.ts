@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -24,21 +27,23 @@ export interface AppDeps {
   version?: string;
   startedAt?: number;
   heartbeatMs?: number;
+  /** Extra origins allowed to call the API. The bundled web app is same-origin and needs none. */
+  allowedOrigins?: string[];
+  /** Folder with the built web app. When it holds an index.html, Sentinel serves it at "/". */
+  webRoot?: string;
 }
-
-const ALLOWED_ORIGINS = ["tauri://localhost", "http://tauri.localhost", "http://localhost:1420", "http://127.0.0.1:1420"];
 
 function fail(c: Context, status: 400 | 404 | 413 | 500 | 503, code: string, message: string) {
   return c.json<ApiError>({ error: { code, message } }, status);
 }
 
-export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000 }: AppDeps) {
+export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
     "*",
     cors({
-      origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : null),
+      origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowHeaders: ["Content-Type", "Last-Event-ID"],
       maxAge: 600,
@@ -57,7 +62,6 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     console.error("[http]", err);
     return fail(c, 500, "internal", "Unexpected server error");
   });
-  app.notFound((c) => fail(c, 404, "not_found", "No such route"));
 
   const rangeOf = (c: Context) => Range.safeParse(c.req.query("range") ?? "1h");
 
@@ -192,5 +196,22 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     });
   });
 
-  return app;
+  // Unknown API paths answer in the API's error shape, never with the web app.
+  app.all("/*", (c) => fail(c, 404, "not_found", "No such route"));
+
+  const root = new Hono();
+  root.route("/", app);
+  if (webRoot && existsSync(join(webRoot, "index.html"))) {
+    // Hashed asset names never change content, so browsers keep them for a year.
+    // The app shell must not be cached, so a new build shows at once.
+    root.use("/*", async (c, next) => {
+      await next();
+      if (c.req.path.startsWith("/assets/")) c.res.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      else if (c.res.headers.get("Content-Type")?.startsWith("text/html")) c.res.headers.set("Cache-Control", "no-cache");
+    });
+    root.use("/*", serveStatic({ root: webRoot, precompressed: true }));
+    // Any other path loads the app shell.
+    root.get("*", serveStatic({ root: webRoot, path: "index.html", precompressed: true }));
+  }
+  return root;
 }

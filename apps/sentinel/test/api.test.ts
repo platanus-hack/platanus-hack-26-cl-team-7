@@ -1,5 +1,9 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { CopilotEvent, Snapshot } from "@sentinel/contracts";
+import { createApp } from "../src/app.ts";
 import { ev, fakeClient, setup, tick } from "./helpers.ts";
 
 async function readSSE(res: Response, until: (events: { event: string; data: string; id?: string }[]) => boolean, ms = 1500) {
@@ -82,10 +86,11 @@ describe("HTTP API", () => {
     expect((await app.request("/v1/blocks/203.0.113.42", { method: "DELETE" })).status).toBe(204);
   });
 
-  it("allows the desktop origins and nothing else", async () => {
-    const { app } = setup();
-    const ok = await app.request("/v1/health", { headers: { Origin: "tauri://localhost" } });
-    expect(ok.headers.get("Access-Control-Allow-Origin")).toBe("tauri://localhost");
+  it("allows only configured cross-origin callers", async () => {
+    const { store, bus, ai } = setup();
+    const app = createApp({ store, bus, ai, allowedOrigins: ["https://soc.example"] });
+    const ok = await app.request("/v1/health", { headers: { Origin: "https://soc.example" } });
+    expect(ok.headers.get("Access-Control-Allow-Origin")).toBe("https://soc.example");
     const no = await app.request("/v1/health", { headers: { Origin: "https://evil.example" } });
     expect(no.headers.get("Access-Control-Allow-Origin")).toBeNull();
   });
@@ -114,6 +119,26 @@ describe("HTTP API", () => {
     }
     const got = await readSSE(await app.request("/v1/stream?after=1"), (es) => es.some((e) => e.event === "reset"));
     expect(got.some((e) => e.event === "reset")).toBe(true);
+  });
+
+  it("serves the web app with immutable assets, a fresh shell and JSON 404s under /v1", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "sentinel-web-"));
+    mkdirSync(join(dir, "assets"));
+    writeFileSync(join(dir, "index.html"), "<!doctype html><title>Sentinel</title>");
+    writeFileSync(join(dir, "assets", "app-abc123.js"), "console.log(1)");
+    const { store, bus, ai } = setup();
+    const app = createApp({ store, bus, ai, webRoot: dir });
+    const home = await app.request("/");
+    expect(await home.text()).toContain("<title>Sentinel</title>");
+    const deep = await app.request("/attackers/203.0.113.42");
+    expect(deep.status).toBe(200);
+    expect(deep.headers.get("Cache-Control")).toBe("no-cache");
+    const asset = await app.request("/assets/app-abc123.js");
+    expect(asset.headers.get("Cache-Control")).toContain("immutable");
+    const api404 = await app.request("/v1/nope");
+    expect(api404.status).toBe(404);
+    expect((await api404.json()).error.code).toBe("not_found");
+    rmSync(dir, { recursive: true });
   });
 
   it("returns 503 for the copilot when AI is off", async () => {
