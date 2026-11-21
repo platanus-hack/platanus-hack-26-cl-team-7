@@ -63,10 +63,10 @@
 
 /* The agents list: one line a row. */
 .main.mirror-main {
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 208px minmax(0, 1fr);
 }
 .main.mirror-main.with-copilot {
-  grid-template-columns: 260px minmax(0, 1fr) 440px;
+  grid-template-columns: 208px minmax(0, 1fr) 440px;
 }
 .mirror-side {
   display: grid;
@@ -76,15 +76,15 @@
   border-right: 1px solid var(--color-line);
 }
 .side-nav {
-  padding: 12px 10px 4px;
+  padding: 8px 8px 2px;
 }
 .side-link {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-  height: 34px;
-  padding: 0 10px;
+  height: 30px;
+  padding: 0 8px;
   border-radius: 6px;
   font-size: 13px;
   color: var(--color-ash);
@@ -171,12 +171,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 44px;
-  padding: 0 20px;
+  height: 34px;
+  padding: 0 14px;
   font-size: 13px;
 }
 .hd.mt-hd {
-  padding-bottom: 10px;
+  padding: 12px 14px 6px;
 }
 .mv-err {
   color: var(--c-danger);
