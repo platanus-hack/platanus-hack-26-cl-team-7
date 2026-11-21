@@ -28,8 +28,16 @@ class Split:
 
 def load_split(directory: Path) -> Split:
     split = Split(requests=[], labels={})
+    owner: dict[str, str] = {}
     for log_path in sorted(directory.rglob("*.jsonl")):
-        _add_pair(split, log_path)
+        name = log_path.relative_to(directory).as_posix()
+        for session_id in _add_pair(split, log_path):
+            first = owner.setdefault(session_id, name)
+            if first != name:
+                raise DatasetError(
+                    f"{name}: session {session_id!r} also appears in {first}; two files would "
+                    "merge into one session (give each source its own IP block)"
+                )
     split.requests.sort(key=lambda req: req.ts)
     return split
 
@@ -46,7 +54,7 @@ def labels_path(log_path: Path) -> Path:
     return log_path.with_name(log_path.name.removesuffix(".jsonl") + ".labels.json")
 
 
-def _add_pair(split: Split, log_path: Path) -> None:
+def _add_pair(split: Split, log_path: Path) -> set[str]:
     meta = _read_labels(labels_path(log_path))
     source = str(meta.get("source") or log_path.stem)
     sessions = _sessions(meta, log_path)
@@ -59,6 +67,7 @@ def _add_pair(split: Split, log_path: Path) -> None:
         split.sources[req.session_id] = source
     split.synthetic[source] = bool(meta.get("synthetic", False))
     split.requests.extend(requests)
+    return {req.session_id for req in requests}
 
 
 def _read_labels(path: Path) -> dict[str, Any]:

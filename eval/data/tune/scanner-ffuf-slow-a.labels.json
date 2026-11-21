@@ -1,0 +1,8 @@
+{
+  "source": "scanner-ffuf-slow-a",
+  "synthetic": false,
+  "notes": "Recorded through Caddy (scripts/record_scanners.sh) against the demo shop. Loopback client_ip/remote_ip rewritten to 10.66.1.2 for this run; no other field changed. Sessions = IP|User-Agent: 1. Slow ffuf: -rate 1. SecLists master as of 2026-11-21: common.txt sha256 47fb86ca6fb3f97e5491161581900d6d99851fb16764eacddf16aa85617c956a, raft-small-directories.txt sha256 06e1ac7b390c17eb9e0da416d0599c785a1541813daa95b01c676bc92d55185f. Command: ffuf -s -rate 1 -t 1 -w <lists>/slow-a.txt -u http://127.0.0.1:8080/FUZZ -H 'User-Agent: Fuzz Faster U Fool v2.1.0-dev scanners-ffuf-slow-a' -mc all -fc 404",
+  "sessions": {
+    "10.66.1.2|Fuzz Faster U Fool v2.1.0-dev scanners-ffuf-slow-a": "probing"
+  }
+}

@@ -17,6 +17,7 @@ first verdict (smallest request_count); humans never enter it.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from typing import Any
 
@@ -139,6 +140,15 @@ def test_median_takes_smallest_request_count_whatever_the_order() -> None:
     value, sessions = metric(score(labels, verdicts), "median_requests_before_verdict")
     assert value == pytest.approx(9.0)
     assert sessions == 1
+
+
+def test_median_uses_the_earliest_verdict_after_an_idle_reset() -> None:
+    # R3 at request 21, then 2000 s idle: the engine restarts the session, so R1 fires later
+    # with request_count 5. Requests before the first verdict are still 21.
+    labels: dict[str, Label] = {sid("p1"): "probing"}
+    late = dataclasses.replace(verdict(sid("p1"), 5, rule="R1"), ts=3024.0)
+    verdicts = [verdict(sid("p1"), 21, rule="R3", critical=True), late]
+    assert metric(score(labels, verdicts), "median_requests_before_verdict") == (21.0, 1)
 
 
 def test_median_of_even_count_is_mean_of_middle_pair() -> None:

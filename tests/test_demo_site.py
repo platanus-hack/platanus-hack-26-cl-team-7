@@ -16,6 +16,8 @@ from urllib.parse import urlencode, urlsplit
 import pytest
 import yaml
 
+from engine.routes import RouteTable
+
 ROOT = Path(__file__).resolve().parents[1]
 ROUTES_YAML = ROOT / "config" / "routes.yaml"
 HOST = "127.0.0.1"
@@ -238,6 +240,8 @@ def test_every_crawled_link_is_on_the_route_list_and_resolves(
 ) -> None:
     exits = sorted(p for p in crawled if not matches_any(p, routes))
     assert exits == [], f"pages link to off-contract paths: {exits}"
+    table = RouteTable.from_yaml(ROUTES_YAML)
+    assert sorted(p for p in crawled if table.match("GET", p) is None) == []
     broken = sorted(f"{p} -> {r.status}" for p, r in crawled.items() if r.status >= 400)
     assert broken == []
 

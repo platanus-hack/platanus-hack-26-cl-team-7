@@ -14,13 +14,26 @@ from pathlib import Path
 
 HUNK = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 
-# Tokens are split so that this file never matches its own rules.
+# Tokens are split so that this file never matches its own rules. File-level forms count too:
+# "ruff: noqa" / "flake8: noqa" switch lint off and "mypy:" / "pyright:" comments change the
+# type checker for a whole file. Skip and xfail match any import alias of `mark`; the pytest
+# plugin scripts/pytest_floor.py fails every skip that a pattern cannot see.
+_SKIP = "sk" + "ip"
+_XFAIL = "x" + "fail"
 RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("noqa", re.compile(r"#\s*" + "no" + "qa", re.IGNORECASE)),
+    ("noqa", re.compile(r"#\s*(?:(?:ruff|flake8)\s*:\s*)?" + "no" + "qa", re.IGNORECASE)),
     ("type-ignore", re.compile(r"#\s*type:\s*" + "ig" + "nore")),
-    ("no-cover", re.compile(r"pragma:\s*no\s*" + "co" + "ver")),
-    ("skip", re.compile(r"\bpytest\.(?:mark\.sk" + r"ip(?:if)?\b|sk" + r"ip\s*\()")),
-    ("xfail", re.compile(r"\bpytest\.(?:mark\.x" + r"fail\b|x" + r"fail\s*\()")),
+    ("checker-config", re.compile(r"#\s*(?:my" + r"py|pyr" + r"ight)\s*:", re.IGNORECASE)),
+    ("no-cover", re.compile(r"pragma:\s*no\s*(?:co" + r"ver|bra" + r"nch)")),
+    (
+        "skip",
+        re.compile(
+            rf"\bmark\.{_SKIP}(?:if)?\b|\bpytest\.{_SKIP}\s*\(|\bimportor{_SKIP}\b"
+            rf"|\bunittest\.{_SKIP}|\b{_SKIP}(?:If|Unless)\b"
+        ),
+    ),
+    ("xfail", re.compile(rf"\bmark\.{_XFAIL}\b|\bpytest\.{_XFAIL}\s*\(|\bexpected" + r"Failure\b")),
+    ("collect-ignore", re.compile(r"\bcollect_" + r"ignore(?:_glob)?\b")),
     ("not-implemented", re.compile(r"\braise\s+NotImpl" + r"ementedError\b")),
 )
 

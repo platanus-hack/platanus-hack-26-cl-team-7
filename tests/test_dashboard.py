@@ -238,9 +238,14 @@ def test_in_process_round_trip_and_unknown_paths(in_process: str) -> None:
     assert b"/api/verdicts" in body
 
 
-@pytest.mark.parametrize("body", [b"[1, 2]", b'"text"', b"{bad", b"x" * (MAX_BODY + 1)])
+@pytest.mark.parametrize("body", [b"[1, 2]", b'"text"', b"{bad", b"x" * 1000])
 def test_in_process_rejects_non_object_or_oversized_body(in_process: str, body: bytes) -> None:
     assert _request(f"{in_process}/webhook", body)[0] == 400
+    assert _verdicts(in_process) == []
+
+
+def test_in_process_answers_413_to_a_body_over_the_limit(in_process: str) -> None:
+    assert _request(f"{in_process}/webhook", b"x" * (MAX_BODY + 1))[0] == 413
     assert _verdicts(in_process) == []
 
 

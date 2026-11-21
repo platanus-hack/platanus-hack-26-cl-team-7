@@ -25,6 +25,12 @@ ignore = ["PLR2004", "S101"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "PLR0913"]
+# Standing lint exception (CONSTRAINTS.md "Lint exceptions"): seeded, non-crypto RNG that makes
+# synthetic data reproducible. Owner team-7, review 2027-05-21. Synthetic-data modules only.
+"eval/synthetic.py" = ["S311"]
+"eval/tail.py" = ["S311"]
+"eval/base_rate.py" = ["S311"]
+"eval/convert/csic.py" = ["S311"]
 
 [tool.mypy]
 strict = true
@@ -35,7 +41,9 @@ testpaths = ["tests"]
 addopts = "-q"
 
 [tool.coverage.run]
-source = ["engine", "eval", "dashboard", "scripts", "demo"]
+# source_pkgs (not source) keeps repo-relative file names in coverage.xml, so diff-cover never
+# mixes up engine/__init__.py with dashboard/__init__.py.
+source_pkgs = ["engine", "eval", "dashboard", "scripts", "demo"]
 branch = true
 
 # File size limits. Exceptions need an owner and an end date (see CONSTRAINTS.md).

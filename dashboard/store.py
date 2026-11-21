@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import time
@@ -18,6 +19,7 @@ CREATE TABLE IF NOT EXISTS verdicts (
 )
 """
 DEFAULT_LIMIT = 500
+MAX_TEXT = 512  # longest string kept in a stored verdict; longer ones keep a length and a hash
 
 
 class VerdictStore:
@@ -33,7 +35,7 @@ class VerdictStore:
         with self._connection() as conn:
             cursor = conn.execute(
                 "INSERT INTO verdicts (received_at, payload) VALUES (?, ?)",
-                (time.time(), json.dumps(payload)),
+                (time.time(), json.dumps(clip(payload))),
             )
             return int(cursor.lastrowid or 0)
 
@@ -60,3 +62,16 @@ def _row(row_id: int, received_at: float, payload: str) -> dict[str, Any]:
     item["id"] = row_id
     item["received_at"] = received_at
     return item
+
+
+def clip(value: Any) -> Any:
+    """Cut every string (keys too) in a JSON value to MAX_TEXT characters, so a session key that
+    carries a huge User-Agent is still stored and shown, with a hash to tell long values apart."""
+    if isinstance(value, dict):
+        return {clip(str(key)): clip(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [clip(item) for item in value]
+    if isinstance(value, str) and len(value) > MAX_TEXT:
+        digest = hashlib.sha256(value.encode("utf-8", "surrogatepass")).hexdigest()[:16]
+        return f"{value[:MAX_TEXT]}... [{len(value)} chars, sha256 {digest}]"
+    return value

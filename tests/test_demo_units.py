@@ -12,7 +12,18 @@ import demo.__main__ as demo_main
 from demo.api import Call
 from demo.assets import ASSETS, FAVICON
 from demo.pages import respond
-from demo.site import ShopServer, compile_route, make_server, parse_form, resolve, serve
+from demo.site import (
+    ROUTES_FILE,
+    Match,
+    ShopServer,
+    compile_route,
+    load_routes,
+    make_server,
+    parse_form,
+    resolve,
+    serve,
+)
+from engine.routes import RouteTable
 
 Answer = tuple[int, dict[str, str], bytes]
 
@@ -58,7 +69,32 @@ def test_route_patterns_follow_the_contract_syntax() -> None:
     assert item.params("/api/users/") is None
     assert item.params("/API/users/7") is None
     login = compile_route({"pattern": "/login", "methods": ["get", "post"]})
-    assert login.allows("HEAD") and login.allows("POST") and not login.allows("PUT")
+    assert login.accepts("GET", "/login") and login.accepts("POST", "/login/")
+    assert not login.accepts("HEAD", "/login") and not login.accepts("PUT", "/login")
+
+
+AGREEMENT_PATHS = ("/", "/login", "/login/", "/products//", "/products/1/", "/static", "/zz")
+
+
+@pytest.mark.parametrize("method", ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"])
+def test_site_serves_exactly_what_the_engine_counts_as_on_the_route_list(method: str) -> None:
+    table = RouteTable.from_yaml(ROUTES_FILE)
+    routes = load_routes(ROUTES_FILE)
+    for path in AGREEMENT_PATHS + ("/cart", "/checkout", "/api/session", "/api/cart"):
+        served = isinstance(resolve(routes, method, path), Match)
+        assert served == (table.match(method, path) is not None), f"{method} {path}"
+
+
+def test_empty_method_list_accepts_no_method_like_the_engine() -> None:
+    entry = {"pattern": "/x", "methods": []}
+    route = compile_route(entry)
+    assert RouteTable.from_patterns([entry]).match("GET", "/x") is None
+    assert resolve((route,), "GET", "/x") == route
+
+
+def test_head_on_a_get_post_route_is_405_like_the_engine_exit(port: int) -> None:
+    status, headers, _ = call(port, "HEAD", "/login")
+    assert status == 405 and headers["Allow"] == "GET, POST"
 
 
 def test_resolve_tells_wrong_method_from_unknown_path() -> None:

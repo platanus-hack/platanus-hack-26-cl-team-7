@@ -17,10 +17,12 @@ from engine.models import Label, Request, Verdict
 from engine.routes import RouteTable
 from eval.dataset import Split, load_split
 from eval.metrics import POSITIVE
-from eval.synthetic import SeededRandom, synthetic_humans
+from eval.synthetic import synthetic_humans
+from eval.tail import tail_humans
 
 __all__ = [
     "RATIO",
+    "TAIL_SHARE",
     "BaseRateRun",
     "false_alarms_per_1000",
     "mix_base_rate",
@@ -29,6 +31,9 @@ __all__ = [
 ]
 
 RATIO = 10_000
+# Share of base-rate humans drawn from eval.tail (DevTools open, iOS touch icons, fast tabs).
+# A modelling choice, not a measured rate; the report prints it next to the result.
+TAIL_SHARE = 0.01
 
 
 def mix_base_rate(
@@ -37,8 +42,12 @@ def mix_base_rate(
     seed: int,
     ratio: int = RATIO,
 ) -> Split:
-    rng = SeededRandom(seed)
+    rng = random.Random(seed)
     wanted = len(humans) // ratio
+    if wanted == 0:
+        raise ValueError(
+            f"a 1:{ratio} mix needs at least {ratio} human sessions, got {len(humans)}"
+        )
     if wanted > len(probes):
         raise ValueError(f"need {wanted} probe sessions, the pool has {len(probes)}")
     stamps = [req.ts for session in humans for req in session]
@@ -68,11 +77,22 @@ class BaseRateRun:
     humans: int = 20_000
     seed: int = 1
     ratio: int = RATIO
+    tail_share: float = TAIL_SHARE
+
+
+def base_rate_humans(
+    patterns: list[dict[str, object]], count: int, seed: int, tail_share: float = TAIL_SHARE
+) -> list[list[Request]]:
+    """`count` synthetic humans: ordinary visits plus round(count * tail_share) tail visits."""
+    if not 0.0 <= tail_share <= 1.0:
+        raise ValueError(f"tail_share must be in 0..1, got {tail_share}")
+    tail = round(count * tail_share)
+    return [*synthetic_humans(patterns, count - tail, seed), *tail_humans(patterns, tail, seed)]
 
 
 def run_base_rate(run: BaseRateRun) -> dict[str, Any]:
     patterns = load_patterns(run.routes)
-    people = synthetic_humans(patterns, run.humans, run.seed)
+    people = base_rate_humans(patterns, run.humans, run.seed, run.tail_share)
     mixed = mix_base_rate(people, probe_sessions(load_split(run.probe_dir)), run.seed, run.ratio)
     detector = Detector(RouteTable.from_patterns(patterns), load_thresholds(run.rules))
     verdicts = replay(mixed.requests, detector)
@@ -80,9 +100,12 @@ def run_base_rate(run: BaseRateRun) -> dict[str, Any]:
     probes = [sid for sid, label in mixed.labels.items() if label == "probing"]
     return {
         "ratio": run.ratio,
+        "actual_ratio": len(people) / len(probes),
         "seed": run.seed,
         "human_sessions": len(people),
         "human_sessions_synthetic": True,
+        "human_tail_sessions": round(run.humans * run.tail_share),
+        "human_tail_share": run.tail_share,
         "probe_sessions": len(probes),
         "probe_source": str(run.probe_dir),
         "flagged_human_sessions": sum(1 for s in people if s and s[0].session_id in flagged),

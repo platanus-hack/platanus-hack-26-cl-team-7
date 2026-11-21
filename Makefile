@@ -4,17 +4,25 @@ SHELL := /bin/bash
 
 BASE ?= $(shell git rev-parse --verify --quiet origin/main >/dev/null 2>&1 && echo origin/main || echo main)
 HAS_BASE = git rev-parse --verify --quiet '$(BASE)^{commit}' >/dev/null 2>&1
+# CI sets REQUIRE_BASE=1: there a missing base fails floor and test instead of narrowing them.
+REQUIRE_BASE ?=
 GIT_DIFF = git diff --no-color --no-ext-diff
 TYPED_PACKAGES = engine eval dashboard scripts demo
 
-.PHONY: check size floor lint types secrets test eval eval-ci lock deps demo-up
+.PHONY: check size require-base floor lint types secrets test eval eval-ci lock baseline deps demo-up
 
 check: size floor lint types secrets test
 
 size:
 	uv run python scripts/check_size.py
 
-floor:
+require-base:
+	@if [ -n "$(REQUIRE_BASE)" ] && ! $(HAS_BASE); then \
+	  echo "$@: base '$(BASE)' not found and REQUIRE_BASE is set; refusing to check a narrower diff" >&2; \
+	  exit 2; \
+	fi
+
+floor: require-base
 	@{ \
 	  if $(HAS_BASE); then $(GIT_DIFF) '$(BASE)...HEAD'; \
 	  else echo "floor: warning: base '$(BASE)' not found; checking only changes against HEAD" >&2; fi; \
@@ -32,7 +40,7 @@ types:
 secrets:
 	gitleaks dir . --redact --no-banner
 
-test:
+test: require-base
 	uv run pytest --cov --cov-branch --cov-report=xml:coverage.xml --cov-report=term
 	@if $(HAS_BASE); then \
 	  uv run diff-cover coverage.xml --compare-branch='$(BASE)' --include-untracked --fail-under=80; \
@@ -47,6 +55,11 @@ eval-ci: eval
 
 lock:
 	uv run python -m eval lock
+
+# Records eval/baseline.json (precision, recall, split, sessions, testset.lock digest) from the
+# locked test split. Run after `make lock`, once the change to the rules is approved.
+baseline:
+	uv run python -m eval baseline
 
 deps:
 	osv-scanner scan source -r .

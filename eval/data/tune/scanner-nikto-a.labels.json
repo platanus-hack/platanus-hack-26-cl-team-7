@@ -1,0 +1,9 @@
+{
+  "source": "scanner-nikto-a",
+  "synthetic": false,
+  "notes": "Recorded through Caddy (scripts/record_scanners.sh) against the demo shop. Loopback client_ip/remote_ip rewritten to 10.66.1.4 for this run; no other field changed. Sessions = IP|User-Agent: 2. nikto also sends its shellshock test UA '() { :; }; ...', a second session. Command: nikto -host 127.0.0.1 -port 8080 -Tuning 2 -maxtime 60s -nointeractive -ask no -useragent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6280.45 Safari/537.36 scanners-nikto-a'",
+  "sessions": {
+    "10.66.1.4|() { :; }; echo 93e4r0-cve-2014-6271: true;echo;echo;": "probing",
+    "10.66.1.4|Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.6280.45 Safari/537.36 scanners-nikto-a": "probing"
+  }
+}

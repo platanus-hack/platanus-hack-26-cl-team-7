@@ -14,7 +14,11 @@ from typing import Any
 from dashboard.store import VerdictStore
 
 PAGE = (Path(__file__).resolve().parent / "page.html").read_bytes()
-MAX_BODY = 64 * 1024
+# The engine copies the attacker's User-Agent into the verdict twice and JSON-escapes it, so one
+# byte on the wire can become 12 bytes of body. Caddy refuses request headers above about 20 KB
+# (431), which keeps a real verdict near 250 KB at most; the store clips long strings on write.
+MAX_BODY = 1024 * 1024
+DRAIN_LIMIT = 16 * MAX_BODY  # an oversize body is read and dropped up to this size, then 413
 
 
 class DashboardServer(ThreadingHTTPServer):
@@ -41,7 +45,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if self.path.partition("?")[0] != "/webhook":
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
             return
-        payload = self._read_object()
+        length = self._body_length()
+        if length > MAX_BODY:
+            self._discard(min(length, DRAIN_LIMIT))
+            self.close_connection = True
+            self.log_message("verdict body of %d bytes is over %d; not stored", length, MAX_BODY)
+            self._send_json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "body too large"})
+            return
+        payload = self._read_object(length)
         if payload is None:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "body must be a JSON object"})
             return
@@ -59,16 +70,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
         assert isinstance(server, DashboardServer)
         return server.store
 
-    def _read_object(self) -> dict[str, Any] | None:
+    def _body_length(self) -> int:
         try:
-            length = int(self.headers.get("Content-Length", "0"))
+            return int(self.headers.get("Content-Length", "0"))
         except ValueError:
-            return None
-        if length <= 0 or length > MAX_BODY:
+            return 0
+
+    def _discard(self, length: int) -> None:
+        while length > 0 and (chunk := self.rfile.read(min(length, 64 * 1024))):
+            length -= len(chunk)
+
+    def _read_object(self, length: int) -> dict[str, Any] | None:
+        if length <= 0:
             return None
         try:
             payload = json.loads(self.rfile.read(length))
-        except ValueError:
+        except (ValueError, RecursionError):
             return None
         return payload if isinstance(payload, dict) else None
 

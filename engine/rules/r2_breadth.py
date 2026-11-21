@@ -18,7 +18,9 @@ class EndpointBreadthRule:
         self.window = thresholds.r2_window
 
     def evaluate(self, session: Session, req: Request, match: RouteMatch | None) -> RuleHit | None:
-        endpoints = session.count_endpoints(req.ts, self.window)
+        # The window ends at the newest ts seen, not at req.ts: under load Caddy writes lines a
+        # few ms out of order, and an earlier line with a later ts must still count.
+        endpoints = session.count_endpoints(session.last_ts, self.window)
         if endpoints <= self.max_endpoints:
             return None
         reason = f"{endpoints} distinct endpoints within {self.window:g} s"

@@ -11,6 +11,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+# Fails any skipped or expected-to-fail test (the CONSTRAINTS.md floor).
+pytest_plugins = ("scripts.pytest_floor",)
+
 
 @pytest.fixture
 def repo_root() -> Path:

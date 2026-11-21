@@ -27,7 +27,8 @@ services:
       dockerfile: deploy/dashboard.Dockerfile
     restart: unless-stopped
     ports:
-      - "8090:8090"
+      # Loopback only: the webhook has no auth; the engine uses http://dashboard:8090 inside.
+      - "127.0.0.1:8090:8090"
     volumes:
       - dashboard-data:/data
 

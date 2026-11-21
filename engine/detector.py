@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterable
 
 from engine.config import Thresholds
@@ -25,7 +26,10 @@ class Detector:
             ContractExitsRule(thresholds),
             EndpointBreadthRule(thresholds),
         )
-        self._fired: set[tuple[str, RuleId]] = set()
+        # Fired (session, rule) pairs outlive session expiry ("one verdict ever"), so they are
+        # kept as fixed-size digests: a scanner that rotates long User-Agents costs ~16 bytes
+        # per verdict here, not the whole UA.
+        self._fired: set[bytes] = set()
         self._next_expiry = float("-inf")
 
     def process(self, req: Request) -> list[Verdict]:
@@ -35,7 +39,7 @@ class Detector:
         session.add(req, match)
         verdicts: list[Verdict] = []
         for rule in self.rules:
-            key = (session.id, rule.rule_id)
+            key = fired_key(session.id, rule.rule_id)
             if key in self._fired:
                 continue
             hit = rule.evaluate(session, req, match)
@@ -45,10 +49,17 @@ class Detector:
         return verdicts
 
     def _expire_idle(self, now: float) -> None:
+        """Free idle sessions about once per idle_timeout. SessionStore.get_or_create already
+        restarts an idle session, so this sweep only bounds memory."""
         if now < self._next_expiry:
             return
         self.sessions.expire(now)
         self._next_expiry = now + self.thresholds.idle_timeout
+
+
+def fired_key(session_id: str, rule: RuleId) -> bytes:
+    text = f"{rule}|{session_id}".encode("utf-8", "surrogatepass")
+    return hashlib.blake2b(text, digest_size=16).digest()
 
 
 def replay(requests: Iterable[Request], detector: Detector) -> list[Verdict]:

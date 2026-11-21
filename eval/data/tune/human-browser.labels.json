@@ -1,0 +1,19 @@
+{
+  "source": "human-browser",
+  "synthetic": true,
+  "notes": "scripted real browser, not a volunteer. Headless Chromium 159 (Playwright) driven through the local stack (Caddy :8080 -> demo site) on Sat, 21 Nov 2026 11:56:21 GMT: follows nav/product links, searches with typed queries (o'brien, c++, rock & roll, cafe with accent, 50% off, quoted phrase...), adds to cart, logs in (POST /login), checks out, logs out; think times compressed to uniform 1-4 s, typing 60-180 ms/char, up to 6 sessions concurrent. Post-processing: client_ip/remote_ip rewritten from 127.0.0.1 to 198.51.100.N (one per session) and a per-session recorder token removed from User-Agent; the UA was overridden to a non-headless Chrome/159 string, but Sec-Ch-Ua still names HeadlessChrome. 502s on a few assets are real: the demo backend reset connections while other recorders loaded it. Demo site sends no cache headers, so assets reload on every page. Labeled human because it imitates human browsing; it is not human data.",
+  "sessions": {
+    "198.51.100.10|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.12|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.14|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.16|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.18|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.20|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.22|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.24|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.26|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.28|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.30|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human",
+    "198.51.100.32|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/159.0.0.0 Safari/537.36": "human"
+  }
+}

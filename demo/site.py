@@ -16,25 +16,31 @@ import yaml
 
 from demo.api import TEXT, Call, Reply
 from demo.pages import respond
+from engine.routes import RouteTable
 
 ROUTES_FILE = Path(__file__).resolve().parents[1] / "config" / "routes.yaml"
 MAX_BODY = 64 * 1024
-PARAM = re.compile(r"\{([^/{}]+)\}")
+PARAM = re.compile(r"\{[^/{}]+\}")
 
 
 @dataclass(frozen=True)
 class Route:
+    """One route list entry. Matching is engine.routes.RouteTable's, so the site serves exactly
+    the (method, path) pairs the engine counts as on the list and nothing it calls an exit."""
+
     pattern: str
     methods: frozenset[str]
-    names: tuple[str, ...]
-    regex: re.Pattern[str]
+    table: RouteTable
+    any_method: RouteTable
 
     def params(self, path: str) -> dict[str, str] | None:
-        found = self.regex.fullmatch(path.rstrip("/"))
-        return dict(zip(self.names, found.groups(), strict=True)) if found else None
+        if self.any_method.match("GET", path) is None:
+            return None
+        pairs = zip(self.pattern.split("/"), path.split("/"), strict=False)
+        return {seg[1:-1]: part for seg, part in pairs if PARAM.fullmatch(seg)}
 
-    def allows(self, method: str) -> bool:
-        return not self.methods or ("GET" if method == "HEAD" else method) in self.methods
+    def accepts(self, method: str, path: str) -> bool:
+        return self.table.match(method, path) is not None
 
 
 @dataclass(frozen=True)
@@ -44,15 +50,10 @@ class Match:
 
 
 def compile_route(entry: dict[str, Any]) -> Route:
-    pattern = str(entry["pattern"])
-    base = pattern.rstrip("/")
-    wildcard = base.endswith("/**")
-    base = base.removesuffix("/**") if wildcard else base
-    names = tuple(PARAM.findall(base))
-    parts = ["([^/]+)" if PARAM.fullmatch(seg) else re.escape(seg) for seg in base.split("/")]
-    regex = re.compile("/".join(parts) + ("(?:/.*)?" if wildcard else ""))
     methods = frozenset(str(m).upper() for m in entry.get("methods") or [])
-    return Route(pattern, methods, names, regex)
+    unfiltered = {key: value for key, value in entry.items() if key != "methods"}
+    table, any_method = RouteTable.from_patterns([entry]), RouteTable.from_patterns([unfiltered])
+    return Route(str(entry["pattern"]), methods, table, any_method)
 
 
 def load_routes(path: Path) -> tuple[Route, ...]:
@@ -67,7 +68,7 @@ def resolve(routes: tuple[Route, ...], method: str, path: str) -> Match | Route 
         params = route.params(path)
         if params is None:
             continue
-        if route.allows(method):
+        if route.accepts(method, path):
             return Match(route, params)
         refused = refused or route
     return refused

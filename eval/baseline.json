@@ -1,0 +1,15 @@
+{
+  "precision": 1.0,
+  "recall": 0.10501193317422435,
+  "split": "test",
+  "sessions": 591,
+  "testset_lock_sha256": "24d37ffdf1c325cea9de16f65cce55295f63e8cac0105aa7b594cc78933f69c2",
+  "thresholds": {
+    "r1_min_exits": 5,
+    "r1_window": 300.0,
+    "r2_max_endpoints": 10,
+    "r2_window": 60.0,
+    "r3_enabled": true,
+    "idle_timeout": 1800.0
+  }
+}

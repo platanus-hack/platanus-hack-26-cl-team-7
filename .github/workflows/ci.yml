@@ -15,7 +15,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     env:
-      BASE: origin/${{ github.base_ref || 'main' }}
+      # A missing diff base fails floor and test instead of narrowing them (see the Makefile).
+      REQUIRE_BASE: "1"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,6 +29,16 @@ jobs:
 
       - name: Install Python dependencies
         run: uv sync --locked
+
+      - name: Pick the diff base (PR target, or the commit before a push to main)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base="$(bash scripts/ci_base.sh "$EVENT_NAME" "$BASE_REF" "$BEFORE")"
+          echo "diff base: $base"
+          echo "BASE=$base" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |

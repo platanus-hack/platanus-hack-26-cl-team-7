@@ -1,9 +1,14 @@
 # Compose proxy: forwards everything to the site and writes one JSON access-log line per request.
 # The engine (another user) follows /var/log/caddy/access.log on the shared volume, hence mode 0644.
-# Credential headers are deleted before the line is written.
+# Credential headers are deleted before the line is written, and so are the password query
+# values of Juice Shop's GET /rest/user/change-password?current=&new=&repeat=.
+# max_header_size pins Caddy's default; dashboard/app.py MAX_BODY assumes it.
 {
 	admin off
 	auto_https off
+	servers {
+		max_header_size 16KiB
+	}
 }
 
 :80 {
@@ -22,6 +27,11 @@
 				request>headers>Proxy-Authorization delete
 				request>headers>X-Api-Key delete
 				resp_headers>Set-Cookie delete
+				request>uri query {
+					replace current REDACTED
+					replace new REDACTED
+					replace repeat REDACTED
+				}
 			}
 		}
 	}

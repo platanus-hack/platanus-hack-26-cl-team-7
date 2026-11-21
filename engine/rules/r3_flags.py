@@ -32,10 +32,25 @@ class CriticalFlagRule:
 def flag(path: str, query: str) -> str | None:
     """Name of the first signature the request matches, or None."""
     decoded_path = decode(path, plus_is_space=False)
-    found = match_sensitive(decoded_path) or match_payload(decoded_path)
+    found = (
+        match_sensitive(decoded_path)
+        or match_sensitive(normalize_path(decoded_path))
+        or match_payload(decoded_path)
+    )
     if found is not None or not query:
         return found
     return match_payload(decode(query, plus_is_space=True))
+
+
+def normalize_path(path: str) -> str:
+    """The path a lenient server resolves: no ";params", "//", "/./" or trailing "/".
+
+    nginx merges slashes and Tomcat or Spring drop ";params", so "/.aws//credentials/" and
+    "/actuator/env;x" still reach the secret. ".." stays, because the traversal patterns
+    look for it.
+    """
+    segments = (segment.split(";", 1)[0] for segment in path.split("/"))
+    return "/" + "/".join(segment for segment in segments if segment not in ("", "."))
 
 
 def decode(text: str, *, plus_is_space: bool) -> str:

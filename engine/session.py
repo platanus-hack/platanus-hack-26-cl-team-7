@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections import deque
+import heapq
+from collections import Counter, deque
 from typing import NamedTuple
 
 from engine.config import Thresholds
@@ -24,6 +25,34 @@ class Event(NamedTuple):
     endpoint: str | None
 
 
+class _Window:
+    """Running counts for the events with ts in [newest - span, newest].
+
+    A min-heap by ts keeps the counts exact when lines arrive slightly out of order, and each
+    request costs O(log n) instead of a scan of the whole window.
+    """
+
+    def __init__(self, span: float) -> None:
+        self.span = span
+        self.exits = 0
+        self.endpoints: Counter[str] = Counter()
+        self._heap: list[tuple[float, int, Event]] = []
+
+    def push(self, seq: int, event: Event, newest: float) -> None:
+        heapq.heappush(self._heap, (event.ts, seq, event))
+        self._tally(event, 1)
+        start = newest - self.span
+        while self._heap and self._heap[0][0] < start:
+            self._tally(heapq.heappop(self._heap)[2], -1)
+
+    def _tally(self, event: Event, step: int) -> None:
+        self.exits += step if event.exit else 0
+        if event.endpoint is not None:
+            self.endpoints[event.endpoint] += step
+            if self.endpoints[event.endpoint] == 0:
+                del self.endpoints[event.endpoint]
+
+
 class Session:
     def __init__(self, ip: str, user_agent: str, max_window: float = DEFAULT_MAX_WINDOW) -> None:
         self.id = session_key(ip, user_agent)
@@ -34,6 +63,7 @@ class Session:
         self.first_ts = 0.0
         self.last_ts = 0.0
         self.events: deque[Event] = deque()
+        self._windows: dict[float, _Window] = {}
 
     def add(self, req: Request, match: RouteMatch | None) -> None:
         if self.request_count == 0:
@@ -42,16 +72,36 @@ class Session:
             self.first_ts = min(self.first_ts, req.ts)
             self.last_ts = max(self.last_ts, req.ts)
         self.request_count += 1
-        self.events.append(_event(req, match))
+        event = _event(req, match)
+        self.events.append(event)
+        for tracked in self._windows.values():
+            tracked.push(self.request_count, event, self.last_ts)
         self._prune()
 
     def count_exits(self, now: float, window: float) -> int:
+        tracked = self._tracked(now, window)
+        if tracked is not None:
+            return tracked.exits
         return sum(1 for event in self._within(now, window) if event.exit)
 
     def count_endpoints(self, now: float, window: float) -> int:
+        tracked = self._tracked(now, window)
+        if tracked is not None:
+            return len(tracked.endpoints)
         endpoints = {event.endpoint for event in self._within(now, window)}
         endpoints.discard(None)
         return len(endpoints)
+
+    def _tracked(self, now: float, span: float) -> _Window | None:
+        """The running window for a query anchored at the newest ts, else None (scan)."""
+        if now != self.last_ts or span > self.max_window:
+            return None
+        tracked = self._windows.get(span)
+        if tracked is None:
+            tracked = self._windows[span] = _Window(span)
+            for seq, event in enumerate(self.events):
+                tracked.push(-1 - seq, event, self.last_ts)
+        return tracked
 
     def _within(self, now: float, window: float) -> list[Event]:
         start = now - window
@@ -80,20 +130,20 @@ class SessionStore:
         return len(self._sessions)
 
     def get_or_create(self, req: Request) -> Session:
+        """The live session for req; a session idle longer than idle_timeout starts over."""
         session = self._sessions.get(req.session_id)
-        if session is None:
+        if session is None or (session.request_count > 0 and self._is_idle(session, req.ts)):
             session = Session(req.ip, req.user_agent, self.max_window)
             self._sessions[session.id] = session
         return session
 
     def expire(self, now: float) -> None:
-        idle = [
-            key
-            for key, session in self._sessions.items()
-            if now - session.last_ts > self.idle_timeout
-        ]
+        idle = [key for key, session in self._sessions.items() if self._is_idle(session, now)]
         for key in idle:
             del self._sessions[key]
+
+    def _is_idle(self, session: Session, now: float) -> bool:
+        return now - session.last_ts > self.idle_timeout
 
 
 def _event(req: Request, match: RouteMatch | None) -> Event:

@@ -5,6 +5,8 @@ SSH credentials, config backups, database dumps). The payload families follow th
 lists (traversal/LFI, SQLi, XSS, command injection, SSTI, log4shell, CRLF). Every input here is
 already percent-decoded and lowercased, so the patterns are lowercase. Each pattern needs syntax
 that ordinary searches do not contain, because the target is 100% critical-flag precision.
+The text is attacker-controlled and can be long, so no pattern may backtrack more than linearly:
+repeats stop at the next delimiter ("<", "{", "*") or have a fixed upper bound.
 """
 
 from __future__ import annotations
@@ -20,6 +22,9 @@ _SHELL_COMMANDS = (
     r"(?:cat|ls|id|whoami|uname|wget|curl|nc|ncat|bash|sh|zsh|ping|nslookup|sleep|echo|rm"
     r"|chmod|python3?|perl|php|powershell|cmd)"
 )
+# "$(" and "`" start a command anywhere. A bare ";" or "|" starts one only right after a value
+# boundary, a quote or a digit ("127.0.0.1;id", "q=|id"), so "sort|id" in a search stays quiet.
+_COMMAND_START = r"(?:\$\(|`|(?:^|[=&'\"\d])\s*(?:;|\|\|?))"
 
 
 def _compile(entries: list[tuple[str, str]]) -> tuple[Signature, ...]:
@@ -67,29 +72,33 @@ PAYLOAD_PATTERNS: tuple[Signature, ...] = _compile(
         ("windows system file", r"\b(?:win|boot|system)\.ini\b|\bc:[/\\]windows[/\\]"),
         ("stream wrapper", r"\b(?:php|expect|phar|zip|data|gopher|dict)://|\bfile:///"),
         ("cloud metadata", r"\b169\.254\.169\.254\b|metadata\.google\.internal"),
-        ("sql union select", r"\bunion(?:\s|/\*.*?\*/)+(?:all\s+|distinct\s+)?select\b"),
+        ("sql union select", r"\bunion(?:\s|/\*[^*]*\*/)+(?:all\s+|distinct\s+)?select\b"),
         ("sql tautology", r"['\"]\s*(?:or|and)\s+['\"]?(\w+)['\"]?\s*=\s*['\"]?\1\b"),
         ("sql numeric tautology", r"\b(?:or|and)\s+(\d+)\s*=\s*\1\b"),
-        ("sql comment break", r"'\s*(?:--|#)(?:[\s&]|$)"),
-        ("sql time delay", r"\b(?:sleep|benchmark|pg_sleep)\s*\(|\bwaitfor\s+delay\b"),
+        ("sql comment break", r"'\s*(?:--|#)[\s-]*(?:&|$)"),
+        (
+            "sql time delay",
+            r"\b(?:sleep|pg_sleep)\s*\(\s*\d+(?:\.\d+)?\s*\)|\bbenchmark\s*\(\s*\d+\s*,"
+            r"|\bwaitfor\s+delay\b",
+        ),
         ("sql metadata", r"\binformation_schema\b|@@version\b|\bsysobjects\b|\bpg_catalog\b"),
         ("sql file access", r"\bload_file\s*\(|\binto\s+(?:out|dump)file\b"),
         ("sql error function", r"\b(?:extractvalue|updatexml)\s*\("),
         ("sql stacked query", r";\s*(?:drop|truncate|alter|shutdown|exec)\s+\w"),
-        ("xss script tag", r"<\s*/?\s*script\b"),
-        ("xss event handler", r"<[a-z!][^>]*[\s/\"']on[a-z]+\s*="),
-        ("xss dangerous tag", r"<\s*(?:iframe|object|embed|svg|math)\b"),
-        ("xss javascript url", r"\bjavascript\s*:[^\s]*\("),
+        ("xss script tag", r"<\s*(?:/\s*)?script\b"),
+        ("xss event handler", r"<[a-z!][^<>]*[\s/\"']on[a-z]+\s*="),
+        ("xss dangerous tag", r"<\s*(?:iframe|object|embed|svg|math)\b[^<>]*[>=]"),
+        ("xss javascript url", r"\bjavascript\s*:[^\s(]{0,256}\("),
         ("log4shell", r"\$\{\s*(?:jndi|\$\{|::-|lower:|upper:|env:|sys:)"),
         ("template injection", r"\{\{\s*\d+\s*[*+]\s*\d+\s*\}\}|\$\{\s*\d+\s*\*\s*\d+\s*\}"),
-        ("template object access", r"\{\{[^}]*__(?:class|globals|builtins|mro|subclasses)__"),
+        ("template object access", r"\{\{[^{}]*__(?:class|globals|builtins|mro|subclasses)__"),
         ("erb or jsp expression", r"<%=?\s*\d+\s*\*\s*\d+\s*%>|#\{\s*\d+\s*\*\s*\d+\s*\}"),
-        ("command injection", r"(?:;|\|\|?|\$\(|`)\s*" + _SHELL_COMMANDS + r"(?:\s|$|[;|`)])"),
+        ("command injection", _COMMAND_START + r"\s*" + _SHELL_COMMANDS + r"(?:\s|$|[;|`)&])"),
         ("shell path", r"/bin/(?:ba|z|da)?sh\b|\bcmd(?:\.exe)?\s+/c\b"),
         (
             "crlf header injection",
-            r"[\r\n]+\s*(?:set-cookie|location|content-(?:type|length)"
-            r"|refresh|x-[a-z-]+|access-control-[a-z-]+)\s*:",
+            r"[\r\n][ \t]*(?:set-cookie|location|content-(?:type|length)"
+            r"|refresh|x-[a-z-]+|access-control-[a-z-]+)[ \t]*:",
         ),
     ]
 )

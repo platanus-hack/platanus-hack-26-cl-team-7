@@ -20,6 +20,7 @@ from helpers import DEFAULT_IP, caddy_line
 from eval.__main__ import main
 from eval.baseline import TOLERANCE, check_baseline, current_values, load_baseline
 from eval.dataset import load_split
+from eval.lock import write_lock
 
 BASE = {"precision": 0.95, "recall": 0.9}
 
@@ -163,9 +164,12 @@ def test_cli_run_prints_table_and_writes_report(
 
 def test_cli_check_baseline_exit_codes(tmp_path: Path, rules_path: Path) -> None:
     paths = write_data(tmp_path)
-    baseline = tmp_path / "baseline.json"
-    baseline.write_text(json.dumps({"precision": 1.0, "recall": 1.0}))
-    args = ["check-baseline", *replay_args(paths, rules_path), "--baseline", str(baseline)]
+    baseline, lock = tmp_path / "baseline.json", tmp_path / "testset.lock"
+    write_lock(paths["data"] / "test", lock)
+    files = ["--baseline", str(baseline), "--lock", str(lock)]
+    assert main(["baseline", *replay_args(paths, rules_path), *files]) == 0
+    assert load_baseline(baseline) == {"precision": 1.0, "recall": 1.0, "sessions": 2.0}
+    args = ["check-baseline", *replay_args(paths, rules_path), *files]
     assert main(args) == 0
     (paths["data"] / "test" / "mix.labels.json").write_text(
         json.dumps(

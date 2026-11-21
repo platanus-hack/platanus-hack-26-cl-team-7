@@ -18,7 +18,9 @@ class ContractExitsRule:
         self.window = thresholds.r1_window
 
     def evaluate(self, session: Session, req: Request, match: RouteMatch | None) -> RuleHit | None:
-        exits = session.count_exits(req.ts, self.window)
+        # The window ends at the newest ts seen, not at req.ts: under load Caddy writes lines a
+        # few ms out of order, and an earlier line with a later ts must still count.
+        exits = session.count_exits(session.last_ts, self.window)
         if exits < self.min_exits:
             return None
         reason = f"{exits} requests outside the route list within {self.window:g} s"

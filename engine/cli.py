@@ -9,6 +9,8 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import TextIO
 
+import yaml
+
 from engine.config import load_thresholds
 from engine.detector import Detector
 from engine.logreader import follow, read_requests
@@ -24,6 +26,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         detector = Detector(RouteTable.from_yaml(args.routes), load_thresholds(args.rules))
+    except (OSError, ValueError, yaml.YAMLError) as err:
+        print(f"engine: bad config: {err}", file=sys.stderr)
+        return EXIT_USAGE
+    try:
         if args.command == "replay":
             return run_replay(read_requests(args.log), detector)
         return run_follow(follow(args.log, from_start=args.from_start), detector, args.webhook)
