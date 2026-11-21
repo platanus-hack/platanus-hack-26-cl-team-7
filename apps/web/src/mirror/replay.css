@@ -84,12 +84,32 @@
 .ag-real .ag-t {
   color: var(--color-ash);
 }
+.rp-ctl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 0;
+}
+.rp-play {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-line);
+  color: var(--color-ash);
+}
+.rp-play:hover {
+  color: var(--color-text);
+  border-color: var(--color-mid);
+}
 .rp-bar {
   display: flex;
+  flex: 1;
   gap: 3px;
   height: 20px;
-  padding: 14px 16px 0;
-  box-sizing: content-box;
+  min-width: 0;
 }
 .rp-bar.dense {
   gap: 1px;

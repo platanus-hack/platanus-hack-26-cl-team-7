@@ -7,11 +7,15 @@
  */
 import { useEffect, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { Pause, Play } from "@phosphor-icons/react";
 import type { TrackDetail } from "@sentinel/contracts";
 import { cn } from "../ui";
 import { AttackGraph, KIND_COLOR } from "./AttackGraph";
 import { OUTCOME, kindOf, numEs, type Moment } from "./moments";
 import "./replay.css";
+
+/** Time one moment stays on the graph while playing; the flight takes 1.6 s. */
+const STEP_MS = 1800;
 
 export function Replay({ detail, moments, onFinding }: { detail: TrackDetail; moments: Moment[]; onFinding: (id: string | null) => void }) {
   const { track, actions } = detail;
@@ -19,6 +23,7 @@ export function Replay({ detail, moments, onFinding }: { detail: TrackDetail; mo
   // The selection is a moment id: indexes shift when old requests drop off.
   const [selId, setSelId] = useState(lastId);
   const [shot, setShot] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const prevLast = useRef(lastId);
 
   // Follow the newest moment while the last one is shown. Play it only when a new moment came after
@@ -38,40 +43,70 @@ export function Replay({ detail, moments, onFinding }: { detail: TrackDetail; mo
   const findingId = m?.finding?.findingId ?? null;
   useEffect(() => onFinding(findingId), [findingId, onFinding]);
 
+  // Play steps through the moments in order, one every STEP_MS, and stops at the last. The effect keys on
+  // the next moment's id, not the array: a refetch makes a new array every second and would reset the timer.
+  const at = m ? moments.findIndex((x) => x.id === m.id) : -1;
+  const nextId = moments[at + 1]?.id ?? null;
+  useEffect(() => {
+    if (!playing) return;
+    if (nextId === null) {
+      setPlaying(false);
+      return;
+    }
+    const t = setTimeout(() => {
+      setSelId(nextId);
+      setShot((n) => n + 1);
+    }, STEP_MS);
+    return () => clearTimeout(t);
+  }, [playing, nextId]);
+
   if (!m) return null;
+  const togglePlay = () => {
+    if (playing) return setPlaying(false);
+    // From the last moment, play again from the first.
+    const start = at >= moments.length - 1 ? moments[0] : m;
+    if (start && start.id !== m.id) setSelId(start.id);
+    setShot((n) => n + 1);
+    setPlaying(true);
+  };
   const fooled = actions.filter((a) => kindOf(a.status) !== "none").length;
 
   return (
     <section className="rp" aria-label="Repetición del ataque">
       <div className="rp-box">
         <AttackGraph track={track} moment={m} shot={shot} decoys={fooled} />
-        <Tooltip.Provider delayDuration={0} skipDelayDuration={0}>
-          <div className={cn("rp-bar", moments.length > 60 && "dense")} role="group" aria-label="Momentos del ataque">
-            {moments.map((mo) => (
-              <Tooltip.Root key={mo.id}>
-                <Tooltip.Trigger asChild>
-                  <button
-                    type="button"
-                    className={cn("rp-seg", mo.id === m.id && "on")}
-                    style={{ background: KIND_COLOR[mo.kind], flexGrow: Math.sqrt(mo.count) }}
-                    aria-label={`${mo.tried}, ${numEs(mo.count)} ${mo.count === 1 ? "intento" : "intentos"}, ${OUTCOME[mo.kind]}: ${mo.hint}`}
-                    aria-pressed={mo.id === m.id}
-                    onClick={() => {
-                      setSelId(mo.id);
-                      setShot((s) => s + 1);
-                    }}
-                  />
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content className="rp-tip" side="top" sideOffset={8}>
-                    <span className="mono">{mo.hint}</span>
-                    {mo.count > 1 && <span className="dim"> +{numEs(mo.count - 1)}</span>}
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            ))}
-          </div>
-        </Tooltip.Provider>
+        <div className="rp-ctl">
+          <button type="button" className="rp-play" onClick={togglePlay} aria-label={playing ? "Pausar" : "Reproducir"}>
+            {playing ? <Pause size={14} weight="fill" /> : <Play size={14} weight="fill" />}
+          </button>
+          <Tooltip.Provider delayDuration={0} skipDelayDuration={0}>
+            <div className={cn("rp-bar", moments.length > 60 && "dense")} role="group" aria-label="Momentos del ataque">
+              {moments.map((mo) => (
+                <Tooltip.Root key={mo.id}>
+                  <Tooltip.Trigger asChild>
+                    <button
+                      type="button"
+                      className={cn("rp-seg", mo.id === m.id && "on")}
+                      style={{ background: KIND_COLOR[mo.kind], flexGrow: Math.sqrt(mo.count) }}
+                      aria-label={`${mo.tried}, ${numEs(mo.count)} ${mo.count === 1 ? "intento" : "intentos"}, ${OUTCOME[mo.kind]}: ${mo.hint}`}
+                      aria-pressed={mo.id === m.id}
+                      onClick={() => {
+                        setSelId(mo.id);
+                        setShot((s) => s + 1);
+                      }}
+                    />
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content className="rp-tip" side="top" sideOffset={8}>
+                      <span className="mono">{mo.hint}</span>
+                      {mo.count > 1 && <span className="dim"> +{numEs(mo.count - 1)}</span>}
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              ))}
+            </div>
+          </Tooltip.Provider>
+        </div>
         <div className="rp-legend">
           <span>
             <i style={{ background: KIND_COLOR.fooled }} />

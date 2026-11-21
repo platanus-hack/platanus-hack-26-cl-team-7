@@ -6,53 +6,22 @@
  * Every string from a track is attacker-controlled; React renders it as text only.
  */
 import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
-import type { Track, TrackAction } from "@sentinel/contracts";
+import type { Track } from "@sentinel/contracts";
 import { Skeleton, clock, cn } from "../ui";
 import { FindingCard } from "./FindingCard";
 import { Replay } from "./Replay";
+import { RequestList } from "./RequestList";
 import { SquaresFour } from "@phosphor-icons/react";
 import { agentName, buildMoments, caughtFor, contained, numEs as num, vulnOf } from "./moments";
 import { useMirror } from "./store";
 import "./mirror.css";
 
-/** Rows shown before "Ver todas las solicitudes". */
-const FIRST_ROWS = 25;
-
 const count = (n: number, one: string, many: string) => `${num(n)} ${n === 1 ? one : many}`;
-const statusClass = (status: number) => (status >= 500 ? "s5" : status >= 400 ? "s4" : status >= 300 ? "s3" : "s2");
-
-const RequestRow = memo(function RequestRow({ a }: { a: TrackAction }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <button type="button" className="trow ma-cols w-full text-left" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <span className="mono dim tnum">{clock(a.ts, false)}</span>
-        <span className="mono truncate pr-4">
-          {a.method} {a.query ? `${a.path}?${a.query}` : a.path}
-        </span>
-        <span className={cn("mstatus mono tnum", statusClass(a.status))}>{a.status}</span>
-      </button>
-      {open && (
-        <div className="ma-bodies">
-          <div>
-            <div className="cap">Lo que envió</div>
-            <pre>{a.requestBody || "(vacío)"}</pre>
-          </div>
-          <div>
-            <div className="cap">Lo que respondió la copia falsa</div>
-            <pre>{a.responseBody || "(vacío)"}</pre>
-          </div>
-        </div>
-      )}
-    </>
-  );
-});
 
 function AgentView() {
   const detail = useMirror((s) => s.detail);
   const selected = useMirror((s) => s.selected);
   const loading = useMirror((s) => s.loading);
-  const [all, setAll] = useState(false);
   const moments = useMemo(() => (detail ? buildMoments(detail.actions, detail.findings) : []), [detail]);
   const [activeFinding, setActiveFinding] = useState<string | null>(null);
   const onFinding = useCallback((id: string | null) => setActiveFinding(id), []);
@@ -70,7 +39,6 @@ function AgentView() {
     );
   }
   const t = detail.track;
-  const rows = all ? detail.actions : detail.actions.slice(0, FIRST_ROWS);
   return (
     <section className="sect" aria-label={`Agente atrapado ${agentName(t.userAgent)}`}>
       <div className="dh mv-head">
@@ -91,17 +59,7 @@ function AgentView() {
         {t.actions === 0 ? (
           <p className="mv-empty">Atrapado a las {clock(t.openedAt, false)}. Desde entonces no ha hecho ninguna solicitud; aparecerán aquí en cuanto vuelva.</p>
         ) : (
-          <>
-            <h3 className="mv-h">Solicitudes en la copia falsa</h3>
-            {rows.map((a) => (
-              <RequestRow key={a.eventId} a={a} />
-            ))}
-          </>
-        )}
-        {!all && detail.actions.length > FIRST_ROWS && (
-          <button type="button" className="mf-open px-8 py-4" onClick={() => setAll(true)}>
-            Ver las {num(detail.actions.length)} solicitudes
-          </button>
+          <RequestList actions={detail.actions} />
         )}
       </div>
     </section>
