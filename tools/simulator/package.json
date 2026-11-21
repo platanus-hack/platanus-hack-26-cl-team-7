@@ -1,0 +1,12 @@
+{
+  "name": "@sentinel/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": { "@sentinel/contracts": "workspace:*" },
+  "devDependencies": { "@types/node": "26.6.6" }
+}
