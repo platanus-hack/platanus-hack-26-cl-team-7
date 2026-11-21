@@ -138,10 +138,10 @@ describe("chainTo", () => {
     const hit = action({ path: "/search", query: "q=%27+OR+1%3d1", status: 200 });
     const ms = buildMoments([...acts, hit], [finding({ ts: hit.ts + 1 })]);
     const steps = chainTo({ rule: "R1", reason: "r", openedAt: 5, actions: 8 }, ms, "fnd_0123456789abcdef");
-    expect(steps[0]).toMatchObject({ kind: "caught", ts: 5, text: "Lo atrapamos: buscó páginas que no existen" });
+    expect(steps[0]).toMatchObject({ kind: "caught", ts: 5, text: "Detectado y desviado a la copia falsa", note: "Buscó páginas que no existen" });
     expect(steps[1]).toMatchObject({ kind: "gap", text: "2 intentos anteriores" });
     expect(steps).toHaveLength(1 + 1 + 5 + 1);
-    expect(steps[steps.length - 1]).toMatchObject({ kind: "win", text: "Funcionó: GET /search?q=' OR 1=1" });
+    expect(steps[steps.length - 1]).toMatchObject({ kind: "win", cat: "sql", code: "GET /search?q=' OR 1=1" });
     expect(chainTo({ rule: "R1", reason: "r", openedAt: 5, actions: 8 }, ms, "fnd_ffffffffffffffff")).toEqual([]);
     const more = chainTo({ rule: "R1", reason: "r", openedAt: 5, actions: 5000 }, ms, "fnd_0123456789abcdef");
     expect(more[1]).toMatchObject({ kind: "gap", text: "Más intentos antes", note: "No todos se muestran aquí." });

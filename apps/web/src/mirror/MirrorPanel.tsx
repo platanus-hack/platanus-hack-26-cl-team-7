@@ -4,14 +4,14 @@
  * Right: the live list of caught agents.
  * Every string from a track is attacker-controlled; React renders it as text only.
  */
-import { memo, useMemo, useState, type ReactNode } from "react";
+import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
 import { FileSearch } from "lucide-react";
-import type { Finding, Track, TrackAction } from "@sentinel/contracts";
+import type { Track, TrackAction } from "@sentinel/contracts";
 import { useReports } from "../reports/store";
 import { Skeleton, clock, cn } from "../ui";
-import { ProofDetails } from "./ProofDetails";
+import { FindingCard } from "./FindingCard";
 import { Replay } from "./Replay";
-import { buildMoments, caughtFor, numEs as num, vulnOf, type Moment } from "./moments";
+import { buildMoments, caughtFor, numEs as num } from "./moments";
 import { useMirror } from "./store";
 import "./mirror.css";
 
@@ -21,21 +21,6 @@ const FIRST_ROWS = 25;
 const count = (n: number, one: string, many: string) => `${num(n)} ${n === 1 ? one : many}`;
 const statusClass = (status: number) => (status >= 500 ? "s5" : status >= 400 ? "s4" : status >= 300 ? "s3" : "s2");
 const preloadReport = () => void import("../reports/ReportView");
-
-function Proof({ f, track, moments }: { f: Finding; track: Track; moments: Moment[] }) {
-  const v = vulnOf(f);
-  return (
-    <article className="mf">
-      <header>
-        <span className={cn("pd-sev", v.severity === "Crítica" && "crit")}>{v.severity}</span>
-        <span className="mf-kind">{v.name}</span>
-        <span className="mono truncate">{f.endpoint}</span>
-        <span className="dim mono tnum ml-auto">{clock(f.ts)}</span>
-      </header>
-      <ProofDetails f={f} track={track} moments={moments} />
-    </article>
-  );
-}
 
 const RequestRow = memo(function RequestRow({ a }: { a: TrackAction }) {
   const [open, setOpen] = useState(false);
@@ -71,6 +56,8 @@ function AgentView() {
   const investigate = useReports((s) => s.open);
   const [all, setAll] = useState(false);
   const moments = useMemo(() => (detail ? buildMoments(detail.actions, detail.findings) : []), [detail]);
+  const [activeFinding, setActiveFinding] = useState<string | null>(null);
+  const onFinding = useCallback((id: string | null) => setActiveFinding(id), []);
   if (!detail || detail.track.trackId !== selected) {
     return (
       <section className="sect" aria-label="Agente atrapado">
@@ -94,9 +81,6 @@ function AgentView() {
           <div className="sub">
             {caughtFor(t)}. Atrapado a las {clock(t.openedAt)}.
           </div>
-          <div className="sub tnum">
-            {count(t.actions, "solicitud", "solicitudes")} en la copia falsa, {count(t.findings, "prueba", "pruebas")}.
-          </div>
         </div>
         <button type="button" className="ask" onClick={() => investigate(t.ip)} onMouseEnter={preloadReport} onFocus={preloadReport}>
           <FileSearch size={16} />
@@ -104,12 +88,14 @@ function AgentView() {
         </button>
       </div>
       <div className="scroll">
-        <Replay key={t.trackId} detail={detail} moments={moments} />
+        <Replay key={t.trackId} detail={detail} moments={moments} onFinding={onFinding} />
         {detail.findings.length > 0 && (
-          <div className="mv-proofs">
-            <h3 className="mv-h mv-h-in">Vulnerabilidades encontradas</h3>
+          <div className="fcs">
+            <h3 className="fcs-h">
+              Vulnerabilidades <span className="dim tnum">{num(detail.findings.length)}</span>
+            </h3>
             {detail.findings.map((f) => (
-              <Proof key={f.findingId} f={f} track={t} moments={moments} />
+              <FindingCard key={f.findingId} f={f} track={t} moments={moments} active={f.findingId === activeFinding} />
             ))}
           </div>
         )}

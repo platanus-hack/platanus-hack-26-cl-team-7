@@ -17,7 +17,8 @@ export interface Moment {
   /** Stable across refetches: the first request's eventId, or the findingId of a proof without its request. */
   id: string;
   kind: MomentKind;
-  /** What the agent tried, in plain words (the most common kind in the moment). */
+  /** What the agent tried (the most common kind in the moment), as a key and in plain words. */
+  cat: CatKey;
   tried: string;
   /** Number of requests in the moment. */
   count: number;
@@ -49,20 +50,38 @@ export function caughtFor(t: Pick<Track, "rule" | "reason">): string {
   return sig ? `Envió un patrón de ataque (${sig})` : "Envió un patrón de ataque";
 }
 
-/** What a request tried, in plain words. */
-export function category(a: Pick<TrackAction, "path" | "query">): string {
+export type CatKey = "code" | "sql" | "traversal" | "params" | "secrets" | "admin" | "account" | "browse" | "guess";
+
+export const CAT_LABEL: Record<CatKey, string> = {
+  code: "Intentó meter código en una página",
+  sql: "Intentó engañar al buscador",
+  traversal: "Intentó colarse en otras carpetas",
+  params: "Probó ajustes ocultos",
+  secrets: "Buscó archivos secretos",
+  admin: "Buscó herramientas de administración",
+  account: "Probó las páginas de cuenta",
+  browse: "Navegó la tienda como un cliente",
+  guess: "Adivinó páginas que podrían existir",
+};
+
+/** What a request tried. */
+export function categoryKey(a: Pick<TrackAction, "path" | "query">): CatKey {
   const q = readable(a.query).toLowerCase();
   const p = a.path.toLowerCase();
-  if (/<\s*script|javascript:|on(error|load)\s*=|<\s*(img|svg|iframe|b)\b/.test(q)) return "Intentó meter código en una página";
-  if (/'\s*(or|and|union|--|;|\)|'|$)|union\s+select|'\s*=\s*'|sleep\s*\(|\\$/.test(q) || /%27/.test(p)) return "Intentó engañar al buscador";
-  if (/\.\.\/|%c0%ae|%2e%2e/.test(q + p)) return "Intentó colarse en otras carpetas";
-  if ((q.match(/&/g) ?? []).length >= 3) return "Probó ajustes ocultos";
-  if (/\.env|\.git|config|passwd|\.ds_store|auth_user|\.htaccess|backup|\.sql\b/.test(p)) return "Buscó archivos secretos";
-  if (/admin|server|status|info|metrics|health|api-docs|swagger|graphql|trace|well-known|cgi|bin\/|scripts|\.asp|\.php|\.pl\b|\.jsp|\.sh\b|docs|^\/api/.test(p))
-    return "Buscó herramientas de administración";
-  if (/login|logout|account|cart|register|signup/.test(p)) return "Probó las páginas de cuenta";
-  if (p === "/" || /^\/(products|search|static|robots\.txt|favicon)/.test(p)) return "Navegó la tienda como un cliente";
-  return "Adivinó páginas que podrían existir";
+  if (/<\s*script|javascript:|on(error|load)\s*=|<\s*(img|svg|iframe|b)\b/.test(q)) return "code";
+  if (/'\s*(or|and|union|--|;|\)|'|$)|union\s+select|'\s*=\s*'|sleep\s*\(|\\$/.test(q) || /%27/.test(p)) return "sql";
+  if (/\.\.\/|%c0%ae|%2e%2e/.test(q + p)) return "traversal";
+  if ((q.match(/&/g) ?? []).length >= 3) return "params";
+  if (/\.env|\.git|config|passwd|\.ds_store|auth_user|\.htaccess|backup|\.sql\b/.test(p)) return "secrets";
+  if (/admin|server|status|info|metrics|health|api-docs|swagger|graphql|trace|well-known|cgi|bin\/|scripts|\.asp|\.php|\.pl\b|\.jsp|\.sh\b|docs|^\/api/.test(p)) return "admin";
+  if (/login|logout|account|cart|register|signup/.test(p)) return "account";
+  if (p === "/" || /^\/(products|search|static|robots\.txt|favicon)/.test(p)) return "browse";
+  return "guess";
+}
+
+/** What a request tried, in plain words. */
+export function category(a: Pick<TrackAction, "path" | "query">): string {
+  return CAT_LABEL[categoryKey(a)];
 }
 
 /** How the decoy answer looked to the agent: a 4xx found nothing, anything else looked like a find. */
@@ -70,7 +89,6 @@ export function kindOf(status: number): MomentKind {
   return status >= 400 && status < 500 ? "none" : "fooled";
 }
 
-export const BUBBLE: Record<MomentKind, string> = { fooled: "¡Lo encontré!", win: "¡Entré!", none: "No hay nada" };
 export const OUTCOME: Record<MomentKind, string> = { fooled: "recibió páginas falsas", win: "su ataque funcionó", none: "no encontró nada" };
 
 const lineOf = (a: Pick<TrackAction, "method" | "path" | "query">) => `${a.method} ${a.path}${a.query ? `?${a.query}` : ""}`;
@@ -123,34 +141,34 @@ export function buildMoments(actions: TrackAction[], findings: Finding[]): Momen
     else loose.push(f);
   }
 
-  type Open = Moment & { key: string | null; tally: Map<string, number> };
+  type Open = Moment & { key: string | null; tally: Map<CatKey, number> };
   const out: Open[] = [];
   sorted.forEach((a, i) => {
     const finding = proofAt.get(i) ?? null;
-    const tried = category(a);
+    const cat = categoryKey(a);
     const kind = finding ? "win" : kindOf(a.status);
-    const key = finding ? null : kind === "none" ? "none" : `${tried}|${kind}`;
+    const key = finding ? null : kind === "none" ? "none" : `${cat}|${kind}`;
     const last = out[out.length - 1];
     if (last && key && last.key === key) {
       last.count++;
-      last.tally.set(tried, (last.tally.get(tried) ?? 0) + 1);
+      last.tally.set(cat, (last.tally.get(cat) ?? 0) + 1);
       return;
     }
     const line = readable(lineOf(a));
-    out.push({ id: a.eventId, key, kind, tried, count: 1, hint: `${a.method} ${a.path}`, line, ts: a.ts, finding, tally: new Map([[tried, 1]]) });
+    out.push({ id: a.eventId, key, kind, cat, tried: "", count: 1, hint: `${a.method} ${a.path}`, line, ts: a.ts, finding, tally: new Map([[cat, 1]]) });
   });
   // A proof whose request is no longer stored still shows, at its time.
   for (const f of loose) {
-    const tried = category({ path: f.endpoint.split(" ", 2)[1] ?? "/", query: "" });
+    const cat = categoryKey({ path: f.endpoint.split(" ", 2)[1] ?? "/", query: "" });
     const at = out.findIndex((o) => o.ts > f.ts);
     const line = readable(quoted(f)) || f.endpoint;
-    out.splice(at < 0 ? out.length : at, 0, { id: f.findingId, key: null, kind: "win", tried, count: 1, hint: f.endpoint, line, ts: f.ts, finding: f, tally: new Map([[tried, 1]]) });
+    out.splice(at < 0 ? out.length : at, 0, { id: f.findingId, key: null, kind: "win", cat, tried: "", count: 1, hint: f.endpoint, line, ts: f.ts, finding: f, tally: new Map([[cat, 1]]) });
   }
   return out.map(({ key: _key, tally, ...m }) => {
-    let tried = m.tried;
+    let cat = m.cat;
     let top = 0;
-    for (const [t, n] of tally) if (n > top) [tried, top] = [t, n];
-    return { ...m, tried };
+    for (const [c, n] of tally) if (n > top) [cat, top] = [c, n];
+    return { ...m, cat, tried: CAT_LABEL[cat] };
   });
 }
 
@@ -199,29 +217,33 @@ export interface Step {
   text: string;
   note: string;
   kind: "caught" | MomentKind | "gap";
+  /** What the step tried, for its icon. */
+  cat: CatKey | null;
+  /** The request line that proved the finding, on the last step. */
+  code: string | null;
 }
 
 const STEPS_BEFORE = 5;
 
-/** The steps from the catch to a proof: the catch, the last moments before it, the proof. */
+/** The trace from the catch to a proof: the catch, the last moments before it, the proof. */
 export function chainTo(track: Pick<Track, "rule" | "reason" | "openedAt" | "actions">, moments: Moment[], findingId: string): Step[] {
   const at = moments.findIndex((m) => m.finding?.findingId === findingId);
   if (at < 0) return [];
   const proof = moments[at]!;
   const before = moments.slice(0, at);
   const shown = before.slice(-STEPS_BEFORE);
-  const steps: Step[] = [{ ts: track.openedAt, text: `Lo atrapamos: ${caughtFor(track).toLowerCase()}`, note: "Desde aquí solo ve la copia falsa.", kind: "caught" }];
+  const steps: Step[] = [{ ts: track.openedAt, text: "Detectado y desviado a la copia falsa", note: caughtFor(track), kind: "caught", cat: null, code: null }];
   // Sentinel sends some requests, not all: say so instead of counting only the ones we hold.
   const loaded = moments.reduce((s, m) => s + (m.id === m.finding?.findingId ? 0 : m.count), 0);
   const unseen = track.actions > loaded;
   if (before.length > shown.length || unseen) {
     const n = before.slice(0, before.length - shown.length).reduce((s, m) => s + m.count, 0);
     const text = unseen ? "Más intentos antes" : `${numEs(n)} ${n === 1 ? "intento anterior" : "intentos anteriores"}`;
-    steps.push({ ts: null, text, note: unseen ? "No todos se muestran aquí." : "", kind: "gap" });
+    steps.push({ ts: null, text, note: unseen ? "No todos se muestran aquí." : "", kind: "gap", cat: null, code: null });
   }
   for (const m of shown)
-    steps.push({ ts: m.ts, text: m.tried, note: `${numEs(m.count)} ${m.count === 1 ? "intento" : "intentos"}, ${OUTCOME[m.kind]}`, kind: m.kind });
-  steps.push({ ts: proof.ts, text: `Funcionó: ${proof.line}`, note: answerOf(proof.finding!), kind: "win" });
+    steps.push({ ts: m.ts, text: m.tried, note: `${numEs(m.count)} ${m.count === 1 ? "intento" : "intentos"} · ${OUTCOME[m.kind]}`, kind: m.kind, cat: m.cat, code: null });
+  steps.push({ ts: proof.ts, text: "Ataque confirmado en la copia falsa", note: answerOf(proof.finding!), kind: "win", cat: proof.cat, code: proof.line });
   return steps;
 }
 

@@ -28,9 +28,6 @@
   margin-top: 6px;
   font-size: 15px;
 }
-.mv-proofs {
-  padding: 8px 32px 0;
-}
 .mv-h {
   margin: 0;
   padding: 28px 32px 10px;
@@ -80,33 +77,6 @@
   user-select: text;
 }
 
-/* A proof: what worked, one line of evidence, and the fix. */
-.mf {
-  padding: 22px 0 24px;
-  border-bottom: 1px solid var(--color-line2);
-}
-.mf header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  font-size: 15px;
-}
-.mf-kind {
-  flex: none;
-  color: var(--color-ember);
-  font-weight: 500;
-}
-.mf-ev {
-  margin: 8px 0 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-mid);
-  user-select: text;
-}
 .mf-open {
   margin-top: 8px;
   font-size: 13px;
@@ -157,7 +127,4 @@
 .mt-sum b {
   color: var(--color-ember);
   font-weight: 500;
-}
-.mv-h.mv-h-in {
-  padding: 20px 0 0;
 }
