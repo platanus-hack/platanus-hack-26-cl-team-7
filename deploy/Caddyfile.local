@@ -1,0 +1,35 @@
+# Local no-Docker proxy (scripts/stack_local.sh): :8080 -> demo site on 127.0.0.1:8081.
+# Paths are relative to the repository root, where the script starts Caddy.
+# Same log redaction and header limit as deploy/Caddyfile.
+{
+	admin off
+	auto_https off
+	servers {
+		max_header_size 16KiB
+	}
+}
+
+:8080 {
+	log {
+		output file run/access.log {
+			roll_size 100MiB
+			roll_keep 5
+		}
+		format filter {
+			wrap json
+			fields {
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				request>headers>Proxy-Authorization delete
+				request>headers>X-Api-Key delete
+				resp_headers>Set-Cookie delete
+				request>uri query {
+					replace current REDACTED
+					replace new REDACTED
+					replace repeat REDACTED
+				}
+			}
+		}
+	}
+	reverse_proxy 127.0.0.1:8081
+}

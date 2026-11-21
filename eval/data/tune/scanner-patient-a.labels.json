@@ -1,0 +1,8 @@
+{
+  "source": "scanner-patient-a",
+  "synthetic": false,
+  "notes": "Recorded through Caddy (scripts/record_scanners.sh) against the demo shop. Loopback client_ip/remote_ip rewritten to 10.66.1.5 for this run; no other field changed. Sessions = IP|User-Agent: 1. Low-and-slow prober: one GET every 20 s, listed and unlisted routes, no payloads. Command: patient scanners-patient-a / /products /admin /products/2 /backup /api/v1/users /search /phpmyadmin/ /server-status /cart /api/admin /config /account /debug /old /api/products /console /test /login /uploads /api/internal (patient = curl -s -A '<Firefox 128 UA> scanners-patient-a' http://127.0.0.1:8080<path>, sleep 20 s between paths)",
+  "sessions": {
+    "10.66.1.5|Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0 scanners-patient-a": "probing"
+  }
+}

@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Agent Detection v0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky contents rail on the left, one reading column on the right. Figures are the only cards. Light theme only, by decision. */
+:root {
+  color-scheme: light;
+  --bg: #eef1f5;
+  --surface: #fcfcfb;
+  --surface-2: #f1f3f6;
+  --ink: #14181f;
+  --ink-2: #434b59;
+  --ink-3: #69717f;
+  --line: #d9dee6;
+  --grid: #e6e9ee;
+  --accent: #2a78d6;
+  --accent-ink: #1c5cab;
+  --accent-soft: #e3edfa;
+  --on-accent: #ffffff;
+  --s1: #2a78d6;
+  --good: #0ca30c;
+  --serious: #ec835a;
+  --crit: #d03b3b;
+  --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); border: 1px solid var(--line); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 66ch; }
+
+.shell {
+  display: grid;
+  grid-template-columns: 188px minmax(0, 1fr);
+  gap: 56px;
+  max-width: 1160px;
+  margin-inline: auto;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 44px 96px;
+}
+.rail { position: sticky; top: 32px; align-self: start; display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.rail ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; border-left: 1px solid var(--line); }
+.rail a { display: block; padding: 5px 0 5px 14px; margin-left: -1px; border-left: 2px solid transparent; color: var(--ink-2); text-decoration: none; font-size: 14px; }
+.rail a:hover { color: var(--ink); border-left-color: var(--accent); }
+.rail-note { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+.rail-note b { color: var(--ink-2); font-weight: 600; }
+main { display: flex; flex-direction: column; gap: 64px; min-width: 0; }
+section { display: flex; flex-direction: column; gap: 22px; scroll-margin-top: 28px; min-width: 0; }
+
+.eyebrow { font: 500 11.5px/1.2 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin: 0; }
+h1 { font-size: clamp(32px, 5vw, 50px); line-height: 1.08; font-weight: 700; letter-spacing: -0.022em; }
+h2 { font-size: clamp(23px, 2.8vw, 28px); line-height: 1.2; font-weight: 600; letter-spacing: -0.012em; }
+h3 { font-size: 17px; line-height: 1.35; font-weight: 600; }
+.lede { font-size: 18px; line-height: 1.55; color: var(--ink-2); }
+
+/* Header */
+.head { display: flex; flex-direction: column; gap: 20px; padding-bottom: 36px; border-bottom: 1px solid var(--line); }
+.head-top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; }
+.label { display: inline-flex; align-items: center; gap: 7px; font: 500 12px/1 var(--font-mono); padding: 6px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+.label svg { flex: none; }
+.label.rec { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+/* Decision box */
+.ask { display: flex; flex-direction: column; gap: 6px; padding: 20px 22px; background: var(--accent-soft); border-radius: 10px; }
+.ask .eyebrow { color: var(--accent-ink); }
+.ask p { color: var(--ink); max-width: 70ch; }
+
+/* Stat strip */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-block: 1px solid var(--line); }
+.stat { padding: 18px 16px 18px 0; display: flex; flex-direction: column; gap: 2px; }
+.stat + .stat { padding-left: 20px; border-left: 1px solid var(--line); }
+.stat b { font: 600 34px/1.15 var(--font-body); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--ink-3); }
+@media (max-width: 640px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .stat:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* Figures */
+.fig { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.fig-scroll { overflow-x: auto; min-width: 0; }
+.fig svg { display: block; width: 100%; height: auto; color: var(--ink-3); }
+.fig figcaption { font-size: 14px; color: var(--ink-2); max-width: 72ch; }
+.fig figcaption b { color: var(--ink); font-weight: 600; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 8px; }
+
+svg .ttl { font: 600 13px var(--font-body); fill: var(--ink); }
+svg .sub { font: 400 11px var(--font-mono); fill: var(--ink-3); }
+svg .lbl { font: 500 12px var(--font-mono); fill: var(--ink-2); }
+svg .tick { font: 400 11.5px var(--font-mono); fill: var(--ink-3); }
+svg .lane { font: 500 11px var(--font-mono); fill: var(--ink-3); letter-spacing: 0.1em; }
+svg .zone { font: 500 11px var(--font-mono); fill: var(--accent-ink); letter-spacing: 0.08em; }
+svg .barlbl { font: 500 12px var(--font-mono); fill: var(--on-accent); }
+svg .mk { font: 700 11.5px var(--font-body); fill: var(--surface); }
+svg .node { fill: var(--surface-2); stroke: var(--line); stroke-width: 1.5; }
+svg .node.new { fill: var(--accent-soft); stroke: var(--accent); }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--line); stroke-width: 1.5; }
+svg .flow { stroke: var(--ink-3); stroke-width: 1.5; fill: none; }
+svg .flow.back { stroke-dasharray: 5 4; }
+
+/* Tables */
+.tbl { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14.5px; }
+th { font: 500 11px/1.2 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); text-align: left; padding: 0 14px 10px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 13px 14px 13px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th:first-child, td:first-child { padding-left: 12px; }
+td.num, th.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+tr.rec td { background: var(--accent-soft); }
+tr.rec .label.rec, .opt.rec .label.rec { background: var(--surface); }
+td .name { font-weight: 600; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+
+/* Risks */
+.risk-wrap { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.risk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.risk-list li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.risk-list li:first-child { padding-top: 0; }
+.rid { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--surface); font: 600 11.5px/28px var(--font-body); text-align: center; }
+.risk-list .what { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-weight: 600; }
+.risk-list .fix { grid-column: 2; color: var(--ink-2); font-size: 14.5px; }
+@media (max-width: 860px) { .risk-wrap { grid-template-columns: 1fr; } }
+
+/* Decisions */
+.settled { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 32px; }
+.settled div { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 2px 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.settled svg { grid-row: 1 / span 2; margin-top: 2px; color: var(--good); }
+.settled dt { font-weight: 600; }
+.settled dd { margin: 0; color: var(--ink-2); font-size: 14.5px; }
+.decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.decision { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.decision p { font-size: 14.5px; color: var(--ink-2); }
+.opts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.opt { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 14.5px; }
+.opt .radio { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--ink-3); margin-top: 3px; }
+.opt.rec { border-color: var(--accent); background: var(--accent-soft); }
+.opt.rec .radio { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 4px, transparent 4.5px); }
+.opt b { font-weight: 600; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.opt span.why { grid-column: 2; color: var(--ink-2); font-size: 13.5px; }
+
+/* Checklist and parts */
+.done { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 32px; }
+.done li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.done svg { margin-top: 2px; color: var(--ink-3); }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 32px; margin: 0; }
+.parts div { padding: 13px 0; border-bottom: 1px solid var(--line); }
+.parts dt { font-weight: 600; }
+.parts dd { margin: 2px 0 0; color: var(--ink-2); font-size: 14.5px; }
+.foot { font-size: 13px; color: var(--ink-3); padding-top: 20px; border-top: 1px solid var(--line); max-width: none; }
+
+@media (max-width: 960px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 28px 72px; }
+  .rail { position: static; gap: 14px; }
+  .rail ul { flex-direction: row; flex-wrap: wrap; border-left: 0; gap: 6px; margin-top: 10px; }
+  .rail a { padding: 6px 12px; margin: 0; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+  .rail a:hover { border-color: var(--accent); }
+  .rail-note { display: none; }
+  main { gap: 52px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="rail">
+    <nav aria-label="Contents">
+      <p class="eyebrow">Contents</p>
+      <ul>
+        <li><a href="#summary">Version 0</a></li>
+        <li><a href="#flow">Version 0 flow</a></li>
+        <li><a href="#rules">The 3 rules</a></li>
+        <li><a href="#constraints">CONSTRAINTS.md</a></li>
+        <li><a href="#testing">Accuracy tests</a></li>
+        <li><a href="#schedule">Build order</a></li>
+        <li><a href="#risks">Risks</a></li>
+        <li><a href="#decisions">Decisions</a></li>
+        <li><a href="#done">Done when</a></li>
+        <li><a href="#parts">Terms</a></li>
+      </ul>
+    </nav>
+    
+  </aside>
+
+  <main>
+
+    <header class="head">
+      <div class="head-top">
+        <p class="eyebrow">Plan · Draft 10 · 2026-11-21</p>
+        <span class="label">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3.2l2 1.3"/></svg>
+          Awaiting approval
+        </span>
+      </div>
+      <h1>AI Agent Detection v0</h1>
+      <p class="lede">Version 0 finds sessions that probe the endpoints of the site, with 3 rules and no model. A constraints file sets a size limit for each source file. A labeled test set measures the accuracy of each rule.</p>
+    </header>
+
+    <section id="summary" aria-labelledby="h-summary">
+      <h2 id="h-summary">Version 0</h2>
+      <p>Draft 10 starts with the smallest engine that does one job well. The job is to find sessions that probe the endpoints of the site. Caddy stands in front of the demo site as the proxy and writes a JSON log. The engine reads the log and applies 3 rules. The full design of draft 9 comes later, one step at a time.</p>
+      <p>Before the first line of engine code, the repository gets a <code>CONSTRAINTS.md</code> file. It sets a size limit for each source file and the other checks that block a merge. A labeled test set and a scored test run measure the accuracy of each rule.</p>
+      <div class="ask">
+        <p class="eyebrow">Your decision</p>
+        <p>Approve draft 10 to start step 1. Approve also accepts the recommended choice for each decision below. Draft 10 replaces draft 9. Select any text on this page to comment on it.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>3</b><span>rules in the first engine.</span></div>
+        <div class="stat"><b>200</b><span>lines at most in each source file.</span></div>
+        <div class="stat"><b>1</b><span>language: Python.</span></div>
+        <div class="stat"><b>~14 h</b><span>estimated build time</span></div>
+      </div>
+    </section>
+
+    <section id="flow" aria-labelledby="h-flow">
+      <h2 id="h-flow">Version 0 flow</h2>
+      <figure class="fig">
+<div class="fig-scroll">
+<svg viewBox="0 0 960 278" style="min-width:760px" role="img" aria-label="Two lanes. Live: a request passes the Caddy proxy to the demo site, and Caddy writes a JSON log line. Engine: the engine reads the log line, groups it into a session, applies 3 rules and posts a verdict to the dashboard through a webhook.">
+<defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+<text class="lane" x="20" y="24">LIVE</text>
+<rect class="node" x="20" y="42" width="170" height="56" rx="8"/>
+<text class="ttl" x="36" y="67">Request in</text>
+<text class="sub" x="36" y="85">browser, agent, bot</text>
+<rect class="node new" x="270" y="42" width="170" height="56" rx="8"/>
+<text class="ttl" x="286" y="67">Caddy proxy</text>
+<text class="sub" x="286" y="85">JSON log, headers</text>
+<rect class="node" x="520" y="42" width="170" height="56" rx="8"/>
+<text class="ttl" x="536" y="67">Demo site</text>
+<text class="sub" x="536" y="85">built by Harold</text>
+<g class="flow">
+<line x1="196" y1="70" x2="264" y2="70" marker-end="url(#ah1)"/>
+<line x1="446" y1="70" x2="514" y2="70" marker-end="url(#ah1)"/>
+</g>
+<text class="lbl" x="230" y="60" text-anchor="middle">passes</text>
+<text class="lbl" x="480" y="60" text-anchor="middle">forwards</text>
+<text class="lane" x="20" y="184">ENGINE</text>
+<rect class="node new" x="20" y="202" width="170" height="56" rx="8"/>
+<text class="ttl" x="36" y="227">Log reader</text>
+<text class="sub" x="36" y="245">follows the file</text>
+<rect class="node new" x="270" y="202" width="170" height="56" rx="8"/>
+<text class="ttl" x="286" y="227">Session</text>
+<text class="sub" x="286" y="245">IP + User-Agent</text>
+<rect class="node new" x="520" y="202" width="170" height="56" rx="8"/>
+<text class="ttl" x="536" y="227">3 rules</text>
+<text class="sub" x="536" y="245">exits, breadth, flags</text>
+<rect class="node new" x="770" y="202" width="170" height="56" rx="8"/>
+<text class="ttl" x="786" y="227">Verdict webhook</text>
+<text class="sub" x="786" y="245">to the dashboard</text>
+<g class="flow">
+<line x1="196" y1="230" x2="264" y2="230" marker-end="url(#ah1)"/>
+<line x1="446" y1="230" x2="514" y2="230" marker-end="url(#ah1)"/>
+<line x1="696" y1="230" x2="764" y2="230" marker-end="url(#ah1)"/>
+</g>
+<text class="lbl" x="230" y="220" text-anchor="middle">parses</text>
+<text class="lbl" x="480" y="220" text-anchor="middle">groups</text>
+<text class="lbl" x="730" y="220" text-anchor="middle">posts</text>
+</svg>
+</div>
+<figcaption><b>Fig. 1</b>Caddy is a ready proxy, so version 0 has no proxy code of our own. The blue boxes are the new parts.</figcaption>
+</figure>
+    </section>
+
+    <section id="rules" aria-labelledby="h-rules">
+      <h2 id="h-rules">The 3 rules</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Rule</th><th>Fires when</th><th>Verdict.</th></tr></thead>
+          <tbody>
+            <tr><td>R1 Contract exits.</td><td>5 or more requests to routes outside the route list in 5 minutes.</td><td>Probing.</td></tr>
+            <tr><td>R2 Endpoint breadth.</td><td>More than 10 different endpoints in 60 seconds. An endpoint is a route pattern, so <code>/api/users/{id}</code> counts once.</td><td>Probing.</td></tr>
+            <tr><td>R3 Critical flag.</td><td>One request for a sensitive file such as <code>/.env</code>, or a known attack payload in the path or query.</td><td>Probing, critical.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The route list is a YAML file. Harold gives the first version. The crawler and the evidence sum of draft 9 replace these simple rules in version 1. All numbers above are starting values. Step 6 tunes them on data.</p>
+    </section>
+
+    <section id="constraints" aria-labelledby="h-constraints">
+      <h2 id="h-constraints">CONSTRAINTS.md</h2>
+      <p>The file sits at the root of the repository. Each row names the command that gives the result. A failed row blocks the change.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Rule</th><th>Limit</th><th>Command</th><th>Runs at.</th></tr></thead>
+          <tbody>
+            <tr><td>File size.</td><td>200 lines for each source file, 300 for each test file.</td><td><code>scripts/check_size.py</code></td><td>Each edit.</td></tr>
+            <tr><td>Lint.</td><td>Zero errors.</td><td><code>ruff check</code></td><td>Each edit.</td></tr>
+            <tr><td>Types.</td><td>Zero errors.</td><td><code>mypy engine</code></td><td>Each edit.</td></tr>
+            <tr><td>Secrets.</td><td>Zero findings.</td><td><code>gitleaks dir . --redact</code></td><td>Each edit.</td></tr>
+            <tr><td>Tests.</td><td>All pass. Changed lines 80% covered.</td><td><code>pytest --cov</code></td><td>Task end.</td></tr>
+            <tr><td>Accuracy.</td><td>Precision and recall do not fall more than 0.5 points.</td><td><code>make eval</code></td><td>Task end and CI.</td></tr>
+            <tr><td>Dependencies.</td><td>No high or critical flaw.</td><td><code>osv-scanner scan source -r .</code></td><td>CI.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The floor also applies. No new suppression comments, no empty stubs, no skipped tests and no weaker limits in the same change as the code that failed them. An exception needs an owner and an end date.</p>
+    </section>
+
+    <section id="testing" aria-labelledby="h-testing">
+      <h2 id="h-testing">Accuracy tests</h2>
+      <p>The tests have three levels. Each level answers a different question.</p>
+      <dl class="parts">
+        <div><dt>1 Rule tests</dt><dd>Does each rule fire at its limit and not below it? Example: 11 endpoints in 60 seconds fires R2, and 10 does not. These are <code>pytest</code> tests with fixed inputs.</dd></div>
+        <div><dt>2 Labeled replay</dt><dd>How accurate is the engine on real sessions? <code>make eval</code> sends labeled log files through the engine and scores each session against its label.</dd></div>
+        <div><dt>3 Base rate test</dt><dd>How many false alarms does a client see? The test mixes attack sessions into human sessions at 1 in 10,000.</dd></div>
+      </dl>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Labeled set</th><th>Source</th><th>Label.</th></tr></thead>
+          <tbody>
+            <tr><td>Human sessions.</td><td>Volunteers on the demo site, and sure-human sessions from the Zanbil shop logs.</td><td>Human.</td></tr>
+            <tr><td>Scanner sessions.</td><td>ffuf, nuclei and nikto against the demo site.</td><td>Probing.</td></tr>
+            <tr><td>Payload requests.</td><td>CSIC 2010 attack requests sent through the proxy.</td><td>Probing.</td></tr>
+            <tr><td>AI agent sessions.</td><td>Your later lab traces.</td><td>Probing, AI.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Metric</th><th>Definition</th><th class="num">Version 0 target (estimate).</th></tr></thead>
+          <tbody>
+            <tr><td>Precision.</td><td>Probing verdicts that are real probing sessions.</td><td class="num">≥ 95%</td></tr>
+            <tr><td>Recall.</td><td>Probing sessions that get a probing verdict.</td><td class="num">≥ 95%</td></tr>
+            <tr><td>Human false alarms.</td><td>Human sessions with a probing verdict.</td><td class="num">≤ 1 in 1,000</td></tr>
+            <tr><td>Critical flag precision.</td><td>R3 verdicts that are real probing.</td><td class="num">100%</td></tr>
+            <tr><td>Requests before the verdict.</td><td>Median for probing sessions.</td><td class="num">≤ 15</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Three rules keep the score honest. The test set is split by session, never by request. The tune set sets the thresholds, and a separate test set gives the final score. A hash file locks the test set, so a change to it shows in review.</p>
+    </section>
+
+    <section id="schedule" aria-labelledby="h-schedule">
+      <h2 id="h-schedule">Build order</h2>
+      <figure class="fig">
+<div class="fig-scroll">
+<svg viewBox="0 0 960 404" style="min-width:760px" role="img" aria-label="Seven build steps over about 14 hours. The repository frame and the constraints come first. The proxy, the engine, the rule tests and the labeled set overlap. The evaluation and the dashboard come last.">
+<g class="grid">
+<line x1="230" y1="44" x2="230" y2="354"/>
+<line x1="328.57" y1="44" x2="328.57" y2="354"/>
+<line x1="427.14" y1="44" x2="427.14" y2="354"/>
+<line x1="525.71" y1="44" x2="525.71" y2="354"/>
+<line x1="624.29" y1="44" x2="624.29" y2="354"/>
+<line x1="722.86" y1="44" x2="722.86" y2="354"/>
+<line x1="821.43" y1="44" x2="821.43" y2="354"/>
+<line x1="920" y1="44" x2="920" y2="354"/>
+</g>
+<line class="axis" x1="230" y1="354" x2="920" y2="354"/>
+<g class="tick" text-anchor="middle">
+<text x="230" y="372">0</text>
+<text x="328.57" y="372">2</text>
+<text x="427.14" y="372">4</text>
+<text x="525.71" y="372">6</text>
+<text x="624.29" y="372">8</text>
+<text x="722.86" y="372">10</text>
+<text x="821.43" y="372">12</text>
+<text x="920" y="372">14</text>
+</g>
+<text class="lbl" x="575" y="395" text-anchor="middle">Hours after approval (estimate)</text>
+<path d="M230 14 l7 7 l-7 7 l-7 -7 z" fill="var(--ink)"/>
+<text class="lbl" x="246" y="25">You approve</text>
+<text class="ttl" x="20" y="63">1 Frame and constraints</text>
+<text class="sub" x="20" y="79">CONSTRAINTS.md, checks</text>
+<text class="ttl" x="20" y="107">2 Caddy proxy</text>
+<text class="sub" x="20" y="123">JSON log, Compose</text>
+<text class="ttl" x="20" y="151">3 Engine</text>
+<text class="sub" x="20" y="167">reader, session, 3 rules</text>
+<text class="ttl" x="20" y="195">4 Rule tests</text>
+<text class="sub" x="20" y="211">pytest, limits</text>
+<text class="ttl" x="20" y="239">5 Labeled set</text>
+<text class="sub" x="20" y="255">humans, scanners, CSIC</text>
+<text class="ttl" x="20" y="283">6 Eval and tuning</text>
+<text class="sub" x="20" y="299">metrics, lock, CI</text>
+<text class="ttl" x="20" y="327">7 Minimal dashboard</text>
+<text class="sub" x="20" y="343">webhook, one page</text>
+<g fill="var(--s1)"><rect x="230" y="54" width="98.57" height="24" rx="4"><title>1 Frame and constraints: 2 h</title></rect><rect x="279.29" y="98" width="98.57" height="24" rx="4"><title>2 Caddy proxy: 2 h</title></rect><rect x="377.86" y="142" width="197.14" height="24" rx="4"><title>3 Engine: 4 h</title></rect><rect x="427.14" y="186" width="147.86" height="24" rx="4"><title>4 Rule tests: 3 h</title></rect><rect x="377.86" y="230" width="246.43" height="24" rx="4"><title>5 Labeled set: 5 h</title></rect><rect x="624.29" y="274" width="147.86" height="24" rx="4"><title>6 Eval and tuning: 3 h</title></rect><rect x="722.86" y="318" width="147.86" height="24" rx="4"><title>7 Minimal dashboard: 3 h</title></rect></g>
+<g class="flow"><path d="M377.86 122 V142"/><path d="M624.29 254 V274"/></g>
+<text class="barlbl" x="242" y="71">2 h</text>
+<text class="barlbl" x="291.29" y="115">2 h</text>
+<text class="barlbl" x="389.86" y="159">4 h</text>
+<text class="barlbl" x="439.14" y="203">3 h</text>
+<text class="barlbl" x="389.86" y="247">5 h</text>
+<text class="barlbl" x="636.29" y="291">3 h</text>
+<text class="barlbl" x="734.86" y="335">3 h</text>
+</svg>
+</div>
+<figcaption><b>Fig. 2</b>Until Harold's site is ready, Juice Shop stands in for it. All durations are estimates.</figcaption>
+</figure>
+    </section>
+
+    <section id="risks" aria-labelledby="h-risks">
+      <h2 id="h-risks">Risks</h2>
+      <div class="risk-wrap">
+<figure class="fig">
+<div class="fig-scroll">
+<svg viewBox="0 0 360 340" style="min-width:300px" role="img" aria-label="Risk matrix. R1 rules too simple for AI agents is high. R2 too few real human sessions and R3 thresholds tuned to the test set are medium. R4 the file size limit splits code badly is low.">
+<rect x="71" y="201" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 10%, var(--surface))"/>
+<rect x="161" y="201" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 18%, var(--surface))"/>
+<rect x="251" y="201" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 28%, var(--surface))"/>
+<rect x="71" y="111" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 18%, var(--surface))"/>
+<rect x="161" y="111" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 34%, var(--surface))"/>
+<rect x="251" y="111" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 46%, var(--surface))"/>
+<rect x="71" y="21" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 28%, var(--surface))"/>
+<rect x="161" y="21" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 46%, var(--surface))"/>
+<rect x="251" y="21" width="88" height="88" style="fill:color-mix(in srgb, var(--serious) 62%, var(--surface))"/>
+<g class="tick" text-anchor="end">
+<text x="62" y="249">Low</text>
+<text x="62" y="159">Medium</text>
+<text x="62" y="69">High</text>
+</g><g class="tick" text-anchor="middle">
+<text x="115" y="308">Low</text>
+<text x="205" y="308">Medium</text>
+<text x="295" y="308">High</text>
+</g>
+<text class="lbl" x="205" y="331" text-anchor="middle">Impact</text>
+<text class="lbl" x="14" y="155" text-anchor="middle" transform="rotate(-90 14 155)">Likelihood</text>
+<circle cx="205" cy="65" r="13" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"><title>R1 3 rules miss slow AI agents. Likelihood high, impact medium.</title></circle>
+<text class="mk" x="205" y="69" text-anchor="middle">R1</text>
+<circle cx="205" cy="155" r="13" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"><title>R2 Too few real human sessions. Likelihood medium, impact medium.</title></circle>
+<text class="mk" x="205" y="159" text-anchor="middle">R2</text>
+<circle cx="295" cy="155" r="13" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"><title>R3 Thresholds fit the test set. Likelihood medium, impact high.</title></circle>
+<text class="mk" x="295" y="159" text-anchor="middle">R3</text>
+<circle cx="115" cy="245" r="13" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"><title>R4 The file size limit splits code badly. Likelihood low, impact low.</title></circle>
+<text class="mk" x="115" y="249" text-anchor="middle">R4</text>
+</svg>
+</div>
+<figcaption><b>Fig. 3</b>Darker cells show a higher score. Score = likelihood × impact.</figcaption>
+</figure>
+<ul class="risk-list">
+<li>
+<span class="rid">R1</span>
+<span class="what">3 rules miss slow AI agents <span class="label"><span class="dot" style="background:var(--crit)"></span>High</span></span>
+<span class="fix">Version 0 targets probing only. Version 1 adds the client checks and the evidence sum.</span>
+</li>
+<li>
+<span class="rid">R3</span>
+<span class="what">Thresholds fit the test set <span class="label"><span class="dot" style="background:var(--crit)"></span>High</span></span>
+<span class="fix">Tune on the tune set only. The hash lock shows each change to the test set.</span>
+</li>
+<li>
+<span class="rid">R2</span>
+<span class="what">Too few real human sessions <span class="label"><span class="dot" style="background:var(--serious)"></span>Medium</span></span>
+<span class="fix">Volunteers plus sure-human Zanbil sessions. The report shows the session count next to each rate.</span>
+</li>
+<li>
+<span class="rid">R4</span>
+<span class="what">The file size limit splits code badly <span class="label"><span class="dot" style="background:var(--good)"></span>Low</span></span>
+<span class="fix">An exception with an owner and an end date covers a real case.</span>
+</li>
+</ul>
+</div>
+    </section>
+
+    <section id="decisions" aria-labelledby="h-decisions">
+      <h2 id="h-decisions">Decisions</h2>
+      <dl class="settled">
+        <div>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M6.2 10.3l2.6 2.6 5-5.3"/></svg>
+          <dt>Carried over</dt><dd>Harold builds the site. Proxy in front. SQLite and DuckDB. Alerts through a webhook. IP block only. No deploy and no AI traces in this plan.</dd>
+        </div>
+        <div>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M6.2 10.3l2.6 2.6 5-5.3"/></svg>
+          <dt>Delivery</dt><dd>Commits and a push to the branch <code>lp/ai-attack-detection-defense</code>, then a draft pull request to <code>main</code>.</dd>
+        </div>
+      </dl>
+      <div class="decisions">
+        <article class="decision">
+          <h3>Which language for version 0?</h3>
+          <p>Draft 9 used Rust for the live path.</p>
+          <ul class="opts">
+            <li class="opt rec"><span class="radio"></span><b>Python now, Rust after a load test <span class="label rec">Recommended</span></b><span class="why">Caddy carries the traffic, so the engine only reads a log. Rust replaces the engine only if the load test shows a need.</span></li>
+            <li class="opt"><span class="radio"></span><b>Rust now</b><span class="why">Fast from day 1. More build time before the first result.</span></li>
+          </ul>
+        </article>
+        <article class="decision">
+          <h3>What file size limit?</h3>
+          <p>Small files are easy to read and review.</p>
+          <ul class="opts">
+            <li class="opt rec"><span class="radio"></span><b>200 lines, 300 for tests <span class="label rec">Recommended</span></b><span class="why">A reviewer reads one file in one pass. Each module keeps one job.</span></li>
+            <li class="opt"><span class="radio"></span><b>400 lines, 600 for tests</b><span class="why">Fewer files. Files can hold more than one job.</span></li>
+          </ul>
+        </article>
+        <article class="decision">
+          <h3>Block or warn on a failed check?</h3>
+          <p>An agent writes much of the code.</p>
+          <ul class="opts">
+            <li class="opt rec"><span class="radio"></span><b>Block <span class="label rec">Recommended</span></b><span class="why">Nobody reads a warning in an unattended run.</span></li>
+            <li class="opt"><span class="radio"></span><b>Warn for 2 weeks, then block</b><span class="why">Less friction at the start. Some weak code gets in.</span></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="done" aria-labelledby="h-done">
+      <h2 id="h-done">Done when</h2>
+      <ul class="done">
+        <li><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="3.5"/></svg><span><code>make check</code> passes. It also fails on a source file of 201 lines, which proves that the size rule works.</span></li>
+        <li><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="3.5"/></svg><span><code>docker compose up</code> starts Caddy, the demo site, the engine and the dashboard.</span></li>
+        <li><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="3.5"/></svg><span>An ffuf run against the proxy shows one probing verdict on the dashboard in less than 2 seconds.</span></li>
+        <li><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="3.5"/></svg><span><code>make eval</code> prints the confusion table and all metrics in the accuracy table, and writes <code>eval/report.json</code>.</span></li>
+        <li><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="3.5"/></svg><span>CI fails when precision or recall falls more than 0.5 points below <code>eval/baseline.json</code>.</span></li>
+        <li><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="3.5"/></svg><span><code>eval/testset.lock</code> holds a SHA-256 hash for each test file.</span></li>
+      </ul>
+    </section>
+
+    <section id="parts" aria-labelledby="h-parts">
+      <h2 id="h-parts">Terms</h2>
+      <dl class="parts">
+        <div><dt>Caddy</dt><dd>An open-source web server and proxy that writes JSON logs with headers.</dd></div>
+        <div><dt>Contract exit</dt><dd>A request for a route that is not on the route list.</dd></div>
+        <div><dt>Precision</dt><dd>The share of probing verdicts that match the label.</dd></div>
+        <div><dt>Recall</dt><dd>The share of real probing sessions that the engine finds.</dd></div>
+        <div><dt>Tune set, test set</dt><dd>Two separate parts of the labeled data. One sets the thresholds and one gives the final score.</dd></div>
+        <div><dt>CI</dt><dd>Continuous integration, the checks that run on each push.</dd></div>
+      </dl>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>
