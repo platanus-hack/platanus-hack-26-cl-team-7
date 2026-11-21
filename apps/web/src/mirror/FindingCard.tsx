@@ -1,13 +1,13 @@
 /**
  * One confirmed vulnerability: severity, name, endpoint, weak point, and the trace from the catch to
  * the proof as a log, always open, and whether Sentinel already keeps the attack out of the real shop.
- * "Preguntar a Copilot" asks the copilot about it.
+ * "Preguntar a la IA" asks the copilot about it.
  * Interface: `<FindingCard f track moments active />`.
  * Request lines and evidence are attacker controlled; React renders them as text only.
  */
 import type { Finding, Track } from "@sentinel/contracts";
 import { useDashboard } from "../dashboard/store";
-import { cn } from "../ui";
+import { Orb, cn } from "../ui";
 import { useState } from "react";
 import { CaretDown, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { agentName, chainTo, contained, vulnOf, type Moment, type Step, type Vuln } from "./moments";
@@ -41,8 +41,9 @@ function AskCopilot({ text }: { text: string }) {
     );
   };
   return (
-    <button type="button" className="vc-link" onClick={ask}>
-      Preguntar a Copilot
+    <button type="button" className="vc-ai" onClick={ask}>
+      <Orb size={16} state="idle" />
+      Preguntar a la IA
     </button>
   );
 }

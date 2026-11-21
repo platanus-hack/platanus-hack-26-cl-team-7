@@ -268,6 +268,21 @@
 .vc-link:hover {
   color: var(--color-text);
 }
+.vc-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 12px 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  color: var(--color-text);
+  transition: background 0.15s;
+}
+.vc-ai:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
 .vc-link svg {
   transition: transform 0.15s;
 }
