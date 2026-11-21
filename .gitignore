@@ -32,3 +32,6 @@ apps/sentinel/data/
 espejismo/controller/ca/*.key
 espejismo/controller/ca/*.pem
 espejismo/sandbox/ca.pem
+
+# Ultimo Paso build artifacts
+ultimo-paso/bin/
