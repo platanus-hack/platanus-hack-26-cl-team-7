@@ -18,7 +18,7 @@ TAG="$(date +%Y%m%dT%H%M%S)-${RUNG}${SUFFIX}"
 mkdir -p "runs/inspect/$TAG"
 for m in "${MODELS[@]}"; do
   "$UV_PROJECT_ENVIRONMENT/bin/inspect" eval harness/espejismo_task.py@s1 \
-    -T rung="$RUNG" -T attacker="$ATK" --model "openrouter/$m" --epochs "$EPOCHS" \
+    -T rung="$RUNG" -T attacker="$ATK" -T max_messages="${MAXMSG:-60}" --model "openrouter/$m" --epochs "$EPOCHS" \
     --max-samples 3 --log-dir "runs/inspect/$TAG" --display none \
     > "runs/inspect/$TAG/$(echo "$m" | tr / _).log" 2>&1 &
 done
