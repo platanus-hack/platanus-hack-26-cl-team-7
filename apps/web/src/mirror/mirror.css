@@ -224,3 +224,10 @@
 .ov-state.ok {
   color: var(--c-ok);
 }
+.mv-empty {
+  margin: 0;
+  padding: 24px 32px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-mid);
+}

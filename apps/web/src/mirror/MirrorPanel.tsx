@@ -88,11 +88,16 @@ function AgentView() {
             ))}
           </div>
         )}
-        <h3 className="mv-h">Solicitudes en la copia falsa</h3>
-        {rows.map((a) => (
-          <RequestRow key={a.eventId} a={a} />
-        ))}
-        {detail.actions.length === 0 && <p className="px-8 py-6 text-mid">Todavía no hay solicitudes.</p>}
+        {t.actions === 0 ? (
+          <p className="mv-empty">Atrapado a las {clock(t.openedAt, false)}. Desde entonces no ha hecho ninguna solicitud; aparecerán aquí en cuanto vuelva.</p>
+        ) : (
+          <>
+            <h3 className="mv-h">Solicitudes en la copia falsa</h3>
+            {rows.map((a) => (
+              <RequestRow key={a.eventId} a={a} />
+            ))}
+          </>
+        )}
         {!all && detail.actions.length > FIRST_ROWS && (
           <button type="button" className="mf-open px-8 py-4" onClick={() => setAll(true)}>
             Ver las {num(detail.actions.length)} solicitudes
@@ -154,6 +159,7 @@ function Overview() {
   const findings = useMirror((s) => s.data.findings);
   const tracks = useMirror((s) => s.data.tracks);
   const select = useMirror((s) => s.select);
+  const more = useMirror((s) => s.tracksCursor !== null);
   const byId = useMemo(() => new Map(tracks.map((t) => [t.trackId, t])), [tracks]);
   return (
     <section className="sect" aria-label="Dashboard">
@@ -162,27 +168,36 @@ function Overview() {
       </div>
       <div className="scroll">
         <div className="ov">
-          <h3 className="fcs-h">
-            Vulnerabilidades <span className="dim tnum">{num(findings.length)}</span>
-          </h3>
-          {findings.length === 0 && <p className="ov-empty">Sin vulnerabilidades en las últimas 24 horas.</p>}
-          <ul className="ov-list">
-            {findings.map((f) => {
-              const v = vulnOf(f);
-              const t = byId.get(f.trackId);
-              return (
-                <li key={f.findingId}>
-                  <button type="button" className={cn("ov-row", v.severity === "Crítica" ? "crit" : "high")} onClick={() => select(f.trackId)}>
-                    <span className="vc-sev">{v.severity}</span>
-                    <span className="ov-name">{v.name}</span>
-                    <code className="ov-ep">{f.endpoint}</code>
-                    <span className="ov-agent">{t ? agentName(t.userAgent) : ""}</span>
-                    <span className={cn("ov-state", contained(f) && "ok")}>{contained(f) ? "Neutralizada" : "Sin contener"}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          {findings.length === 0 ? (
+            <p className="ov-empty">
+              Ninguna vulnerabilidad confirmada en las últimas 24 horas.
+              {tracks.length > 0 &&
+                ` ${more ? "Al menos " : ""}${count(tracks.length, "agente atrapado", "agentes atrapados")}; ninguno llegó a la tienda real desde que lo atrapamos.`}
+            </p>
+          ) : (
+            <h3 className="fcs-h">
+              Vulnerabilidades <span className="dim tnum">{num(findings.length)}</span>
+            </h3>
+          )}
+          {findings.length > 0 && (
+            <ul className="ov-list">
+              {findings.map((f) => {
+                const v = vulnOf(f);
+                const t = byId.get(f.trackId);
+                return (
+                  <li key={f.findingId}>
+                    <button type="button" className={cn("ov-row", v.severity === "Crítica" ? "crit" : "high")} onClick={() => select(f.trackId)}>
+                      <span className="vc-sev">{v.severity}</span>
+                      <span className="ov-name">{v.name}</span>
+                      <code className="ov-ep">{f.endpoint}</code>
+                      <span className="ov-agent">{t ? agentName(t.userAgent) : ""}</span>
+                      <span className={cn("ov-state", contained(f) && "ok")}>{contained(f) ? "Neutralizada" : "Sin contener"}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       </div>
     </section>
