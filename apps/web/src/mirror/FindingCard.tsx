@@ -7,7 +7,7 @@
  */
 import type { Finding, Track } from "@sentinel/contracts";
 import { useDashboard } from "../dashboard/store";
-import { Orb, cn } from "../ui";
+import { cn } from "../ui";
 import { useState } from "react";
 import { CaretDown, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { agentName, chainTo, contained, vulnOf, type Moment, type Step, type Vuln } from "./moments";
@@ -41,8 +41,7 @@ function AskCopilot({ text }: { text: string }) {
     );
   };
   return (
-    <button type="button" className="vc-copy vc-ask" onClick={ask}>
-      <Orb size={14} state="idle" />
+    <button type="button" className="vc-link" onClick={ask}>
       Preguntar a Copilot
     </button>
   );
@@ -54,34 +53,39 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
   const [open, setOpen] = useState(false);
   return (
     <article className={cn("vc", v.severity === "Crítica" ? "crit" : "high", active && "on")} aria-label={`${v.severity}: ${v.name} en ${f.endpoint}`}>
-      <header className="vc-h">
-        <span className="vc-sev">{v.severity}</span>
-        <h4>{v.name}</h4>
-        <span className="vc-actions">
+      <div className="vc-body">
+        <div className="vc-top">
+          <span className="vc-sev">
+            <i aria-hidden />
+            {v.severity}
+          </span>
           {contained(f) ? (
-            <span className="vc-status ok">
-              <CheckCircle size={16} weight="fill" aria-hidden />
-              Ya la neutralizamos
+            <span className="vc-state ok">
+              <CheckCircle size={14} weight="fill" aria-hidden />
+              Neutralizada
             </span>
           ) : (
-            <span className="vc-status">
-              <WarningCircle size={16} weight="fill" aria-hidden />
+            <span className="vc-state">
+              <WarningCircle size={14} weight="fill" aria-hidden />
               Sin contener
             </span>
           )}
-          <AskCopilot text={findingText(f, track, v, steps)} />
-        </span>
-      </header>
-      <p className="vc-meta">
-        <code>{f.endpoint}</code>
-        <span>{v.gap}</span>
-      </p>
-      {steps.length > 0 && (
-        <button type="button" className="vc-more" aria-expanded={open} onClick={() => setOpen(!open)}>
-          {open ? "Ocultar detalle" : "Ver detalle"}
-          <CaretDown size={12} weight="bold" className={open ? "up" : undefined} aria-hidden />
-        </button>
-      )}
+        </div>
+        <h4>{v.name}</h4>
+        <code className="vc-ep">{f.endpoint}</code>
+        <p className="vc-gap">{v.gap}</p>
+      </div>
+      <div className="vc-foot">
+        {steps.length > 0 ? (
+          <button type="button" className="vc-link" aria-expanded={open} onClick={() => setOpen(!open)}>
+            {open ? "Ocultar detalle" : "Ver detalle"}
+            <CaretDown size={12} weight="bold" className={open ? "up" : undefined} aria-hidden />
+          </button>
+        ) : (
+          <span />
+        )}
+        <AskCopilot text={findingText(f, track, v, steps)} />
+      </div>
       {open && steps.length > 0 && (
         <ol className="log">
           {steps.map((s, i) => (

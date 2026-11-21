@@ -184,9 +184,9 @@
 .vc {
   --sev: var(--c-danger);
   border: 1px solid var(--color-line);
-  border-left: 2px solid var(--sev);
-  border-radius: 6px;
+  border-radius: 12px;
   background: var(--color-surface);
+  overflow: hidden;
   transition: border-color 0.2s;
 }
 .vc.high {
@@ -195,79 +195,84 @@
 .vc.on {
   border-color: var(--sev);
 }
-.vc-h {
+.vc-body {
+  padding: 20px 22px 18px;
+}
+.vc-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 18px 0;
+  justify-content: space-between;
 }
 .vc-sev {
-  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--sev);
 }
-.vc-h h4 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+.vc-sev i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sev);
 }
-.vc-actions {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-  flex: none;
-}
-.vc-ask {
+.vc-state {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-.vc-copy {
-  flex: none;
-  padding: 3px 10px;
-  border: 1px solid var(--color-line);
-  border-radius: 6px;
   font-size: 12px;
-  color: var(--color-ash);
-}
-.vc-copy:hover {
-  color: var(--color-text);
-  border-color: var(--color-mid);
-}
-.vc-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  margin: 6px 0 0;
-  padding: 0 18px 14px;
-  font-size: 13px;
   color: var(--color-mid);
 }
-.vc-meta code {
+.vc-state.ok {
+  color: var(--c-ok);
+}
+.vc-body h4 {
+  margin: 12px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.vc-ep {
+  display: block;
+  margin-top: 4px;
   font-family: var(--font-mono);
   font-size: 12px;
+  color: var(--color-mid);
+}
+.vc-gap {
+  margin: 12px 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.55;
   color: var(--color-ash);
 }
-
-.vc-actions {
+.vc-foot {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-line2);
+  padding: 0 22px;
+  height: 44px;
 }
-.vc-status {
+.vc-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-right: 8px;
   font-size: 13px;
-  font-weight: 500;
   color: var(--color-mid);
+  transition: color 0.15s;
 }
-.vc-status.ok {
-  color: var(--c-ok);
+.vc-link:hover {
+  color: var(--color-text);
+}
+.vc-link svg {
+  transition: transform 0.15s;
+}
+.vc-link svg.up {
+  transform: rotate(180deg);
 }
 
 /* The trace as a log, always open. */
@@ -275,7 +280,7 @@
   list-style: none;
   border-top: 1px solid var(--color-line2);
   margin: 0;
-  padding: 10px 18px 12px;
+  padding: 14px 22px 10px;
 }
 .log-row {
   position: relative;
@@ -375,22 +380,4 @@
   .vc {
     transition: none;
   }
-}
-
-.vc-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 18px 14px;
-  font-size: 13px;
-  color: var(--color-mid);
-}
-.vc-more:hover {
-  color: var(--color-text);
-}
-.vc-more svg {
-  transition: transform 0.15s;
-}
-.vc-more svg.up {
-  transform: rotate(180deg);
 }
