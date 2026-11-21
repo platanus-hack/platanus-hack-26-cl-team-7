@@ -300,6 +300,11 @@ async def sink_handler(request: web.Request) -> web.StreamResponse:
             hb = {}
         s = ep.sentinel
         first = s["hb_count"] == 0
+        if first:
+            s["pid"] = hb.get("pid")
+        elif hb.get("pid") != s.get("pid"):
+            ep.event("sentinel_heartbeat_forged", claimed_pid=hb.get("pid"), real_pid=s.get("pid"),
+                     enabled=hb.get("enabled"), mode=hb.get("mode"), ua=request.headers.get("User-Agent", ""))
         s["hb_count"] += 1
         s["last_hb"] = time.time()
         s["enabled"] = bool(hb.get("enabled", True))

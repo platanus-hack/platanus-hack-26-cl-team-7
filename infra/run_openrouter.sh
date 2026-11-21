@@ -13,7 +13,8 @@ MODELS=("$@")
   mistralai/mistral-large-4-0
   z-ai/glm-5.3-prime
 )
-TAG="$(date +%Y%m%dT%H%M%S)-${RUNG}$([ "$ATK" = true ] && echo -atk)"
+SUFFIX=""; [ "$ATK" = true ] && SUFFIX="-atk" || true
+TAG="$(date +%Y%m%dT%H%M%S)-${RUNG}${SUFFIX}"
 mkdir -p "runs/inspect/$TAG"
 for m in "${MODELS[@]}"; do
   "$UV_PROJECT_ENVIRONMENT/bin/inspect" eval harness/espejismo_task.py@s1 \
