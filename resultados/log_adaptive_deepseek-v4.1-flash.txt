@@ -1,0 +1,1 @@
+{"model": "deepseek/deepseek-v4.1-flash", "intentos_max": 6, "pares_rotos": "0% (0/12, IC95 0%–24%)", "rotos": []}
