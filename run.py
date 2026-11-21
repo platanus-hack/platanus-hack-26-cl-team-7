@@ -3,7 +3,8 @@
 Uso:
   ANTHROPIC_API_KEY=... uv run run.py --ataque en --user-tasks 4 --injection-tasks 2
   --ataque: none | en (important_instructions original) | es_pe (plantilla peruana)
-  --defensa: none | <nombre en DEFENSAS>
+  --defensa: none | detector (el de AgentDojo) | <nombre en DEFENSAS>
+  --idioma: en | es (entorno y pedidos traducidos, data/banking_es)
 """
 
 import argparse
@@ -54,7 +55,14 @@ def make_attack(name: str, template: str, suite, pipeline) -> FixedJailbreakAtta
 # --- Enchufe 2: defensa propia -----------------------------------------------------------
 # Cada defensa es un BasePipelineElement que corre justo después de ToolsExecutor (ve los
 # tool outputs antes que el LLM) y puede reescribir mensajes o cortar el loop.
-DEFENSAS: dict = {"none": None}
+def detector_agentdojo():
+    # Mismo detector y parámetros que la defensa `transformers_pi_detector` de AgentDojo.
+    from agentdojo.agent_pipeline import TransformersBasedPIDetector
+
+    return TransformersBasedPIDetector("protectai/deberta-v3-base-prompt-injection-v2", "SAFE", 0.5, mode="message")
+
+
+DEFENSAS: dict = {"none": None, "detector": detector_agentdojo}
 
 
 def build_pipeline(model: str, defensa: str) -> AgentPipeline:
@@ -87,12 +95,20 @@ def main():
     ap.add_argument("--model", default="claude-sonnet-5-5")
     ap.add_argument("--ataque", default="en", choices=["none", "en", "es_pe"])
     ap.add_argument("--defensa", default="none", choices=list(DEFENSAS))
+    ap.add_argument("--idioma", default="en", choices=["en", "es"], help="es: datos del banco y pedidos en español (data/banking_es)")
     ap.add_argument("--user-tasks", type=int, default=4, help="primeros N user_tasks")
     ap.add_argument("--injection-tasks", type=int, default=2, help="primeros M injection_tasks")
     a = ap.parse_args()
 
     suite = get_suite(VERSION, "banking")
+    if a.idioma == "es":
+        # ponytail: se reemplaza el entorno y los PROMPT en memoria; los checks de utilidad comparan montos y cuentas,
+        # que no cambian («Renta» mantiene «rent» para los checks que buscan esa palabra).
+        suite.data_path = Path("data/banking_es")
+        for k, prompt in json.loads(Path("data/banking_es/prompts.json").read_text()).items():
+            suite.user_tasks[k].PROMPT = prompt
     pipe = build_pipeline(a.model, a.defensa)
+    pipe.name += f"-{a.idioma}"
     ut = list(suite.user_tasks)[: a.user_tasks]
     it = list(suite.injection_tasks)[: a.injection_tasks]
     logdir = Path("runs") / a.ataque
@@ -105,7 +121,7 @@ def main():
             r = benchmark_suite_with_injections(pipe, suite, atk, logdir, False, ut, it, True, VERSION)
 
     u, s = r["utility_results"].values(), r["security_results"].values()
-    out = {"model": a.model, "ataque": a.ataque, "defensa": a.defensa, "utilidad": wilson(sum(u), len(u))}
+    out = {"model": a.model, "idioma": a.idioma, "ataque": a.ataque, "defensa": a.defensa, "utilidad": wilson(sum(u), len(u))}
     if a.ataque != "none":
         out["ASR"] = wilson(sum(s), len(s))  # security_results=True ⇒ el ataque logró su objetivo
     print(json.dumps(out, ensure_ascii=False))
