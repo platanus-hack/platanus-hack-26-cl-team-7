@@ -4,6 +4,8 @@
 
 **Pruébalo:** https://espejismo-demo.haroldmedrano33.workers.dev (el episodio real de un agente, paso a paso, en 90 segundos).
 
+**La ficha de los 8 modelos:** https://espejismo-demo.haroldmedrano33.workers.dev/benchmark
+
 **Videos:** [la propuesta en 78 segundos](https://espejismo-demo.haroldmedrano33.workers.dev/video/propuesta.mp4) · [lo que el agente dice contra lo que registró el sistema, 74 segundos](https://espejismo-demo.haroldmedrano33.workers.dev/video/dicho-vs-hecho.mp4)
 
 ## El problema
