@@ -105,7 +105,10 @@ async function tick(): Promise<void> {
   try {
     const res = await fetch(`${BASE}${API_PREFIX}/events`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(process.env.SENTINEL_INGEST_TOKEN ? { Authorization: `Bearer ${process.env.SENTINEL_INGEST_TOKEN}` } : {}),
+      },
       body: JSON.stringify(batch),
       signal: AbortSignal.timeout(2000),
     });

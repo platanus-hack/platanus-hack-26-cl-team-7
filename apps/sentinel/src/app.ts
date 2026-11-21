@@ -14,10 +14,10 @@ import {
   type ApiError,
   type CopilotEvent,
   type Health,
-  type StreamBatch,
 } from "@sentinel/contracts";
 import type { Ai } from "./ai.ts";
-import type { Bus } from "./bus.ts";
+import { timingSafeEqual } from "node:crypto";
+import type { Bus, Frame } from "./bus.ts";
 import type { Store } from "./store.ts";
 
 export interface AppDeps {
@@ -31,13 +31,20 @@ export interface AppDeps {
   allowedOrigins?: string[];
   /** Folder with the built web app. When it holds an index.html, Sentinel serves it at "/". */
   webRoot?: string;
+  /** Host names the API answers besides localhost. Anything else is refused, which stops DNS rebinding. */
+  allowedHosts?: string[];
+  /** When set, POST /v1/events needs `Authorization: Bearer <token>`. */
+  ingestToken?: string;
 }
 
-function fail(c: Context, status: 400 | 404 | 413 | 500 | 503, code: string, message: string) {
+const MAX_QUEUED_FRAMES = 1000;
+const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
+
+function fail(c: Context, status: 400 | 401 | 403 | 404 | 413 | 415 | 500 | 503, code: string, message: string) {
   return c.json<ApiError>({ error: { code, message } }, status);
 }
 
-export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot }: AppDeps) {
+export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
@@ -49,6 +56,24 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
       maxAge: 600,
     }),
   );
+
+  // Browsers may only reach the API from this origin (or a configured one), under a known host name.
+  // POSTs must be JSON, which a cross-site form or a no-preflight fetch cannot send.
+  const hosts = new Set([...LOCAL_HOSTS, ...allowedHosts]);
+  app.use("*", async (c, next) => {
+    const hostHeader = c.req.header("Host") ?? new URL(c.req.url).host;
+    const host = hostHeader.replace(/:\d+$/, "").replace(/^\[(.*)\]$/, "$1");
+    if (!hosts.has(host)) return fail(c, 403, "forbidden_host", "Unknown host name. Add it to SENTINEL_ALLOWED_HOSTS.");
+    const method = c.req.method;
+    if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+      const origin = c.req.header("Origin");
+      const sameOrigin = !!origin && URL.canParse(origin) && new URL(origin).host === hostHeader;
+      if (origin && !sameOrigin && !allowedOrigins.includes(origin)) return fail(c, 403, "forbidden_origin", "Cross-site request refused");
+      if (method === "POST" && !c.req.header("Content-Type")?.toLowerCase().startsWith("application/json"))
+        return fail(c, 415, "unsupported_media_type", "Send Content-Type: application/json");
+    }
+    await next();
+  });
 
   // Every response says how long the server worked on it.
   app.use("*", async (c, next) => {
@@ -113,6 +138,8 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
 
   /** Gateways post one event or a batch of up to 500. The rules verdict comes back in the response. */
   app.post("/events", bodyLimit({ maxSize: 2 * 1024 * 1024, onError: (c) => fail(c, 413, "too_large", "Body over 2 MB") }), async (c) => {
+    if (ingestToken && !tokenMatches(c.req.header("Authorization"), ingestToken))
+      return fail(c, 401, "unauthorized", "Missing or wrong ingest token");
     const body = await c.req.json().catch(() => undefined);
     const parsed = IngestBody.safeParse(body);
     if (!parsed.success) {
@@ -127,27 +154,27 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
 
   /** Live changes as Server-Sent Events, one batch per 100 ms frame. */
   app.get("/stream", (c) => {
-    const lastId = c.req.header("Last-Event-ID") ?? c.req.query("after");
-    const after = lastId !== undefined && lastId !== "" ? Number(lastId) : bus.lastSeq;
+    // EventSource resends the last id on reconnect; the first connect passes the snapshot position.
+    const position = c.req.header("Last-Event-ID") || c.req.query("after") || "";
     c.header("Cache-Control", "no-store");
     c.header("X-Accel-Buffering", "no");
     return streamSSE(c, async (stream) => {
-      type Item = { kind: "batch"; seq: number; data: string } | { kind: "reset" } | { kind: "ping" };
-      const queue: Item[] = [];
+      const queue: (Frame | "reset" | "ping")[] = [];
       let wake: (() => void) | null = null;
-      const push = (item: Item) => {
-        queue.push(item);
+      let open = true;
+      const push = (item: Frame | "reset" | "ping") => {
+        // A client that cannot keep up is told to reload instead of holding memory without limit.
+        if (queue.length >= MAX_QUEUED_FRAMES) queue.splice(0, queue.length, "reset");
+        else queue.push(item);
         wake?.();
       };
-      const pushBatch = (b: StreamBatch) => push({ kind: "batch", seq: b.seq, data: JSON.stringify(b) });
 
-      const backlog = Number.isFinite(after) ? bus.since(after) : [];
-      if (backlog === null) push({ kind: "reset" });
-      else backlog.forEach(pushBatch);
+      const backlog = position ? bus.since(position) : [];
+      if (backlog === null) push("reset");
+      else backlog.forEach(push);
 
-      const unsubscribe = bus.subscribe(pushBatch);
-      const beat = setInterval(() => push({ kind: "ping" }), heartbeatMs);
-      let open = true;
+      const unsubscribe = bus.subscribe(push);
+      const beat = setInterval(() => push("ping"), heartbeatMs);
       stream.onAbort(() => {
         open = false;
         unsubscribe();
@@ -155,22 +182,24 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
         wake?.();
       });
 
-      await stream.writeSSE({ event: "ready", data: JSON.stringify({ seq: bus.lastSeq }) });
+      await stream.writeSSE({ event: "ready", data: JSON.stringify({ epoch: bus.epoch, seq: bus.lastSeq }) });
       while (open) {
         if (queue.length === 0) await new Promise<void>((r) => (wake = r));
         wake = null;
         while (open && queue.length) {
           const item = queue.shift()!;
-          if (item.kind === "ping") await stream.write(": ping\n\n");
-          else if (item.kind === "reset") await stream.writeSSE({ event: "reset", data: "{}" });
-          else await stream.writeSSE({ event: "batch", id: String(item.seq), data: item.data });
+          if (item === "ping") await stream.write(": ping\n\n");
+          else if (item === "reset") {
+            await stream.writeSSE({ event: "reset", data: "{}" });
+            queue.length = 0;
+          } else await stream.writeSSE({ event: "batch", id: item.id, data: item.json });
         }
       }
     });
   });
 
   /** Copilot answer as Server-Sent Events. Closing the request stops the model. */
-  app.post("/copilot/messages", async (c) => {
+  app.post("/copilot/messages", bodyLimit({ maxSize: 512 * 1024, onError: (c) => fail(c, 413, "too_large", "Body over 512 KB") }), async (c) => {
     const parsed = CopilotRequest.safeParse(await c.req.json().catch(() => undefined));
     if (!parsed.success) return fail(c, 400, "invalid_request", z.prettifyError(parsed.error));
     if (!ai.enabled) return fail(c, 503, "ai_unavailable", "AI is not configured. Set ANTHROPIC_API_KEY for Sentinel.");
@@ -206,12 +235,20 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
     // The app shell must not be cached, so a new build shows at once.
     root.use("/*", async (c, next) => {
       await next();
-      if (c.req.path.startsWith("/assets/")) c.res.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      if (c.req.path.startsWith("/assets/") && c.res.status === 200) c.res.headers.set("Cache-Control", "public, max-age=31536000, immutable");
       else if (c.res.headers.get("Content-Type")?.startsWith("text/html")) c.res.headers.set("Cache-Control", "no-cache");
     });
     root.use("/*", serveStatic({ root: webRoot, precompressed: true }));
+    // A missing hashed asset is a 404, never the app shell (a stale tab would cache HTML as JS).
+    root.all("/assets/*", (c) => c.text("Not found", 404));
     // Any other path loads the app shell.
     root.get("*", serveStatic({ root: webRoot, path: "index.html", precompressed: true }));
   }
   return root;
+}
+
+function tokenMatches(header: string | undefined, token: string): boolean {
+  const given = Buffer.from(header?.replace(/^Bearer\s+/i, "") ?? "");
+  const want = Buffer.from(token);
+  return given.length === want.length && timingSafeEqual(given, want);
 }

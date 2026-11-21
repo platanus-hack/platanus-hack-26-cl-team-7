@@ -61,6 +61,7 @@ export type GeoHint = z.infer<typeof GeoHint>;
 
 /** What a gateway or the simulator sends to POST /v1/events. */
 export const IngestEvent = z.object({
+  /** When the gateway saw the request. Outside [now − 24 h, now + 30 s] the server uses its own clock. */
   ts: z.number().int().positive().optional(),
   ip: z.ipv4().or(z.ipv6()),
   method: z.string().max(10).default("GET"),
@@ -141,8 +142,10 @@ export const Snapshot = z.object({
   series: z.array(SeriesPoint),
   events: z.array(AttackEvent),
   attackers: z.array(Attacker),
-  /** Last stream sequence included. Pass it as Last-Event-ID to resume without gaps. */
+  /** Stream position this snapshot includes. Connect with `?after=${epoch}-${seq}`. */
   seq: z.number().int(),
+  /** Changes on every Sentinel restart. A different epoch means the client must reload the snapshot. */
+  epoch: z.string(),
 });
 export type Snapshot = z.infer<typeof Snapshot>;
 
@@ -167,12 +170,22 @@ export type ApiError = z.infer<typeof ApiError>;
 /* ------------------------------------------------------------------ */
 
 export type StreamChange =
-  | { kind: "event"; event: AttackEvent }
+  /**
+   * `prev` is set when this updates an event published earlier (for example
+   * analyzing → killed). Without `prev` the event is new: count it as received.
+   */
+  | { kind: "event"; event: AttackEvent; prev?: EventStatus }
   | { kind: "attacker"; attacker: Attacker }
   | { kind: "report"; report: AttackerReport }
   | { kind: "block"; ip: string; blocked: boolean };
 
+/**
+ * GET /v1/stream sends `event: ready` with `{ epoch, seq }`, then `event: batch`
+ * with ids `${epoch}-${seq}`. `event: reset` means the client missed more than the
+ * server kept (or the server restarted): reload the snapshot and reconnect.
+ */
 export interface StreamBatch {
+  epoch: string;
   seq: number;
   now: number;
   changes: StreamChange[];

@@ -125,6 +125,7 @@ export class GeoResolver {
         city: j.city ?? null,
         network: j.org || j.isp || null,
       };
+      if (this.cache.size >= 10_000) this.cache.clear(); // Bounded: a flood of IPs cannot grow it forever.
       this.cache.set(ip, geo);
       this.onResolved(ip, geo);
     } catch {

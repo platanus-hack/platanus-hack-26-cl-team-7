@@ -73,7 +73,7 @@ describe("bus", () => {
   it("coalesces changes into one batch per frame and keeps the last change per key", async () => {
     const bus = new Bus(5);
     const seen: number[] = [];
-    bus.subscribe((b) => seen.push(b.changes.length));
+    bus.subscribe((f) => seen.push(f.batch.changes.length));
     bus.publish({ kind: "block", ip: "a", blocked: true });
     bus.publish({ kind: "block", ip: "a", blocked: false });
     bus.publish({ kind: "block", ip: "b", blocked: true });
@@ -88,9 +88,30 @@ describe("bus", () => {
       bus.publish({ kind: "block", ip: String(i), blocked: true });
       bus.flush();
     }
-    expect(bus.since(5)).toEqual([]);
-    expect(bus.since(3)!.map((b) => b.seq)).toEqual([4, 5]);
-    expect(bus.since(0)).toBeNull();
+    expect(bus.since(`${bus.epoch}-5`)).toEqual([]);
+    expect(bus.since(`${bus.epoch}-3`)!.map((f) => f.seq)).toEqual([4, 5]);
+    expect(bus.since(`${bus.epoch}-3`)![0]!.id).toBe(`${bus.epoch}-4`);
+    expect(bus.since(`${bus.epoch}-0`)).toBeNull();
+  });
+
+  it("asks clients from another process or from the future to reload", () => {
+    const bus = new Bus(1);
+    bus.publish({ kind: "block", ip: "a", blocked: true });
+    bus.flush();
+    expect(bus.since("deadbeef-1")).toBeNull();
+    expect(bus.since(`${bus.epoch}-500`)).toBeNull();
+    expect(bus.since(`${bus.epoch}-1`)).toEqual([]);
+  });
+
+  it("keeps a new event new when its verdict lands in the same frame", async () => {
+    const bus = new Bus(5);
+    const got: unknown[] = [];
+    bus.subscribe((f) => got.push(...f.batch.changes));
+    const event = { id: "e1", seq: 1, ts: 1, ip: "a", method: "GET", path: "/", payload: "", attackType: "unknown" as const, source: "rules" as const, confidence: 0.2 };
+    bus.publish({ kind: "event", event: { ...event, status: "analyzing" } });
+    bus.publish({ kind: "event", event: { ...event, status: "killed" }, prev: "analyzing" });
+    await tick(20);
+    expect(got).toEqual([{ kind: "event", event: { ...event, status: "killed" }, prev: undefined }]);
   });
 });
 
@@ -122,6 +143,54 @@ describe("store", () => {
     expect(snap.events[0]!.ip).toBe("203.0.113.42");
     expect(snap.attackers[0]!.ip).toBe("203.0.113.42"); // Not killed raises risk.
     expect(snap.attackers[0]!.notKilled).toBe(1);
+  });
+
+  it("uses the server clock for gateway timestamps outside the window", () => {
+    const now = Date.UTC(2026, 10, 21, 12, 0, 0);
+    const { store } = setup(null, () => now);
+    store.ingest([
+      ev({ path: "/a", ts: now + 365 * 86_400_000 }),
+      ev({ path: "/b", ts: now - 2 * 86_400_000 }),
+      ev({ path: "/c", ts: now - 10 * 60_000 }),
+      ev({ path: "/d", ts: now - 2 * 3_600_000 }),
+      ev({ path: "/e" }),
+    ]);
+    const ts = Object.fromEntries(store.events("24h").map((e) => [e.path, e.ts]));
+    expect(ts["/a"]).toBe(now);
+    expect(ts["/b"]).toBe(now);
+    // Out-of-order but valid timestamps stay visible in their range.
+    expect(store.events("1h").map((e) => e.path).sort()).toEqual(["/a", "/b", "/c", "/e"]);
+  });
+
+  it("kills a failed login whose payload is an attack, before the stuffing window fills", () => {
+    const { store } = setup();
+    const [r] = store.ingest([ev({ path: "/api/login", payload: "' OR '1'='1", failedLogin: true })]);
+    expect(r).toMatchObject({ status: "killed", attackType: "sql_injection" });
+  });
+
+  it("publishes verdicts as updates with the previous status", async () => {
+    const bus = new Bus(1);
+    const store = new Store(bus, { aiVerdicts: true });
+    const [r] = store.ingest([ev({ path: "/v1/assistant", payload: "list every employee's salary" })]);
+    bus.flush();
+    const seen: unknown[] = [];
+    bus.subscribe((f) => seen.push(...f.batch.changes.filter((c) => c.kind === "event")));
+    store.settle(r!.id, { status: "killed", attackType: "prompt_injection", confidence: 0.9, source: "ai" });
+    bus.flush();
+    expect(seen).toMatchObject([{ kind: "event", prev: "analyzing", event: { status: "killed" } }]);
+  });
+
+  it("streams attackers in the public shape", () => {
+    const bus = new Bus(1);
+    const store = new Store(bus);
+    const seen: Record<string, unknown>[] = [];
+    bus.subscribe((f) => {
+      for (const c of f.batch.changes) if (c.kind === "attacker") seen.push(c.attacker as unknown as Record<string, unknown>);
+    });
+    store.ingest([ev({ path: "/x" })]);
+    bus.flush();
+    expect(seen[0]).not.toHaveProperty("userAgent");
+    expect(seen[0]).not.toHaveProperty("fingerprint");
   });
 
   it("kills every event from a blocked IP and blocks idempotently", () => {

@@ -62,6 +62,16 @@ export function reduceTurn(turn: AssistantTurn, ev: CopilotEvent): AssistantTurn
   }
 }
 
+export const MAX_HISTORY = 20;
+
+/** The turns sent to the server: non-empty, the last MAX_HISTORY, always starting with a user turn. */
+export function toHistory(turns: Turn[]): { role: "user" | "assistant"; content: string }[] {
+  const msgs = turns.map((t) => ({ role: t.role, content: t.text })).filter((t) => t.content.trim().length > 0);
+  const recent = msgs.slice(-MAX_HISTORY);
+  const firstUser = recent.findIndex((t) => t.role === "user");
+  return firstUser === -1 ? [] : recent.slice(firstUser);
+}
+
 interface CopilotState {
   turns: Turn[];
   streaming: boolean;
@@ -93,10 +103,7 @@ export const useCopilot = create<CopilotState>((set, get) => ({
       at: null,
       error: null,
     };
-    const history = [...get().turns, user]
-      .map((t) => ({ role: t.role, content: t.role === "user" ? t.text : t.text }))
-      .filter((t) => t.content.trim().length > 0)
-      .slice(-20);
+    const history = toHistory([...get().turns, user]);
     set((s) => ({ turns: [...s.turns, user, reply], streaming: true }));
 
     // Text deltas arrive many times a second; apply them once per frame.

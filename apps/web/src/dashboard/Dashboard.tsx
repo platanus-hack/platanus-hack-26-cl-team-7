@@ -252,6 +252,9 @@ const AttackerRow = memo(function AttackerRow({ a, selected, onSelect, onHover }
   );
 });
 
+/** Rows rendered in the attackers list. The rest is summarized, so 10k attackers never mean 10k rows. */
+const ATTACKER_ROWS = 100;
+
 function Attackers() {
   const attackers = useDashboard((s) => s.data.attackers);
   const loading = useDashboard((s) => s.conn === "loading");
@@ -274,7 +277,8 @@ function Attackers() {
                 <Skeleton w={30} style={{ justifySelf: "end" }} />
               </div>
             ))
-          : attackers.map((a) => <AttackerRow key={a.ip} a={a} selected={a.ip === selectedIp} onSelect={select} onHover={prefetch} />)}
+          : attackers.slice(0, ATTACKER_ROWS).map((a) => <AttackerRow key={a.ip} a={a} selected={a.ip === selectedIp} onSelect={select} onHover={prefetch} />)}
+        {attackers.length > ATTACKER_ROWS && <p className="px-6 py-3 text-xs text-mid">{num(attackers.length - ATTACKER_ROWS)} more, lower risk</p>}
         {!loading && attackers.length === 0 && <p className="px-6 py-6 text-sm text-mid">No attackers in this time range.</p>}
       </div>
     </section>
@@ -296,7 +300,7 @@ function AttackerPanel() {
   const liveReport = useDashboard((s) => (s.selectedIp ? s.data.reports[s.selectedIp] : undefined));
   const detail = useDashboard((s) => (s.selectedIp ? s.details[s.selectedIp] : undefined));
   const aiEnabled = useDashboard((s) => s.health?.ai.enabled ?? null);
-  const pending = useDashboard((s) => (s.selectedIp ? Boolean(s.pendingBlock[s.selectedIp]) : false));
+  const pending = useDashboard((s) => (s.selectedIp ? s.selectedIp in s.pendingBlock : false));
   const toggleBlock = useDashboard((s) => s.toggleBlock);
   const loading = useDashboard((s) => s.conn === "loading");
 

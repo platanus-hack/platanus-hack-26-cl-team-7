@@ -16,7 +16,10 @@ const port = Number(process.env.SENTINEL_PORT ?? DEFAULT_PORT);
 const host = process.env.SENTINEL_HOST ?? "127.0.0.1";
 const dbPath = resolve(process.env.SENTINEL_DB ?? resolve(here, "../data/sentinel.db"));
 const webRoot = resolve(process.env.SENTINEL_WEB ?? resolve(here, "../../web/dist"));
-const allowedOrigins = (process.env.SENTINEL_ALLOWED_ORIGINS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+const list = (v: string | undefined) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+const allowedOrigins = list(process.env.SENTINEL_ALLOWED_ORIGINS);
+const allowedHosts = list(process.env.SENTINEL_ALLOWED_HOSTS);
+const ingestToken = process.env.SENTINEL_INGEST_TOKEN || undefined;
 
 mkdirSync(dirname(dbPath), { recursive: true });
 // The SDK resolves ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN. Without either, AI stays off.
@@ -30,10 +33,10 @@ const ai = new Ai(store, bus, { client });
 // Attackers without a location hint get one from ip-api.com, off the ingest path.
 const geo = new GeoResolver((ip, g) => store.setGeo(ip, g));
 bus.subscribe((b) => {
-  for (const c of b.changes) if (c.kind === "attacker" && !c.attacker.country) geo.request(c.attacker.ip);
+  for (const c of b.batch.changes) if (c.kind === "attacker" && !c.attacker.country) geo.request(c.attacker.ip);
 });
 
-const app = createApp({ store, bus, ai, webRoot, allowedOrigins });
+const app = createApp({ store, bus, ai, webRoot, allowedOrigins, allowedHosts, ingestToken });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
   console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}`);

@@ -47,7 +47,7 @@ export const api = {
   attacker: (ip: string, signal?: AbortSignal) => request<AttackerDetail>(`/v1/attackers/${encodeURIComponent(ip)}`, { signal }),
   block: (ip: string) => request<Block>(`/v1/blocks/${encodeURIComponent(ip)}`, { method: "PUT" }),
   unblock: (ip: string) => request<void>(`/v1/blocks/${encodeURIComponent(ip)}`, { method: "DELETE" }),
-  streamUrl: (after: number) => `${BASE_URL}/v1/stream?after=${after}`,
+  streamUrl: (after: string) => `${BASE_URL}/v1/stream?after=${encodeURIComponent(after)}`,
   copilotUrl: () => `${BASE_URL}/v1/copilot/messages`,
 };
 

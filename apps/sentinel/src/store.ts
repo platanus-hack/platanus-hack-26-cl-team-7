@@ -78,6 +78,11 @@ export class LoginWindow {
     this.windowMs = windowMs;
   }
 
+  /** Forgets IPs with no failed login inside the window. */
+  prune(now: number): void {
+    for (const [ip, list] of this.hits) if (now - (list[list.length - 1] ?? 0) >= this.windowMs) this.hits.delete(ip);
+  }
+
   record(ip: string, ts: number): RuleVerdict {
     const list = (this.hits.get(ip) ?? []).filter((t) => ts - t < this.windowMs);
     list.push(ts);
@@ -94,6 +99,9 @@ export class LoginWindow {
 const RETAIN_MS = RANGE_MS["24h"];
 const BASE_BUCKET = 10_000; // Smallest bucket. Larger buckets sum these.
 const MAX_EVENTS = 50_000;
+/** Trim in chunks: removing from the front of a 50k array on every event would cost O(n) each time. */
+const TRIM_CHUNK = 5_000;
+const FUTURE_SKEW_MS = 30_000;
 const PAYLOAD_KEEP = 2048;
 
 const SEVERITY: Record<AttackType, number> = {
@@ -149,6 +157,8 @@ export class Store {
   private dirtyEvents = new Map<string, AttackEvent>();
   private dirtyAttackers = new Set<string>();
   private flushTimer: NodeJS.Timeout | null = null;
+  private readonly pruneTimer: NodeJS.Timeout | null = null;
+  private closed = false;
 
   private readonly bus: Bus;
   private readonly db: DatabaseSync | null;
@@ -164,6 +174,8 @@ export class Store {
     if (db) {
       migrate(db);
       this.load(db);
+      this.pruneTimer = setInterval(() => this.prune(), 60_000);
+      this.pruneTimer.unref();
     }
   }
 
@@ -176,7 +188,9 @@ export class Store {
   }
 
   private ingestOne(item: IngestEventParsed): IngestResult {
-    const ts = item.ts ?? this.now();
+    // Gateway clocks are not trusted: a timestamp out of range would hide the event or pin it to the top.
+    const now = this.now();
+    const ts = item.ts && item.ts >= now - RETAIN_MS && item.ts <= now + FUTURE_SKEW_MS ? Math.min(item.ts, now) : now;
     const a = this.touchAttacker(item, ts);
 
     let attackType: AttackType = "unknown";
@@ -191,7 +205,10 @@ export class Store {
       status = "killed";
       source = "block";
     } else {
-      const rule = item.failedLogin ? this.logins.record(item.ip, ts) : classify(item.path, item.payload);
+      // Payload rules always run; a failed login adds the stuffing window. The stronger signal wins.
+      const fromPayload = classify(item.path, item.payload);
+      const fromLogin = item.failedLogin ? this.logins.record(item.ip, ts) : null;
+      const rule = fromLogin && (!fromPayload || fromLogin.confidence > fromPayload.confidence) ? fromLogin : fromPayload;
       if (rule) ({ attackType, confidence } = rule);
       status = confidence >= KILL_THRESHOLD ? "killed" : this.aiVerdicts ? "analyzing" : "active";
     }
@@ -212,7 +229,7 @@ export class Store {
 
     this.events_.push(event);
     this.byId.set(event.id, event);
-    if (this.events_.length > MAX_EVENTS) this.dropOldest(this.events_.length - MAX_EVENTS);
+    if (this.events_.length > MAX_EVENTS + TRIM_CHUNK) this.dropOldest(this.events_.length - MAX_EVENTS);
 
     const bucket = this.bucket(ts);
     bucket.received++;
@@ -244,7 +261,7 @@ export class Store {
     this.replaceEvent(updated);
     if (verdict.status === "killed") this.bucket(e.ts).killed++;
     this.markDirty(updated, e.ip);
-    this.bus.publish({ kind: "event", event: updated });
+    this.bus.publish({ kind: "event", event: updated, prev: e.status });
     if (a) this.publishAttacker(a.ip);
     return true;
   }
@@ -255,7 +272,7 @@ export class Store {
     if (existing) return existing;
     const at = this.now();
     this.blocks_.set(ip, at);
-    this.db?.prepare("INSERT OR REPLACE INTO blocks (ip, blocked_at) VALUES (?, ?)").run(ip, at);
+    this.liveDb?.prepare("INSERT OR REPLACE INTO blocks (ip, blocked_at) VALUES (?, ?)").run(ip, at);
     this.bus.publish({ kind: "block", ip, blocked: true });
     if (this.attackers_.has(ip)) this.publishAttacker(ip);
     return at;
@@ -264,7 +281,7 @@ export class Store {
   /** Idempotent. Returns true when a block existed. */
   unblock(ip: string): boolean {
     if (!this.blocks_.delete(ip)) return false;
-    this.db?.prepare("DELETE FROM blocks WHERE ip = ?").run(ip);
+    this.liveDb?.prepare("DELETE FROM blocks WHERE ip = ?").run(ip);
     this.bus.publish({ kind: "block", ip, blocked: false });
     if (this.attackers_.has(ip)) this.publishAttacker(ip);
     return true;
@@ -289,7 +306,9 @@ export class Store {
 
   /* ----------------------------- reads ------------------------------ */
 
+  /** Flushes the bus first, so the snapshot holds exactly the changes up to its `seq`. */
   snapshot(range: Range): Snapshot {
+    this.bus.flush();
     const now = this.now();
     return {
       range,
@@ -299,6 +318,7 @@ export class Store {
       events: this.events(range, { limit: 200 }),
       attackers: this.attackers(range),
       seq: this.bus.lastSeq,
+      epoch: this.bus.epoch,
     };
   }
 
@@ -324,7 +344,7 @@ export class Store {
     const out: AttackEvent[] = [];
     for (let i = this.events_.length - 1; i >= 0 && out.length < limit; i--) {
       const e = this.events_[i]!;
-      if (e.ts < since) break;
+      if (e.ts < since) continue;
       if (!filter || filter(e)) out.push(e);
     }
     return out;
@@ -364,10 +384,31 @@ export class Store {
     return [...this.blocks_].map(([ip, blockedAt]) => ({ ip, blockedAt }));
   }
 
+  /** The database while the store is open. Writes after close() are dropped instead of throwing. */
+  private get liveDb(): DatabaseSync | null {
+    return this.closed ? null : this.db;
+  }
+
   /** Flushes pending writes. Call on shutdown. */
   close(): void {
+    if (this.pruneTimer) clearInterval(this.pruneTimer);
     this.flushWrites();
     if (this.flushTimer) clearTimeout(this.flushTimer);
+    this.closed = true;
+  }
+
+  /** Forgets attackers and rows older than the retention window. Runs every minute. */
+  prune(): void {
+    const now = this.now();
+    const cutoff = now - RETAIN_MS;
+    for (const [ip, a] of this.attackers_) if (a.lastSeen < cutoff && !this.blocks_.has(ip)) this.attackers_.delete(ip);
+    this.logins.prune(now);
+    this.pruneBuckets();
+    if (!this.db || this.closed) return;
+    this.flushWrites();
+    this.db.prepare("DELETE FROM events WHERE ts < ? OR seq <= ?").run(cutoff, this.eventSeq - MAX_EVENTS);
+    this.db.exec("DELETE FROM attackers WHERE ip NOT IN (SELECT DISTINCT ip FROM events) AND ip NOT IN (SELECT ip FROM blocks)");
+    this.db.exec("DELETE FROM reports WHERE ip NOT IN (SELECT ip FROM attackers)");
   }
 
   /* ---------------------------- internals --------------------------- */
@@ -439,8 +480,8 @@ export class Store {
   }
 
   private publishAttacker(ip: string): void {
-    const a = this.attackers_.get(ip);
-    if (a) this.bus.publish({ kind: "attacker", attacker: this.view(a) });
+    const attacker = this.attacker(ip);
+    if (attacker) this.bus.publish({ kind: "attacker", attacker });
   }
 
   private bucket(ts: number): { received: number; killed: number } {
@@ -488,7 +529,7 @@ export class Store {
   /** One transaction for every write in the last 250 ms keeps ingest off the disk path. */
   private flushWrites(): void {
     this.flushTimer = null;
-    const db = this.db;
+    const db = this.closed ? null : this.db;
     if (!db || (this.dirtyEvents.size === 0 && this.dirtyAttackers.size === 0)) return;
     const evStmt = db.prepare(
       `INSERT OR REPLACE INTO events (id, seq, ts, ip, method, path, payload, attack_type, status, source, confidence)
@@ -531,8 +572,8 @@ export class Store {
     for (const r of db.prepare("SELECT * FROM attackers").all() as Record<string, string | number | null>[])
       meta.set(String(r.ip), r);
     const rows = db
-      .prepare("SELECT * FROM events WHERE ts >= ? ORDER BY seq ASC")
-      .all(since) as Record<string, string | number>[];
+      .prepare("SELECT * FROM (SELECT * FROM events WHERE ts >= ? ORDER BY seq DESC LIMIT ?) ORDER BY seq ASC")
+      .all(since, MAX_EVENTS) as Record<string, string | number>[];
     for (const r of rows) {
       const e: AttackEvent = {
         id: String(r.id),

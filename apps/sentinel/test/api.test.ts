@@ -103,11 +103,11 @@ describe("HTTP API", () => {
     store.ingest([ev({ path: "/b?id=1 UNION SELECT a FROM b" })]);
     bus.flush();
 
-    const res = await app.request(`/v1/stream?after=${missed - 1}`);
+    const res = await app.request(`/v1/stream?after=${bus.epoch}-${missed - 1}`);
     expect(res.headers.get("Content-Type")).toMatch(/text\/event-stream/);
     const got = await readSSE(res, (es) => es.filter((e) => e.event === "batch").length >= 2);
     const batches = got.filter((e) => e.event === "batch");
-    expect(batches.map((b) => Number(b.id))).toEqual([missed, missed + 1]);
+    expect(batches.map((b) => b.id)).toEqual([`${bus.epoch}-${missed}`, `${bus.epoch}-${missed + 1}`]);
     expect(JSON.parse(batches[1]!.data).changes.some((c: { kind: string }) => c.kind === "event")).toBe(true);
   });
 
@@ -117,7 +117,7 @@ describe("HTTP API", () => {
       bus.publish({ kind: "block", ip: String(i), blocked: true });
       bus.flush();
     }
-    const got = await readSSE(await app.request("/v1/stream?after=1"), (es) => es.some((e) => e.event === "reset"));
+    const got = await readSSE(await app.request(`/v1/stream?after=${bus.epoch}-1`), (es) => es.some((e) => e.event === "reset"));
     expect(got.some((e) => e.event === "reset")).toBe(true);
   });
 
@@ -135,10 +135,48 @@ describe("HTTP API", () => {
     expect(deep.headers.get("Cache-Control")).toBe("no-cache");
     const asset = await app.request("/assets/app-abc123.js");
     expect(asset.headers.get("Cache-Control")).toContain("immutable");
+    const missing = await app.request("/assets/app-old999.js");
+    expect(missing.status).toBe(404);
+    expect(missing.headers.get("Cache-Control")).toBeNull();
     const api404 = await app.request("/v1/nope");
     expect(api404.status).toBe(404);
     expect((await api404.json()).error.code).toBe("not_found");
     rmSync(dir, { recursive: true });
+  });
+
+  it("puts pending changes inside the snapshot, so the stream never repeats them", async () => {
+    const { app, store, bus } = setup();
+    store.ingest([ev({ path: "/a?id=1 UNION SELECT a FROM b" })]); // still in the 5 ms buffer
+    const snap = (await (await app.request("/v1/snapshot?range=5m")).json()) as Snapshot;
+    expect(snap.events).toHaveLength(1);
+    expect(snap.epoch).toBe(bus.epoch);
+    expect(bus.since(`${snap.epoch}-${snap.seq}`)).toEqual([]);
+  });
+
+  it("refuses cross-site writes, foreign host names and non-JSON posts", async () => {
+    const { app } = setup();
+    const post = (headers: Record<string, string>, path = "/v1/events") =>
+      app.request(path, { method: "POST", headers, body: JSON.stringify({ ip: "192.0.2.1", path: "/" }) });
+    expect((await post({ "Content-Type": "text/plain" })).status).toBe(415);
+    expect((await post({ "Content-Type": "application/json", Origin: "https://evil.example" })).status).toBe(403);
+    expect((await post({ "Content-Type": "application/json", Host: "evil.example" })).status).toBe(403);
+    expect((await post({ "Content-Type": "application/json", Origin: "http://localhost", Host: "localhost" })).status).toBe(202);
+    expect((await app.request("/v1/health", { headers: { Host: "rebind.evil.example:8787" } })).status).toBe(403);
+    expect((await app.request("/v1/blocks/192.0.2.1", { method: "PUT", headers: { Origin: "https://evil.example" } })).status).toBe(403);
+  });
+
+  it("requires the ingest token when one is configured", async () => {
+    const { store, bus, ai } = setup();
+    const app = createApp({ store, bus, ai, ingestToken: "s3cret" });
+    const post = (auth?: string) =>
+      app.request("/v1/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(auth ? { Authorization: auth } : {}) },
+        body: JSON.stringify({ ip: "192.0.2.1", path: "/" }),
+      });
+    expect((await post()).status).toBe(401);
+    expect((await post("Bearer nope")).status).toBe(401);
+    expect((await post("Bearer s3cret")).status).toBe(202);
   });
 
   it("returns 503 for the copilot when AI is off", async () => {
