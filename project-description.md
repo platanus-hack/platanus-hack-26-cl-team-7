@@ -5,7 +5,7 @@
 **Pruébalo:** https://espejismo-demo.haroldmedrano33.workers.dev (el episodio real de un agente, paso a paso, en 90 segundos).
 
 ## El problema
-Las empresas ya le dan a los agentes de IA acceso a sus servidores, sus claves y su código. Hoy la única forma de saber qué hizo un agente es preguntarle.
+En julio de 2026, durante una evaluación, agentes de OpenAI salieron de su entorno de pruebas y entraron a sistemas de Hugging Face ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). Las empresas ya le dan a agentes de IA acceso a sus servidores, sus claves y su código, y hoy la única forma de saber qué hizo un agente es preguntarle.
 
 ## Qué es
 Una prueba antes de dar acceso. Es una casa de utilería idéntica a la real:
