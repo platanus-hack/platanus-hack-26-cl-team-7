@@ -57,27 +57,32 @@ const reports = reportModel
   ? new ReportService({ store, db, model: reportModel, sources: { sen: sentinelSource(store), acc: accessLogSource(accessLogPath), eng: engineSource(verdictsDbPath) } })
   : null;
 
-const upRoot = resolve(repoRoot, "ultimo-paso");
-const upEnvironment = providerEnvironment(resolve(upRoot, ".env"));
-const replayDirectory = resolve(upRoot, "scoreboard/evidence");
-const eventDirectory = process.env.ULTIMO_PASO_EVENT_DIR || resolve(upRoot, "scoreboard/runs/live");
-if (!process.env.ULTIMO_PASO_EVENT_DIR) mkdirSync(eventDirectory, { recursive: true });
-const inventory = inventoryOf({ package: process.env.ULTIMO_PASO_PACKAGE, version: process.env.ULTIMO_PASO_VERSION });
-const journal = new EvidenceJournal(db, eventDirectory, upEnvironment.FIRECRAWL_API_KEY, inventory);
-const pipeline = new Pipeline(db, { ...pipelineProviders(upEnvironment),
-  evaluate: fixtureWorker(upRoot, eventDirectory, upEnvironment.ULTIMO_PASO_LIMA_VM) });
-const app = createApp({ evidence: { replayDirectory, journal, pipeline }, store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
+// Último Paso replays recorded fixtures and runs fixture demos: off unless ULTIMO_PASO=1, so Sentinel shows only real data by default.
+const upEnabled = process.env.ULTIMO_PASO === "1";
+function ultimoPaso() {
+  const upRoot = resolve(repoRoot, "ultimo-paso");
+  const upEnvironment = providerEnvironment(resolve(upRoot, ".env"));
+  const replayDirectory = resolve(upRoot, "scoreboard/evidence");
+  const eventDirectory = process.env.ULTIMO_PASO_EVENT_DIR || resolve(upRoot, "scoreboard/runs/live");
+  if (!process.env.ULTIMO_PASO_EVENT_DIR) mkdirSync(eventDirectory, { recursive: true });
+  const inventory = inventoryOf({ package: process.env.ULTIMO_PASO_PACKAGE, version: process.env.ULTIMO_PASO_VERSION });
+  const journal = new EvidenceJournal(db, eventDirectory, upEnvironment.FIRECRAWL_API_KEY, inventory);
+  const pipeline = new Pipeline(db, { ...pipelineProviders(upEnvironment), evaluate: fixtureWorker(upRoot, eventDirectory, upEnvironment.ULTIMO_PASO_LIMA_VM) });
+  return { replayDirectory, journal, pipeline };
+}
+const evidence = upEnabled ? ultimoPaso() : undefined;
+const app = createApp({ evidence, store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
-  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
+  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}  ultimo-paso=${upEnabled ? "on" : "off (set ULTIMO_PASO=1)"}`);
 });
 
 function shutdown() {
   ai.stop();
   fixes.stop();
   bus.stop();
-  pipeline.stop();
-  journal.stop();
+  evidence?.pipeline.stop();
+  evidence?.journal.stop();
   store.close();
   db.close();
   server.close(() => process.exit(0));
