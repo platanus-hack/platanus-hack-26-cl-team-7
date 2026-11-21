@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Dashboard } from "./dashboard/Dashboard";
 import { connect, loadHealth, startClock, useDashboard } from "./dashboard/store";
+import { useReports } from "./reports/store";
 import { Skeleton } from "./ui";
 
 const CopilotPanel = lazy(() => import("./copilot/CopilotPanel"));
+const ReportView = lazy(() => import("./reports/ReportView").then((m) => ({ default: m.ReportView })));
 
 function CopilotFallback() {
   return (
@@ -19,6 +21,7 @@ function CopilotFallback() {
 /** App lifecycle: connect to Sentinel, keep the chart clock and health fresh, ⌘K / Esc for the copilot. */
 export function App() {
   const copilotOpen = useDashboard((s) => s.copilotOpen);
+  const reportIp = useReports((s) => s.ip);
 
   useEffect(() => {
     connect(useDashboard.getState().data.range);
@@ -42,14 +45,21 @@ export function App() {
   }, []);
 
   return (
-    <Dashboard
-      sidebarOverlay={
-        copilotOpen && (
-          <Suspense fallback={<CopilotFallback />}>
-            <CopilotPanel />
-          </Suspense>
-        )
-      }
-    />
+    <>
+      <Dashboard
+        sidebarOverlay={
+          copilotOpen && (
+            <Suspense fallback={<CopilotFallback />}>
+              <CopilotPanel />
+            </Suspense>
+          )
+        }
+      />
+      {reportIp && (
+        <Suspense fallback={null}>
+          <ReportView key={reportIp} ip={reportIp} />
+        </Suspense>
+      )}
+    </>
   );
 }

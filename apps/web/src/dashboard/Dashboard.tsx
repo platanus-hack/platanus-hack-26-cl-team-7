@@ -5,13 +5,15 @@
  */
 import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, FileSearch, Sparkles } from "lucide-react";
 import { ATTACK_LABEL, RANGES, type AttackEvent, type Attacker, type Range, type SeriesPoint } from "@sentinel/contracts";
 import { useDashboard } from "./store";
+import { useReports } from "../reports/store";
 import { Orb, Segmented, Skeleton, Status, clock, cn, joinDefined, num } from "../ui";
 
 const RANGE_LABEL: Record<Range, string> = { "5m": "5 min", "1h": "1 h", "24h": "24 h" };
 const preloadCopilot = () => void import("../copilot/CopilotPanel");
+const preloadReport = () => void import("../reports/ReportView");
 
 function TitleBar() {
   const range = useDashboard((s) => s.data.range);
@@ -302,6 +304,7 @@ function AttackerPanel() {
   const aiEnabled = useDashboard((s) => s.health?.ai.enabled ?? null);
   const pending = useDashboard((s) => (s.selectedIp ? s.selectedIp in s.pendingBlock : false));
   const toggleBlock = useDashboard((s) => s.toggleBlock);
+  const investigate = useReports((s) => s.open);
   const loading = useDashboard((s) => s.conn === "loading");
 
   if (!attacker || !ip) {
@@ -351,6 +354,10 @@ function AttackerPanel() {
         )}
       </div>
       <div className="foot">
+        <button type="button" className="btn-ghost btn-inv" onClick={() => investigate(ip)} onMouseEnter={preloadReport} onFocus={preloadReport}>
+          <FileSearch size={16} />
+          Investigate
+        </button>
         {attacker.blocked ? (
           <button type="button" className="btn-ghost" onClick={() => void toggleBlock(ip)} disabled={pending}>
             Unblock

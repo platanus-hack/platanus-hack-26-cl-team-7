@@ -12,6 +12,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "1.11.0",
     "@hono/node-server": "2.1.11",
+    "@mastra/core": "1.85.0",
     "@sentinel/contracts": "workspace:*",
     "hono": "4.13.19",
     "ua-parser-js": "2.0.10",

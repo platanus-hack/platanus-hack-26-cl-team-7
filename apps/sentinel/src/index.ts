@@ -9,6 +9,9 @@ import { Ai } from "./ai.ts";
 import { createApp } from "./app.ts";
 import { Bus } from "./bus.ts";
 import { GeoResolver } from "./enrich.ts";
+import { createMastraReportModel } from "./reports/mastra.ts";
+import { ReportService } from "./reports/service.ts";
+import { accessLogSource, engineSource, sentinelSource } from "./reports/sources.ts";
 import { Store } from "./store.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -20,6 +23,10 @@ const list = (v: string | undefined) => (v ?? "").split(",").map((s) => s.trim()
 const allowedOrigins = list(process.env.SENTINEL_ALLOWED_ORIGINS);
 const allowedHosts = list(process.env.SENTINEL_ALLOWED_HOSTS);
 const ingestToken = process.env.SENTINEL_INGEST_TOKEN || undefined;
+// The agent-detection stack (scripts/stack_local.sh) writes its log and verdicts under agent-detection/run.
+const repoRoot = resolve(here, "../../..");
+const accessLogPath = resolve(process.env.SENTINEL_ACCESS_LOG || resolve(repoRoot, "agent-detection/run/access.log"));
+const verdictsDbPath = resolve(process.env.SENTINEL_VERDICTS_DB || resolve(repoRoot, "agent-detection/run/verdicts.db"));
 
 mkdirSync(dirname(dbPath), { recursive: true });
 // The SDK resolves ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN. Without either, AI stays off.
@@ -36,10 +43,16 @@ bus.subscribe((b) => {
   for (const c of b.changes) if (c.kind === "attacker" && !c.attacker.country) geo.request(c.attacker.ip);
 });
 
-const app = createApp({ store, bus, ai, webRoot, allowedOrigins, allowedHosts, ingestToken });
+// Incident reports need ANTHROPIC_API_KEY (a bearer token alone is not enough for the Mastra client). Missing files are fine: that log store reports STORE_DOWN.
+const reportModel = createMastraReportModel({ apiKey: process.env.ANTHROPIC_API_KEY });
+const reports = reportModel
+  ? new ReportService({ store, db, model: reportModel, sources: { sen: sentinelSource(store), acc: accessLogSource(accessLogPath), eng: engineSource(verdictsDbPath) } })
+  : null;
+
+const app = createApp({ store, bus, ai, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
-  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
+  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
 });
 
 function shutdown() {

@@ -18,6 +18,8 @@ import {
 import type { Ai } from "./ai.ts";
 import { timingSafeEqual } from "node:crypto";
 import type { Bus, EncodedFrame } from "./bus.ts";
+import { reportRoutes } from "./reports/routes.ts";
+import type { ReportService } from "./reports/service.ts";
 import type { Store } from "./store.ts";
 
 export interface AppDeps {
@@ -35,6 +37,8 @@ export interface AppDeps {
   allowedHosts?: string[];
   /** When set, POST /v1/events needs `Authorization: Bearer <token>`. */
   ingestToken?: string;
+  /** Incident reports. Absent or null: every /v1/reports route answers 503 AI_DISABLED. */
+  reports?: ReportService | null;
 }
 
 const MAX_QUEUED_FRAMES = 1000;
@@ -45,7 +49,7 @@ function fail(c: Context, status: 400 | 401 | 403 | 404 | 413 | 415 | 500 | 503,
   return c.json<ApiError>({ error: { code, message } }, status);
 }
 
-export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken }: AppDeps) {
+export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
@@ -233,6 +237,8 @@ export function createApp({ store, bus, ai, version = "0.1.0", startedAt = Date.
       await writes;
     });
   });
+
+  app.route("/reports", reportRoutes(reports));
 
   // Unknown API paths answer in the API's error shape, never with the web app.
   app.all("/*", (c) => fail(c, 404, "not_found", "No such route"));

@@ -2,7 +2,7 @@
  * The Sentinel client: the one module that talks to the server.
  * JSON requests with timeouts and the error envelope, plus an SSE reader for streams.
  */
-import type { AttackerDetail, Block, Health, Range, Snapshot } from "@sentinel/contracts";
+import { Report, ReportSummary, type AttackerDetail, type Block, type DecisionRequest, type Health, type Range, type Snapshot } from "@sentinel/contracts";
 
 /** Same origin by default: Sentinel serves this app in production and Vite proxies /v1 in development. */
 export const BASE_URL: string = (import.meta.env.VITE_SENTINEL_URL as string | undefined) ?? "";
@@ -39,6 +39,35 @@ async function request<T>(path: string, init?: RequestInit & { timeoutMs?: numbe
     clearTimeout(timer);
     init?.signal?.removeEventListener("abort", onAbort);
   }
+}
+
+/** Parses a response with a contract schema. A body that does not match is a server fault, not a crash. */
+function parseWith<T>(schema: { safeParse(value: unknown): { success: true; data: T } | { success: false } }, body: unknown): T {
+  const out = schema.safeParse(body);
+  if (!out.success) throw new ApiRequestError(502, "bad_response", "Sentinel sent a reply this dashboard cannot read.");
+  return out.data;
+}
+
+/** Starts a report for one attacker. Returns the open report when one exists. Code `AI_DISABLED` means AI is off. */
+export async function createReport(ip: string, signal?: AbortSignal): Promise<Report> {
+  return parseWith(Report, await request<unknown>("/v1/reports", { method: "POST", body: JSON.stringify({ ip }), signal }));
+}
+
+export async function getReport(id: string, signal?: AbortSignal): Promise<Report> {
+  return parseWith(Report, await request<unknown>(`/v1/reports/${encodeURIComponent(id)}`, { signal }));
+}
+
+/** Newest first. */
+export async function listReports(ip?: string, signal?: AbortSignal): Promise<ReportSummary[]> {
+  const query = ip === undefined ? "" : `?ip=${encodeURIComponent(ip)}`;
+  const body = await request<{ items?: unknown } | null>(`/v1/reports${query}`, { signal });
+  if (!Array.isArray(body?.items)) throw new ApiRequestError(502, "bad_response", "Sentinel sent a reply this dashboard cannot read.");
+  return body.items.map((item) => parseWith(ReportSummary, item));
+}
+
+/** Codes to expect: `REASON_REQUIRED` (422), `BAD_STATE` and `REVISION_LIMIT` (409). The message is plain words. */
+export async function decideReport(id: string, body: DecisionRequest, signal?: AbortSignal): Promise<Report> {
+  return parseWith(Report, await request<unknown>(`/v1/reports/${encodeURIComponent(id)}/decision`, { method: "POST", body: JSON.stringify(body), signal }));
 }
 
 export const api = {

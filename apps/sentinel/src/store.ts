@@ -340,6 +340,11 @@ export class Store {
     return points;
   }
 
+  /** One retained event by id, or null. */
+  event(id: string): AttackEvent | null {
+    return this.byId.get(id) ?? null;
+  }
+
   /** Events in the range, newest first. */
   events(range: Range, { limit = Infinity, filter }: { limit?: number; filter?: (e: AttackEvent) => boolean } = {}): AttackEvent[] {
     const since = this.now() - RANGE_MS[range];

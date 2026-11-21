@@ -59,7 +59,7 @@ const REPORTS_PER_MINUTE = 10;
 const REPORT_CONCURRENCY = 2;
 
 /** JSON for prompts. "<" is escaped so attacker text cannot close the surrounding tag. */
-function promptJson(v: unknown): string {
+export function promptJson(v: unknown): string {
   return JSON.stringify(v).replace(/</g, "\\u003c");
 }
 
