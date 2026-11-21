@@ -1,16 +1,17 @@
 /**
  * Sentinel's one screen. Interface: `<MirrorPanel sidebarOverlay={…} />`.
- * Left: the selected caught agent (who, why, the replay, its vulnerabilities, its requests).
- * Right: the live list of caught agents.
+ * Left: the Dashboard link and the live list of caught agents, always open.
+ * Middle: the Dashboard (all vulnerabilities) or the selected agent (graph, vulnerabilities, requests).
+ * Right: the copilot, when open.
  * Every string from a track is attacker-controlled; React renders it as text only.
  */
 import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
 import type { Track, TrackAction } from "@sentinel/contracts";
-import { useDashboard } from "../dashboard/store";
 import { Skeleton, clock, cn } from "../ui";
 import { FindingCard } from "./FindingCard";
 import { Replay } from "./Replay";
-import { agentName, buildMoments, caughtFor, numEs as num } from "./moments";
+import { SquaresFour } from "@phosphor-icons/react";
+import { agentName, buildMoments, caughtFor, numEs as num, vulnOf } from "./moments";
 import { useMirror } from "./store";
 import "./mirror.css";
 
@@ -125,6 +126,7 @@ function Agents() {
   const select = useMirror((s) => s.select);
   const more = useMirror((s) => s.tracksCursor !== null);
   const loadOlder = useMirror((s) => s.loadOlder);
+  const view = useMirror((s) => s.view);
   return (
     <section className="sect" aria-label="Agentes atrapados">
       <div className="hd mt-hd">
@@ -134,7 +136,7 @@ function Agents() {
       <div className="scroll">
         <div role="listbox" aria-label="Agentes atrapados, los más recientes primero">
           {tracks.map((t) => (
-            <AgentRow key={t.trackId} t={t} selected={t.trackId === selected} onSelect={select} />
+            <AgentRow key={t.trackId} t={t} selected={view === "agent" && t.trackId === selected} onSelect={select} />
           ))}
         </div>
         {more && (
@@ -147,25 +149,70 @@ function Agents() {
   );
 }
 
-/** The main area. `sidebarOverlay` (the copilot) covers the right column. */
+/** Every confirmed vulnerability of the last 24 hours, newest first; a click opens its agent. */
+function Overview() {
+  const findings = useMirror((s) => s.data.findings);
+  const tracks = useMirror((s) => s.data.tracks);
+  const select = useMirror((s) => s.select);
+  const byId = useMemo(() => new Map(tracks.map((t) => [t.trackId, t])), [tracks]);
+  return (
+    <section className="sect" aria-label="Dashboard">
+      <div className="dh mv-head">
+        <div className="mv-name">Dashboard</div>
+      </div>
+      <div className="scroll">
+        <div className="ov">
+          <h3 className="fcs-h">
+            Vulnerabilidades <span className="dim tnum">{num(findings.length)}</span>
+          </h3>
+          {findings.length === 0 && <p className="ov-empty">Sin vulnerabilidades en las últimas 24 horas.</p>}
+          <ul className="ov-list">
+            {findings.map((f) => {
+              const v = vulnOf(f);
+              const t = byId.get(f.trackId);
+              return (
+                <li key={f.findingId}>
+                  <button type="button" className={cn("ov-row", v.severity === "Crítica" ? "crit" : "high")} onClick={() => select(f.trackId)}>
+                    <span className="vc-sev">{v.severity}</span>
+                    <span className="ov-name">{v.name}</span>
+                    <code className="ov-ep">{f.endpoint}</code>
+                    <span className="ov-agent">{t ? agentName(t.userAgent) : ""}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Dashboard and agents on the left, always open; the selected view in the middle; the copilot on the right when open. */
 export function MirrorPanel({ sidebarOverlay }: { sidebarOverlay?: ReactNode }) {
   const error = useMirror((s) => s.error);
-  // The agents list is narrow; the copilot needs the full column when it covers it.
-  const copilot = useDashboard((s) => s.copilotOpen);
+  const view = useMirror((s) => s.view);
+  const showDashboard = useMirror((s) => s.showDashboard);
   return (
-    <main className={cn("main mirror-main", copilot && "wide")}>
+    <main className={cn("main mirror-main", sidebarOverlay && "with-copilot")}>
+      <aside className="mirror-side" aria-label="Navegación">
+        <nav className="side-nav">
+          <button type="button" className="side-link" aria-current={view === "dashboard" ? "page" : undefined} onClick={showDashboard}>
+            <SquaresFour size={16} weight="duotone" aria-hidden />
+            Dashboard
+          </button>
+        </nav>
+        <Agents />
+      </aside>
       <div className="mirror-left">
         {error && (
           <p role="alert" className="mv-err m-0 px-8 py-2 text-sm">
             {error}
           </p>
         )}
-        <AgentView />
+        {view === "dashboard" ? <Overview /> : <AgentView />}
       </div>
-      <div className="right mirror-right">
-        <Agents />
-        {sidebarOverlay}
-      </div>
+      {sidebarOverlay && <div className="copilot-col">{sidebarOverlay}</div>}
     </main>
   );
 }

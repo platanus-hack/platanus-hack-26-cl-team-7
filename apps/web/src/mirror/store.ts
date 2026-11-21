@@ -93,8 +93,11 @@ interface MirrorState {
   error: string | null;
   selected: string | null;
   detail: TrackDetail | null;
+  /** What the main area shows: the selected agent, or the overview of all vulnerabilities. */
+  view: "agent" | "dashboard";
   toggle: (open?: boolean) => void;
   select: (trackId: string) => void;
+  showDashboard: () => void;
   loadOlder: () => Promise<void>;
 }
 
@@ -106,11 +109,13 @@ export const useMirror = create<MirrorState>((set, get) => ({
   error: null,
   selected: null,
   detail: null,
+  view: "agent",
   toggle: (open) => set((s) => ({ open: open ?? !s.open })),
   select: (trackId) => {
-    set((s) => ({ selected: trackId, detail: s.detail?.track.trackId === trackId ? s.detail : null }));
+    set((s) => ({ view: "agent", selected: trackId, detail: s.detail?.track.trackId === trackId ? s.detail : null }));
     void loadDetail(trackId);
   },
+  showDashboard: () => set({ view: "dashboard" }),
   loadOlder: async () => {
     const cursor = get().tracksCursor;
     if (!cursor) return;

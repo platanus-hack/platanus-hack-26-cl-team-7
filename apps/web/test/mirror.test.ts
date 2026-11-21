@@ -243,3 +243,15 @@ describe("track detail", () => {
     expect(useMirror.getState().detail).toBeNull();
   });
 });
+
+describe("view", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("switches between the dashboard and an agent", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => undefined)));
+    useMirror.getState().showDashboard();
+    expect(useMirror.getState().view).toBe("dashboard");
+    useMirror.getState().select(`trk_${"a".repeat(16)}`);
+    expect(useMirror.getState()).toMatchObject({ view: "agent", selected: `trk_${"a".repeat(16)}` });
+  });
+});
