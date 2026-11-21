@@ -1,5 +1,9 @@
 .env*
+*.env
 .venv/
 __pycache__/
 runs/
 .claude/settings.local.json
+controller/ca/*.key
+controller/ca/*.pem
+sandbox/ca.pem

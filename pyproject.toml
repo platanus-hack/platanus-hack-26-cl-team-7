@@ -1,0 +1,17 @@
+[project]
+name = "espejismo"
+version = "0.1.0"
+description = "Engaño a nivel de red + testigo eBPF para agentes de IA: le hacemos creer que ganó."
+requires-python = ">=3.12"
+dependencies = [
+  "aiohttp>=3.10",
+  "dnslib>=0.9.25",
+  "cryptography>=43",
+  "inspect-ai",
+  "anthropic",
+  "openai",
+  "httpx",
+]
+
+[tool.uv]
+package = false
