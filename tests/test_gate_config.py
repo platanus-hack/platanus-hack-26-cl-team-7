@@ -14,7 +14,11 @@ PACKAGES = ("engine", "eval", "dashboard", "scripts", "demo")
 
 
 def clean_env() -> dict[str, str]:
-    return {k: v for k, v in os.environ.items() if not k.startswith(("COV", "PYTEST"))}
+    return {
+        k: v
+        for k, v in os.environ.items()
+        if not k.startswith(("COV", "PYTEST")) and k not in {"REQUIRE_BASE", "BASE"}
+    }
 
 
 def coverage_filenames(tmp_path: Path) -> list[str]:
