@@ -5,4 +5,6 @@ requires-python = ">=3.12"
 dependencies = [
     "agentdojo>=0.1.35",
     "anthropic<1",
+    "torch>=2.15.0",
+    "transformers>=5.23.0",
 ]
