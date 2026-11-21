@@ -3,3 +3,4 @@
 __pycache__/
 runs/
 .claude/settings.local.json
+.eval.log

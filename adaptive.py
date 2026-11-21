@@ -91,6 +91,7 @@ def main():
     pares = [(u, i) for u in list(suite.user_tasks)[: a.user_tasks] for i in list(suite.injection_tasks)[: a.injection_tasks]]
     with ThreadPoolExecutor(6) as ex:
         res = list(ex.map(lambda p: atacar_par(a.model, *p, a.intentos), pares))
+    os.makedirs("runs", exist_ok=True)
     with open(f"runs/adaptive_{a.model.replace('/', '_')}.jsonl", "a") as f:
         for filas in res:
             f.writelines(json.dumps(x, ensure_ascii=False) + "\n" for x in filas)
