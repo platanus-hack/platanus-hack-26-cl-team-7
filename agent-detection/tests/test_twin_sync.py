@@ -9,6 +9,7 @@ import pytest
 from test_twin_support import POLICY_FILE, make_shop, make_twin
 
 from demo import auth, db, store
+from demo.mask import project
 from demo.masking import Row, load_policy
 from demo.replica import Copied, Syncer
 from demo.tables import SQL
@@ -143,17 +144,21 @@ def login(shop: Shop) -> str:
     return result.token
 
 
-def test_copy_brings_the_session_and_own_account_verbatim(shops: Shops) -> None:
+def test_copy_brings_the_session_and_own_account_masked_as_the_push_masks_it(
+    shops: Shops,
+) -> None:
     real, twin, syncer = shops
     token = login(real)
     assert signed_in(twin, token) is None
     own = account_rows(real, 2)
     assert syncer.copy(f"cart=1:2; session={token}") == Copied(2, len(own["orders"]))
-    assert account_rows(twin, 2) == own and own["orders"]
+    masked = project(real.db, syncer.policy).tables
+    assert account_rows(twin, 2) == {t: [masked[t][r[0]] for r in rs] for t, rs in own.items()}
+    assert own["orders"] and account_rows(twin, 2) != own
     account = signed_in(twin, token)
-    assert account is not None and account["username"] == "alice"
+    assert account is not None and account["username"] == masked["users"][2][1] != "alice"
     assert syncer.push() == {"inserted": 0, "updated": 0, "deleted": 0}
-    assert rows(twin, "users")[2] == rows(real, "users")[2]
+    assert rows(twin, "users")[2] == masked["users"][2]
 
 
 def test_a_second_copy_keeps_what_the_agent_changed_on_the_twin(shops: Shops) -> None:
@@ -167,9 +172,22 @@ def test_a_second_copy_keeps_what_the_agent_changed_on_the_twin(shops: Shops) ->
     assert rows(twin, "users")[2][8] == "http://cb.example.net/me.png"
 
 
-def test_new_real_orders_of_a_copied_account_stay_out_of_the_twin(shops: Shops) -> None:
+def test_new_real_orders_of_a_copied_account_reach_the_twin_masked(shops: Shops) -> None:
     real, twin, syncer = shops
     syncer.copy(login(real))
+    order = place(real, 2, {1: 1})
+    assert syncer.push() == {"inserted": 3, "updated": 0, "deleted": 0}
+    masked = rows(twin, "users")[2]
+    assert rows(twin, "orders")[order][4:6] == (masked[2], masked[5])
+    assert syncer.push() == {"inserted": 0, "updated": 0, "deleted": 0}
+
+
+def test_new_real_orders_of_an_account_the_agent_changed_stay_out_of_the_twin(
+    shops: Shops,
+) -> None:
+    real, twin, syncer = shops
+    syncer.copy(login(real))
+    execute(twin, "UPDATE users SET avatar_url = 'http://cb.example.net/me.png' WHERE id = 2")
     copied = account_rows(twin, 2)
     owner_elsewhere = place(real, 2, {1: 1})
     other = place(real, 5, {2: 1})
@@ -177,7 +195,7 @@ def test_new_real_orders_of_a_copied_account_stay_out_of_the_twin(shops: Shops) 
     assert account_rows(twin, 2) == copied and owner_elsewhere not in rows(twin, "orders")
     assert rows(twin, "orders")[other][1] == 5
     agent = place(twin, 2, {3: 1})
-    assert agent == other + 1 and "Alice Liddell" in str(store.invoice(twin, agent))
+    assert agent == other + 1 and str(copied["users"][0][2]) in str(store.invoice(twin, agent))
     whole_orders(twin)
 
 

@@ -8,8 +8,10 @@ Per request the tap reads the body (mirror.proxy.read_body), then:
 - on the mirror lane, it grants the callback relay one egress to a host the request names, then
   proxies to run/twin.sock (mirror.proxy: status, headers and body bytes as the twin sent them).
 
-After a twin answer the tap reports one track.action (bodies cut at MAX_BODY), binds the answer's
-twin-born values to the track (mirror.exchange) and runs the finding rules (mirror.findings).
+After a twin answer the tap reports one track.action (bodies cut at MAX_BODY, secret fields
+redacted: mirror.redact), binds the answer's twin-born values to the track unless the real database
+holds them (mirror.exchange, mirror.binding) and runs the finding rules (mirror.findings) on the
+redacted request, so a password typed on the twin reaches neither Sentinel nor its fix proposals.
 """
 
 from __future__ import annotations
@@ -21,20 +23,23 @@ import time
 import uuid
 from dataclasses import dataclass
 from email.message import Message
+from functools import partial
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from mirror.binding import RealValues, bindable
 from mirror.canaries import Canaries
 from mirror.contracts import ID_HEX, MAX_BODY, MAX_URI, TRACK_PREFIX, TrackAction, event_id
 from mirror.egress import Grants
 from mirror.exchange import Exchange, named_hosts, twin_born_values
 from mirror.findings import FindingRules, NotFoundSize
-from mirror.keys import twin_born_key
 from mirror.lane import LANE_HEADER, TRACK_HEADER, Emit, LaneRouter
 from mirror.logins import Logins
 from mirror.proxy import forward, read_body
+from mirror.redact import redact_body, redacted
+from mirror.session_copy import real_values
 from mirror.sockets import UnixHTTPServer
 
 if TYPE_CHECKING:
@@ -56,6 +61,7 @@ class Tap:
     emit: Emit
     real: Path
     twin: Path
+    real_values: RealValues
 
     def serve(self, handler: BaseHTTPRequestHandler) -> None:
         started, ts = time.monotonic(), int(time.time() * 1000)
@@ -116,6 +122,7 @@ class Tap:
             return ""
 
     def _record(self, ex: Exchange, ts: int, duration_ms: int) -> None:
+        shown = redacted(ex)
         self.emit(
             TrackAction(
                 event_id=event_id("track.action", ex.request_id),
@@ -123,18 +130,21 @@ class Tap:
                 ts=ts,
                 method=ex.method,
                 path=ex.path[:MAX_URI],
-                query=ex.query[:MAX_URI],
+                query=shown.query[:MAX_URI],
                 status=ex.status,
                 duration_ms=duration_ms,
-                request_body=ex.request_body[:MAX_BODY].decode("utf-8", "replace"),
-                response_body=ex.response_body[:MAX_BODY].decode("utf-8", "replace"),
+                request_body=shown.request_body[:MAX_BODY].decode("utf-8", "replace"),
+                response_body=_shown(ex.response_type, ex.response_body),
             )
         )
-        for n, value in enumerate(twin_born_values(ex)):
-            key = twin_born_key(value)
-            if key is not None:
-                self.lane.link(ex.track_id, key, ex.request_id, f"{TWIN_BORN_PART}-{n}")
-        self.findings.check(ex)
+        for n, key in bindable(twin_born_values(ex), self.real_values):
+            self.lane.link(ex.track_id, key, ex.request_id, f"{TWIN_BORN_PART}-{n}")
+        self.findings.check(shown)
+
+
+def _shown(content_type: str, body: bytes) -> str:
+    """A body as the report shows it: secret fields redacted, then cut at MAX_BODY."""
+    return redact_body(content_type, body)[:MAX_BODY].decode("utf-8", "replace")
 
 
 def _request_id(raw: str) -> str:
@@ -163,8 +173,9 @@ def handler_for(tap: Tap) -> type[BaseHTTPRequestHandler]:
 
 def tap_listener(router: Router) -> socketserver.BaseServer:
     config, emit = router.config, router.reporter.emit
-    logins = Logins(router.lane, router.patches)
+    logins = Logins(router.lane)
     not_found = NotFoundSize(config.twin)
     rules = FindingRules(Canaries(config.canaries), router.routes, router.patches, emit, not_found)
-    tap = Tap(router.lane, logins, router.grants, rules, emit, config.real, config.twin)
+    ask_real = partial(real_values, config.sync)
+    tap = Tap(router.lane, logins, router.grants, rules, emit, config.real, config.twin, ask_real)
     return UnixHTTPServer(config.tap, handler_for(tap))

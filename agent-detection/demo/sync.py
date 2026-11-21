@@ -5,8 +5,12 @@ twin's file; the twin never connects to it.
 
 - Every 5 s it pushes the masked projection of the real rows (demo.replica.Syncer.push).
 - POST /copy {"cookie": "<Cookie header or session token>"} copies that real session and its
-  own account verbatim to the twin (demo.replica.Syncer.copy), so a flagged agent stays signed
-  in there. 200 {"userId", "orders"}; 400 for a bad body; 404 for an unknown session.
+  own account, masked as the push masks it, to the twin (demo.replica.Syncer.copy), so a flagged
+  agent stays signed in there. 200 {"userId", "orders"}; 400 for a bad body; 404 for an unknown
+  session.
+- POST /real-values {"values": ["<text>", ...]} answers 200 {"real": [...]}: the values the real
+  database holds as a username, email or session token (demo.identities). The router binds a
+  value the twin gave out to a track only when it is not in that list.
 """
 
 from __future__ import annotations
@@ -21,14 +25,18 @@ from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Any
 
+from demo.identities import real_values
 from demo.mask import DEFAULT_POLICY
 from demo.masking import load_policy
 from demo.replica import Syncer
 from demo.web import JSON
+from mirror.session_copy import COPY_PATH, MAX_VALUE_CHARS, VALUES_PATH
 from mirror.sockets import UnixHTTPServer
 
 PUSH_SECONDS = 5.0
 MAX_COPY_BODY = 8 * 1024
+MAX_VALUES = 32  # values in one /real-values question
+MAX_VALUES_BODY = 64 * 1024
 
 
 class SyncServer(UnixHTTPServer):
@@ -38,32 +46,45 @@ class SyncServer(UnixHTTPServer):
 
 
 class SyncHandler(BaseHTTPRequestHandler):
-    def read_json(self) -> object:
-        """The JSON body, or None when it is missing, too long or not JSON. The body is read
-        before any answer, so the caller can finish sending it."""
+    def read_json(self, limit: int) -> object:
+        """The JSON body, or None when it is missing, longer than `limit` or not JSON. The body
+        is read before any answer, so the caller can finish sending it."""
         try:
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             return None
-        raw = self.rfile.read(min(max(length, 0), MAX_COPY_BODY + 1))
+        raw = self.rfile.read(min(max(length, 0), limit + 1))
         try:
-            return json.loads(raw) if 0 < len(raw) <= MAX_COPY_BODY else None
+            return json.loads(raw) if 0 < len(raw) <= limit else None
         except ValueError:
             return None
 
     def do_POST(self) -> None:
-        data = self.read_json()
-        if self.path != "/copy" or not isinstance(self.server, SyncServer):
+        data = self.read_json(MAX_VALUES_BODY if self.path == VALUES_PATH else MAX_COPY_BODY)
+        if self.path not in (COPY_PATH, VALUES_PATH) or not isinstance(self.server, SyncServer):
             return self.reply(404, {"error": "not found"})
+        try:
+            if self.path == VALUES_PATH:
+                return self.real_values(self.server.syncer, data)
+            return self.copy(self.server.syncer, data)
+        except sqlite3.Error as exc:
+            return self.reply(503, {"error": f"{self.path} failed: {exc}"})
+
+    def copy(self, syncer: Syncer, data: object) -> None:
         if not isinstance(data, dict) or not isinstance(data.get("cookie"), str):
             return self.reply(400, {"error": 'expected {"cookie": "<value>"}'})
-        try:
-            copied = self.server.syncer.copy(data["cookie"])
-        except sqlite3.Error as exc:
-            return self.reply(503, {"error": f"copy failed: {exc}"})
+        copied = syncer.copy(data["cookie"])
         if copied is None:
             return self.reply(404, {"error": "unknown session"})
         return self.reply(200, {"userId": copied.user_id, "orders": copied.orders})
+
+    def real_values(self, syncer: Syncer, data: object) -> None:
+        values = data.get("values") if isinstance(data, dict) else None
+        if not isinstance(values, list) or not all(isinstance(v, str) for v in values):
+            return self.reply(400, {"error": 'expected {"values": ["<text>", ...]}'})
+        if len(values) > MAX_VALUES or any(len(v) > MAX_VALUE_CHARS for v in values):
+            return self.reply(400, {"error": f"at most {MAX_VALUES} values of {MAX_VALUE_CHARS}"})
+        return self.reply(200, {"real": real_values(syncer.real, values)})
 
     def do_GET(self) -> None:
         self.reply(404, {"error": "not found"})

@@ -1,6 +1,9 @@
 # Allow list for the twin's data (python -m demo.mask and python -m demo.sync).
 #
 # Only the tables listed here reach the twin; an unlisted table (sessions) stays empty there.
+# One exception: copy on flag (POST /copy of python -m demo.sync) writes the flagged client's own
+# session row (token, user id, date: the cookie the client already holds) so it stays signed in
+# on the twin; its account (user, orders, items, history) goes through this same allow list.
 # In a listed table a column copies only when it is marked:
 #   public                       the real value is copied as it is
 #   {mask: <kind>, person: <col>} a realistic value of <kind> (name, username, email, phone or

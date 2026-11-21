@@ -5,7 +5,9 @@ A patch names a method, an endpoint (the RouteTable pattern, or the raw path for
 route list) and an R3 signature name from engine.signatures; an empty signature covers every
 request to the endpoint (a canary read through an ordinary route has no attack signature). The
 signature is engine.rules.r3_flags.flag(), the same test R3 uses, and it only runs for a request
-to a patched endpoint. Patches persist as JSONL, one line each, and reload on restart. Reads take
+to a patched endpoint. The lane endpoint sees only the URI, so a patch is made from a signature
+in the path or query (mirror.findings) and matched against them; a login body is checked by
+mirror.logins instead. Patches persist as JSONL, one line each, and reload on restart. Reads take
 no lock: add() swaps in a new index, so a reader sees the old one or the new one, never half.
 """
 
@@ -86,8 +88,8 @@ class PatchBook:
             return True
 
     def match(self, method: str, path: str, query: str) -> Patch | None:
-        """The patch this request falls under. `query` is the raw query string, or for the tap a
-        form-encoded body (the same encoding, so the same signatures apply)."""
+        """The patch this request falls under. `query` is the raw query string: the URI is all
+        the lane endpoint sees, so a patch is made from and matched against the URI only."""
         index = self._index
         if not index:
             return None

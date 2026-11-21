@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tempfile
 import threading
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from email.message import Message
@@ -17,7 +18,7 @@ from engine.models import Request, Verdict
 from engine.routes import RouteTable
 from mirror.contracts import DeceptionEvent, TrackKey, TrackLinked, TrackOpened
 from mirror.forwarded import Forwarded
-from mirror.keys import KeyTable, twin_born_key
+from mirror.keys import Clock, KeyTable, twin_born_key
 from mirror.lane import REAL, Decision, LaneRouter, handler_for
 from mirror.patches import ANY_SIGNATURE, Patch, PatchBook
 from mirror.sockets import UnixHTTPConnection, UnixHTTPServer
@@ -37,10 +38,12 @@ class Harness:
     copies: list[str] = field(default_factory=list)
 
 
-def build(tmp_path: Path, thresholds: Thresholds | None = None) -> Harness:
+def build(
+    tmp_path: Path, thresholds: Thresholds | None = None, clock: Clock = time.time
+) -> Harness:
     routes = RouteTable.from_yaml(REPO / "config" / "routes.yaml")
     detector = Detector(routes, thresholds or load_thresholds(REPO / "config" / "rules.yaml"))
-    keys = KeyTable.load(tmp_path / "keys.jsonl")
+    keys = KeyTable.load(tmp_path / "keys.jsonl", clock=clock)
     patches = PatchBook.load(tmp_path / "patches.jsonl", routes)
     events: list[DeceptionEvent] = []
     copies: list[str] = []

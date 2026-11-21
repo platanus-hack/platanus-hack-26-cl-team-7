@@ -62,6 +62,17 @@ def test_no_repeat_verdict_after_long_idle_gap() -> None:
     assert later == []
 
 
+def test_rearm_lets_one_session_fire_each_rule_again() -> None:
+    detector = make_detector()
+    attack = req(1.0, "/.env")
+    other = req(1.0, "/.env", ip=IP_OTHER)
+    assert [v.rule for v in detector.process(attack) + detector.process(other)] == ["R3", "R3"]
+    assert detector.process(attack) == []
+    detector.rearm(attack.session_id)
+    assert [v.rule for v in detector.process(attack)] == ["R3"]
+    assert detector.process(other) == []  # only the rearmed session
+
+
 def test_r1_fires_on_fifth_and_r2_on_eleventh_request() -> None:
     detector = make_detector()
     by_index = [detector.process(r) for r in noisy_probe(11)]

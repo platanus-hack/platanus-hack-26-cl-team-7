@@ -141,8 +141,7 @@ def test_an_auth_flip_needs_a_401_then_success_with_a_signature(make: Callable[[
     assert "answered this track 401 (request req-1), now 303" in finding.evidence
     assert "signature 'sql tautology'" in finding.evidence
     assert finding.evidence.endswith("body username=%27+OR+1%3D1+--&password=x")
-    assert rules.patches.match("POST", "/login", SQLI.decode()) is not None
-    assert rules.patches.match("POST", "/login", "username=bob&password=pw") is None
+    assert len(rules.patches) == 0  # a signature only in the body starts no patch
 
 
 def test_a_401_counts_only_for_its_track_and_endpoint(make: Callable[[], Rules]) -> None:
@@ -159,7 +158,8 @@ def test_one_request_can_flip_and_succeed_but_patches_once(make: Callable[[], Ru
     rules.check(method="POST", path="/api/session", status=401)
     body = json.dumps({"username": "' OR 1=1 --", "password": "x"}).encode()
     sqli = {"method": "POST", "path": "/api/session", "content_type": "application/json"}
-    assert rules.check(**sqli, request_body=body, body=b'{"token": "t"}' * 3) == [
+    query = "next=%27+OR+1%3D1+--"
+    assert rules.check(**sqli, query=query, request_body=body, body=b'{"token": "t"}' * 3) == [
         "auth_flip",
         "signature_success",
     ]

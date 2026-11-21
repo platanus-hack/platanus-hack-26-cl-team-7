@@ -7,59 +7,39 @@ later batches join it, and the worker backs off (BACKOFF_START doubling up to BA
 replays the spool with the same eventIds, so Sentinel counts a resent event as a duplicate; a crash
 mid-replay keeps the rest. Past spool_max bytes, new events are lost and counted in `dropped`, so
 an outage cannot fill the disk. An INVALID batch is halved until the bad event alone is dropped.
+A batch is also cut to MAX_BATCH_BYTES of body (mirror.post), since an oversized body never gets
+a 413; a single event over that is dropped and counted too, never retried.
 """
 
 from __future__ import annotations
 
 import contextlib
-import json
 import logging
 import queue
 import threading
 import time
 from collections.abc import Callable
 from functools import partial
-from http.client import HTTPConnection, HTTPException, HTTPSConnection, InvalidURL
+from http.client import HTTPException
 from pathlib import Path
-from typing import Any
-from urllib.parse import urlsplit
 
 from mirror.contracts import MAX_BATCH, DeceptionEvent, from_wire, to_wire
 from mirror.journal import Journal
+from mirror.post import MAX_BATCH_BYTES, Wire, by_size, post_batch, wire_size
 
 EVENTS_PATH = "/v1/deception/events"
 QUEUE_MAX = 10_000
 FLUSH_INTERVAL = 0.25
-POST_TIMEOUT = 2.0
 BACKOFF_START = 0.25
 BACKOFF_MAX = 30.0
 CLOSE_TIMEOUT = 5.0
 SPOOL_MAX_BYTES = 64 * 1024 * 1024  # about 4,000 track actions with both 8 KB bodies full
 INVALID = frozenset({400, 413, 422})
-_HTTP: dict[str, type[HTTPConnection]] = {"http": HTTPConnection, "https": HTTPSConnection}
 SENDING_SUFFIX = ".sending"
 
-Wire = dict[str, Any]
 Post = Callable[[list[Wire]], int]  # HTTP status; raises OSError or HTTPException on no answer
 
 log = logging.getLogger(__name__)
-
-
-def post_batch(url: str, token: str, batch: list[Wire], timeout: float = POST_TIMEOUT) -> int:
-    """POST one batch; the HTTP status. `url` is the --sentinel base plus EVENTS_PATH."""
-    target = urlsplit(url)
-    connect = _HTTP.get(target.scheme)
-    if connect is None or not target.hostname:
-        raise InvalidURL(f"sentinel URL must be http(s)://host[:port]: {url!r}")
-    connection = connect(target.hostname, target.port, timeout=timeout)
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    try:
-        connection.request("POST", target.path, json.dumps(batch).encode(), headers)
-        response = connection.getresponse()
-        response.read()
-        return response.status
-    finally:
-        connection.close()
 
 
 class SentinelReporter:
@@ -136,11 +116,16 @@ class SentinelReporter:
         return batch
 
     def _deliver(self, batch: list[Wire]) -> None:
-        if self._spooled() or time.monotonic() < self._retry_at or not self._send(batch):
-            self._spill(batch)
+        for part in by_size(batch, MAX_BATCH_BYTES):
+            if self._spooled() or time.monotonic() < self._retry_at or not self._send(part):
+                self._spill(part)
 
     def _send(self, batch: list[Wire]) -> bool:
         """True when Sentinel took the batch or refused it for good; False to keep it."""
+        if len(batch) == 1 and wire_size(batch[0]) > MAX_BATCH_BYTES:  # no body could carry it
+            log.error("%s is over %d bytes; dropped", batch[0].get("eventId"), MAX_BATCH_BYTES)
+            self.dropped += 1
+            return True
         try:
             status = self._post(batch)
         except (OSError, HTTPException) as err:
@@ -183,11 +168,13 @@ class SentinelReporter:
         if not self._sending.exists():
             self._spool.move_to(self._sending.path)
         events = [wire for wire in self._sending.read() if _valid(wire)]
-        for start in range(0, len(events), MAX_BATCH):
-            if not self._send(events[start : start + MAX_BATCH]):
-                if start:
-                    self._sending.rewrite(events[start:])
+        sent = 0
+        for part in by_size(events, MAX_BATCH_BYTES):
+            if not self._send(part):
+                if sent:
+                    self._sending.rewrite(events[sent:])
                 return
+            sent += len(part)
         self._sending.remove()
 
 

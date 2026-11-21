@@ -7,7 +7,9 @@ import { fail, requireToken } from "./http.ts";
 
 /**
  * A full batch is 500 actions with two 8 KB bodies each, about 8 MB of ASCII text.
- * Escaped non-ASCII text can be larger; the router answers a 413 by splitting the batch.
+ * Escaped non-ASCII text can be larger. The router cuts every batch to half of this limit before
+ * it sends (agent-detection/mirror/post.py, MAX_BATCH_BYTES; a test pins the 16 MB figure) and
+ * still splits a batch that gets a 413.
  */
 const MAX_BODY_BYTES = 16 * 1024 * 1024;
 /** A batch of 500 bad events would otherwise answer with thousands of lines. */

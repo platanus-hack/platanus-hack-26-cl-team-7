@@ -69,7 +69,7 @@ def test_whole_endpoint_patch_matches_every_request_to_it(book: PatchBook) -> No
     assert book.match("GET", "/api/products/7", "") is None
 
 
-def test_patch_on_a_form_body_for_the_tap(book: PatchBook) -> None:
+def test_patch_on_a_post_endpoint_matches_its_query_string(book: PatchBook) -> None:
     login = Patch(FINDING, "POST", "/login", "sql comment break", "R3")
     book.add(login)
     assert book.match("POST", "/login", "username=admin%27--&password=x") == login

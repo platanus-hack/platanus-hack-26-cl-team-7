@@ -8,10 +8,13 @@ signature_success  a request with an attack signature gets 2xx with a body large
                    404 page.
 
 The attack signature is engine.rules.r3_flags.flag() on the path and query, else on the body as
-form text, the same test R3 and the virtual patches use. Each rule gives one finding.confirmed per
-(track, kind, endpoint, signature). A finding with a signature starts a virtual patch on its
-endpoint and signature. One without (a canary read through an ordinary request) starts none: a
-whole-endpoint patch would mirror every real user of that endpoint.
+form text (flag_form), the same tests R3 uses. Each rule gives one finding.confirmed per (track,
+kind, endpoint, signature). A finding with a signature in the URI starts a virtual patch on its
+endpoint and signature: the lane endpoint sees only the URI, so that is all a patch can match.
+A signature only in the body starts none, since the real lane never sends a body but a login
+POST's, and mirror.logins checks every login body for every signature anyway. One without any
+signature (a canary read through an ordinary request) starts none: a whole-endpoint patch would
+mirror every real user of that endpoint.
 """
 
 from __future__ import annotations
@@ -28,7 +31,7 @@ from pathlib import Path
 
 from engine.models import RuleId
 from engine.routes import RouteTable
-from engine.rules.r3_flags import flag
+from engine.rules.r3_flags import flag, flag_form
 from mirror.canaries import Canaries
 from mirror.contracts import (
     MAX_BODY,
@@ -101,7 +104,8 @@ class FindingRules:
     def check(self, ex: Exchange) -> list[FindingConfirmed]:
         """Emit the findings of one exchange and start their patches; returns the findings."""
         endpoint = endpoint_of(self._routes, ex.method, ex.path)
-        signature = flag(ex.path, ex.query) or (flag(ex.path, ex.body_form) or "")
+        uri_signature = flag(ex.path, ex.query) or ""
+        signature = uri_signature or flag_form(ex.body_form) or ""
         found: list[tuple[FindingKind, str, str]] = []
         canary = self._canaries.find(ex.response_body)
         if canary is not None:
@@ -122,7 +126,7 @@ class FindingRules:
         findings = []
         for kind, mark, evidence in found:
             if self._first((ex.track_id, kind, ex.method, endpoint, mark)):
-                findings.append(self._confirm(ex, endpoint, signature, kind, evidence))
+                findings.append(self._confirm(ex, endpoint, uri_signature, kind, evidence))
         return findings
 
     def _remember(self, ex: Exchange, endpoint: str) -> str:
@@ -148,7 +152,7 @@ class FindingRules:
             return True
 
     def _confirm(
-        self, ex: Exchange, endpoint: str, signature: str, kind: FindingKind, evidence: str
+        self, ex: Exchange, endpoint: str, uri_signature: str, kind: FindingKind, evidence: str
     ) -> FindingConfirmed:
         finding = FindingConfirmed(
             event_id=event_id("finding.confirmed", ex.request_id, kind),
@@ -160,9 +164,9 @@ class FindingRules:
             evidence=f"{ex.method} {endpoint} {evidence}. Request: {_request(ex)}"[:MAX_BODY],
         )
         self._emit(finding)
-        if signature:
+        if uri_signature:
             try:
-                patch = Patch(finding.finding_id, ex.method, endpoint, signature, PATCH_RULE)
+                patch = Patch(finding.finding_id, ex.method, endpoint, uri_signature, PATCH_RULE)
             except ValueError as err:  # an endpoint off the route list longer than a URI
                 log.warning("finding %s: no virtual patch: %s", finding.finding_id, err)
             else:

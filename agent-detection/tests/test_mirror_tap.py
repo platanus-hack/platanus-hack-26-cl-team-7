@@ -4,6 +4,7 @@ values bind, the relay grants and the listener wiring."""
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import socket
@@ -20,7 +21,6 @@ from engine.config import load_thresholds
 from engine.detector import Detector
 from engine.routes import RouteTable
 from mirror.canaries import Canaries
-from mirror.cli import build_router, parse_config
 from mirror.contracts import DeceptionEvent, FindingConfirmed, TrackAction, TrackLinked
 from mirror.egress import Grant, Grants
 from mirror.findings import FindingRules
@@ -29,7 +29,7 @@ from mirror.lane import LaneRouter
 from mirror.logins import Logins
 from mirror.patches import PatchBook
 from mirror.sockets import UnixHTTPConnection, UnixHTTPServer
-from mirror.tap import Tap, handler_for, tap_listener
+from mirror.tap import Tap, handler_for
 from tests.test_mirror_tap_proxy import serving
 from tests.test_twin_support import socket_dir
 
@@ -82,6 +82,7 @@ class Stack:
     keys: KeyTable
     events: list[DeceptionEvent]
     done: threading.Semaphore  # released when the tap has handled a request, records and all
+    real: set[str]  # the values the real database holds, for the tap's check before it binds
 
     def send(
         self, method: str, target: str, body: bytes = b"", headers: dict[str, str] | None = None
@@ -128,6 +129,12 @@ def counted(tap: Tap, done: threading.Semaphore) -> type[BaseHTTPRequestHandler]
 
 @pytest.fixture
 def stack(tmp_path: Path) -> Iterator[Stack]:
+    with serving_stack(tmp_path, set()) as running:
+        yield running
+
+
+@contextlib.contextmanager
+def serving_stack(tmp_path: Path, real: set[str]) -> Iterator[Stack]:
     routes = RouteTable.from_yaml(REPO / "config" / "routes.yaml")
     detector = Detector(routes, load_thresholds(REPO / "config" / "rules.yaml"))
     keys = KeyTable.load(tmp_path / "keys.jsonl")
@@ -142,14 +149,15 @@ def stack(tmp_path: Path) -> Iterator[Stack]:
     shops = Shops(grants)
     done = threading.Semaphore(0)
     with socket_dir() as run:
-        logins = Logins(lane, patches)
-        tap = Tap(lane, logins, grants, rules, events.append, run / "real.sock", run / "twin.sock")
+        logins = Logins(lane)
+        sock = run / "real.sock", run / "twin.sock"
+        tap = Tap(lane, logins, grants, rules, events.append, *sock, lambda v: frozenset(v) & real)
         with (
             serving(UnixHTTPServer(tap.real, shop_handler(shops, "real"))),
             serving(UnixHTTPServer(tap.twin, shop_handler(shops, "twin"))),
             serving(UnixHTTPServer(run / "tap.sock", counted(tap, done))) as front,
         ):
-            yield Stack(tap, front.socket_path, shops, keys, events, done)
+            yield Stack(tap, front.socket_path, shops, keys, events, done, real)
 
 
 def test_a_mirror_request_goes_to_the_twin_and_is_recorded(stack: Stack) -> None:
@@ -286,15 +294,3 @@ def test_parallel_mirror_requests_each_get_one_record(stack: Stack) -> None:
         thread.join()
     ids = sorted(action.event_id for action in stack.of(TrackAction))
     assert ids == sorted(f"track.action:req-p{n}" for n in range(8))
-
-
-def test_tap_listener_serves_the_router_tap_socket() -> None:
-    with socket_dir() as run:
-        names = ("lane", "tap", "real", "twin", "sync", "state", "spool", "canaries", "patches")
-        config = parse_config([part for name in names for part in (f"--{name}", str(run / name))])
-        router = build_router(config, "test-ingest-value")
-        try:
-            with tap_listener(router) as server:
-                assert isinstance(server, UnixHTTPServer) and server.socket_path == run / "tap"
-        finally:
-            router.close()

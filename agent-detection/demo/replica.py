@@ -2,18 +2,21 @@
 
 push(): the projection of the real rows (config/mask.yaml through demo.masking) goes to the
 twin: new rows are inserted, changed ones updated, removed ones deleted. A row the twin holds
-for itself (an agent's checkout, a copied account, a changed picture) is left as the twin has
-it: this job writes a row only where the twin has none or still has the one this job wrote.
+for itself (an agent's checkout, a changed picture) is left as the twin has it: this job writes
+a row only where the twin has none or still has the one this job wrote.
 
 An order moves whole. Both shops number a new row max + 1, so an agent's checkout on the twin
 takes the ids the next real order gets. When the twin holds the id of a real order or of one of
 its items or history rows, that real order and all of its rows stay out of the twin, so no order
-ever shows rows of another. New real orders of an account the twin holds for itself (a copied
-account, one an agent changed) stay out too: that account changes only by what the agent does.
+ever shows rows of another. New real orders of an account the agent changed on the twin stay out
+too: that account changes only by what the agent does.
 
-copy(cookie): that real session and its own account (user row, orders, order items and order
-history) are copied verbatim, so a flagged agent stays signed in on the twin. The same rules
-apply, so a second copy of the same session changes nothing.
+copy(cookie): the flagged agent's real session row (token, user id, date: the cookie it already
+holds) and its own account (user row, orders, order items and order history) go to the twin, so
+the agent stays signed in there. The account comes from the same masked projection as push, so
+the twin never holds a real private value (the password hash, name, email, phone and address are
+NULL or made up); the session row is the one real value, and the twin's SQL cannot read it (see
+demo.db). The same rules apply, so a second copy of the same session changes nothing.
 """
 
 from __future__ import annotations
@@ -29,23 +32,9 @@ from pathlib import Path
 from demo import db
 from demo.mask import project
 from demo.masking import Policy, Row
+from demo.own import Tables, own_rows
 from demo.tables import SESSION_REPLACE, SQL
 from demo.web import SESSION_COOKIE, parse_cookies
-
-Tables = dict[str, dict[int, Row]]
-OWN_ROWS = (
-    ("orders", "SELECT * FROM orders WHERE user_id = ? ORDER BY id"),
-    (
-        "order_items",
-        "SELECT * FROM order_items WHERE order_id IN"
-        " (SELECT id FROM orders WHERE user_id = ?) ORDER BY id",
-    ),
-    (
-        "order_events",
-        "SELECT * FROM order_events WHERE order_id IN"
-        " (SELECT id FROM orders WHERE user_id = ?) ORDER BY id",
-    ),
-)
 
 
 @dataclass(frozen=True)
@@ -149,15 +138,12 @@ class Syncer:
             return None
         with contextlib.closing(db.connect(self.real, db.READ_ONLY)) as real:
             session = real.execute("SELECT * FROM sessions WHERE token = ?", (token,)).fetchone()
-            if session is None:
-                return None
-            user_id = int(session["user_id"])
-            user = real.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-            if user is None:
-                return None
-            own: Tables = {"users": {user_id: tuple(user)}}
-            for table, query in OWN_ROWS:
-                own[table] = {int(r["id"]): tuple(r) for r in real.execute(query, (user_id,))}
+        if session is None:
+            return None
+        user_id = int(session["user_id"])
+        own = own_rows(project(self.real, self.policy), user_id)
+        if not own.get("users"):
+            return None
         with self._lock, contextlib.closing(db.connect(self.twin, db.EXISTING)) as conn, conn:
             conn.execute("BEGIN IMMEDIATE")
             conn.execute(SESSION_REPLACE, tuple(session))

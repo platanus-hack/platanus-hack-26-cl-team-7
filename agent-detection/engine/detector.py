@@ -1,4 +1,5 @@
-"""Runs the three rules over each request and emits at most one verdict per session and rule."""
+"""Runs the three rules over each request and emits at most one verdict per session and rule,
+until rearm() lets that session fire again."""
 
 from __future__ import annotations
 
@@ -26,9 +27,9 @@ class Detector:
             ContractExitsRule(thresholds),
             EndpointBreadthRule(thresholds),
         )
-        # Fired (session, rule) pairs outlive session expiry ("one verdict ever"), so they are
-        # kept as fixed-size digests: a scanner that rotates long User-Agents costs ~16 bytes
-        # per verdict here, not the whole UA.
+        # Fired (session, rule) pairs outlive session expiry ("one verdict ever") until a caller
+        # rearms the session. They are kept as fixed-size digests: a scanner that rotates long
+        # User-Agents costs ~16 bytes per verdict here, not the whole UA.
         self._fired: set[bytes] = set()
         self._next_expiry = float("-inf")
 
@@ -47,6 +48,11 @@ class Detector:
                 self._fired.add(key)
                 verdicts.append(_verdict(session, req, hit))
         return verdicts
+
+    def rearm(self, session_id: str) -> None:
+        """Let the session fire each rule again. The mirror lane calls it for a client with no
+        live track, so "one verdict" lasts as long as its track and not as long as the process."""
+        self._fired.difference_update(fired_key(session_id, rule.rule_id) for rule in self.rules)
 
     def _expire_idle(self, now: float) -> None:
         """Free idle sessions about once per idle_timeout. SessionStore.get_or_create already

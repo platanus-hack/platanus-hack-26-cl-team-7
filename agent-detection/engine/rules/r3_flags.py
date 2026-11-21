@@ -37,9 +37,13 @@ def flag(path: str, query: str) -> str | None:
         or match_sensitive(normalize_path(decoded_path))
         or match_payload(decoded_path)
     )
-    if found is not None or not query:
-        return found
-    return match_payload(decode(query, plus_is_space=True))
+    return found or flag_form(query)
+
+
+def flag_form(text: str) -> str | None:
+    """Name of the first payload signature in form-encoded text, a query string or a login
+    body, or None."""
+    return match_payload(decode(text, plus_is_space=True)) if text else None
 
 
 def normalize_path(path: str) -> str:

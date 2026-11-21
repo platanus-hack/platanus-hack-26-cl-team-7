@@ -4,7 +4,8 @@
 opened read-only, an authorizer allows SELECT, reads and recursive CTEs and nothing else (no
 ATTACH, no PRAGMA, no writes, no extension loading), values are capped in size and every
 statement gets a fixed step budget. An injected query can read this instance's own tables, as a
-real flaw would, and can never touch a host file.
+real flaw would, and can never touch a host file. The one table it cannot read is `sessions`: a
+session token signs in on the real shop too, and copy on flag puts a real one in the twin's file.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ MAX_VALUE_BYTES = 64 * 1024
 PROGRESS_EVERY = 1000  # VM instructions between progress checks
 MAX_PROGRESS_CHECKS = 2000  # about two million VM instructions per injectable statement
 BLOCKED_FUNCTIONS = frozenset({"load_extension", "fts3_tokenizer", "zeroblob", "randomblob"})
+UNREADABLE_TABLES = frozenset({"sessions"})  # no text-built SQL reads these
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS products (
@@ -110,6 +112,8 @@ def columns(conn: sqlite3.Connection, table: str) -> list[str]:
 
 
 def _authorize(action: int, arg1: str | None, arg2: str | None, *_: str | None) -> int:
+    if action == sqlite3.SQLITE_READ and (arg1 or "").lower() in UNREADABLE_TABLES:
+        return sqlite3.SQLITE_DENY
     if action in _ALLOWED_ACTIONS:
         return sqlite3.SQLITE_OK
     if action == sqlite3.SQLITE_FUNCTION and (arg2 or "").lower() not in BLOCKED_FUNCTIONS:

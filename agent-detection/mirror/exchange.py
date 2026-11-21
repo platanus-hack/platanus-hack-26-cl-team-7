@@ -4,7 +4,9 @@ From the request: the login username (form or JSON body), the body as form text 
 signatures test it as they test a query string) and the hosts it names (each may get one egress
 through the callback relay). From the answer: the twin-born values, which bind to the track and
 follow the agent from any IP: token-like cookie values, tokens, usernames and emails. A value the
-request itself sent is not twin-born (a login echoes its own username).
+request itself sent is not twin-born (a login echoes its own username). A value the real database
+holds is not bound either (mirror.binding asks the real side), so no real user can be routed to
+the twin by their own username or email.
 """
 
 from __future__ import annotations

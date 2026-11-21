@@ -10,11 +10,19 @@ from pathlib import Path
 import pytest
 from test_twin_support import POLICY_FILE, Answer, make_shop, make_twin, running, socket_dir
 
-from demo import auth, sync
+from demo import auth, db, sync
 from demo.masking import load_policy
 from demo.replica import Copied, Syncer
-from demo.sync import MAX_COPY_BODY, SyncServer, push_forever
+from demo.sync import (
+    MAX_COPY_BODY,
+    MAX_VALUE_CHARS,
+    MAX_VALUES,
+    MAX_VALUES_BODY,
+    SyncServer,
+    push_forever,
+)
 from demo.web import Shop
+from mirror.session_copy import real_values
 from mirror.sockets import UnixHTTPConnection
 
 
@@ -72,6 +80,53 @@ def test_copy_of_a_real_session_answers_the_user_and_order_count(
 def test_bad_or_unknown_copy_requests_are_refused(sock: Path, body: bytes, status: int) -> None:
     answer = call(sock, "POST", "/copy", body)
     assert answer.status == status and "error" in answer.json()
+
+
+def test_real_values_names_the_usernames_emails_and_tokens_the_real_shop_holds(
+    sock: Path, syncer: Syncer
+) -> None:
+    real = Shop(syncer.real, syncer.real.with_name("real-files"))
+    login = auth.login(real, "alice", "wonderland")
+    assert login is not None
+    with db.opened(syncer.twin) as conn:
+        masked = conn.execute("SELECT username, email FROM users WHERE id = 2").fetchone()
+    assert masked["username"] != "alice"
+    values = ["alice", "ALICE.liddell@GMAIL.com", login.token, "nobody.here", *masked]
+    answer = call(sock, "POST", "/real-values", json.dumps({"values": values}).encode())
+    assert answer.status == 200
+    assert answer.json() == {"real": ["alice", "ALICE.liddell@GMAIL.com", login.token]}
+    assert real_values(sock, values) == frozenset(answer.json()["real"])
+    assert call(sock, "POST", "/real-values", b'{"values": []}').json() == {"real": []}
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"",
+        b"{}",
+        b'{"values": "alice"}',
+        b'{"values": [7]}',
+        b'["alice"]',
+        json.dumps({"values": ["v"] * (MAX_VALUES + 1)}).encode(),
+        json.dumps({"values": ["v" * (MAX_VALUE_CHARS + 1)]}).encode(),
+        json.dumps({"values": ["v" * MAX_VALUES_BODY]}).encode(),
+    ],
+)
+def test_bad_real_values_requests_are_refused(sock: Path, body: bytes) -> None:
+    answer = call(sock, "POST", "/real-values", body)
+    assert answer.status == 400 and "error" in answer.json()
+
+
+def test_a_database_error_while_checking_real_values_is_a_503(
+    sock: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken(real: Path, values: list[str]) -> list[str]:
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(sync, "real_values", broken)
+    answer = call(sock, "POST", "/real-values", b'{"values": ["alice"]}')
+    assert answer.status == 503 and "database is locked" in answer.json()["error"]
+    assert real_values(sock, ["alice"]) is None
 
 
 def test_other_paths_and_methods_are_not_found(sock: Path) -> None:

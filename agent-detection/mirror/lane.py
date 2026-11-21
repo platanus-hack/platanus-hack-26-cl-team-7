@@ -8,7 +8,8 @@ engine Detector on that request, as a library with the same rules, then picks:
    then IP): mirror on that key's track, and the request's own keys link to it;
 2. a verdict, or else a virtual patch: mirror on a new track bound to the own keys. The trigger
    request itself is mirrored, so its session (the Cookie header, else a Bearer token) is copied
-   to the twin before the answer (mirror.session_copy);
+   to the twin before the answer (mirror.session_copy). A client with no bound key starts over:
+   the Detector rearms its session, so a client whose keys expired can be flagged again;
 3. else real.
 
 The own keys are IP + User-Agent, and the IP on an R3 critical verdict. The answer is always 200
@@ -89,11 +90,13 @@ class LaneRouter:
         req = Request(time.time(), fwd.ip, fwd.user_agent, fwd.method, fwd.path, fwd.query)
         known = [*fwd.twin_born_keys(), fwd.ip_ua_key, fwd.ip_key]
         with self._lock:
+            hit = self._keys.find(known)
+            if hit is None:  # no live track: a rule this client fired before may fire again
+                self._detector.rearm(req.session_id)
             verdicts = self._detector.process(req)
             own = [fwd.ip_ua_key] + ([fwd.ip_key] if any(v.critical for v in verdicts) else [])
-            followed = self.follow(known, own, fwd.request_id)
-            if followed is not None:
-                return followed
+            if hit is not None:
+                return self._join(hit[0], own, fwd.request_id)
             patch = self._patches.match(fwd.method, fwd.path, fwd.query)
             cause = _verdict_cause(verdicts) or patch_cause(patch)
             if cause is None:
@@ -112,11 +115,12 @@ class LaneRouter:
         """Mirror on the track of the first bound key in `known`, linking the request's `own` keys
         to it; None when none is bound. The tap calls it for a login with a twin-born username."""
         hit = self._keys.find(known)
-        if hit is None:
-            return None
+        return None if hit is None else self._join(hit[0], own, request_id)
+
+    def _join(self, track_id: str, own: list[TrackKey], request_id: str) -> Decision:
         for key in own:
-            self.link(hit[0], key, request_id)
-        return Decision("mirror", hit[0])
+            self.link(track_id, key, request_id)
+        return Decision("mirror", track_id)
 
     def link(self, track_id: str, key: TrackKey, request_id: str, part: str = "") -> bool:
         """Bind `key` to the track and report track.linked; False when it was already bound."""

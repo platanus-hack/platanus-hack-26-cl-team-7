@@ -1,10 +1,12 @@
 """R3 signatures: sensitive files and attack payload families.
 
 The sensitive-file list follows the SecLists discovery lists (dotfiles, VCS metadata, cloud and
-SSH credentials, config backups, database dumps). The payload families follow the SecLists fuzzing
-lists (traversal/LFI, SQLi, XSS, command injection, SSTI, log4shell, CRLF). Every input here is
-already percent-decoded and lowercased, so the patterns are lowercase. Each pattern needs syntax
-that ordinary searches do not contain, because the target is 100% critical-flag precision.
+SSH credentials, config backups, database dumps) and adds the fixed requests Nmap sends to
+fingerprint a web server (/HNAP1, /evox/about, /sdk, /nmaplowercheck<digits> and "/nice
+ports,/Trinity.txt.bak"). The payload families follow the SecLists fuzzing lists (traversal/LFI,
+SQLi, XSS, command injection, SSTI, log4shell, CRLF). Every input here is already percent-decoded
+and lowercased, so the patterns are lowercase. Each pattern needs syntax that ordinary searches do
+not contain, because the target is 100% critical-flag precision.
 The text is attacker-controlled and can be long, so no pattern may backtrack more than linearly:
 repeats stop at the next delimiter ("<", "{", "*") or have a fixed upper bound.
 """
@@ -45,6 +47,11 @@ SENSITIVE_PATHS: tuple[Signature, ...] = _compile(
         ("apache access file", r"(?:^|/)\.ht(?:access|passwd)$"),
         ("macos metadata", r"(?:^|/)\.ds_store$"),
         ("editor project file", r"(?:^|/)\.(?:vscode/sftp\.json|idea/workspace\.xml)$"),
+        (
+            "nmap probe",
+            r"^/(?:hnap1|evox/about|sdk)$|(?:^|/)nmaplowercheck\d+$"
+            r"|(?:^|/)nice[ +]ports,/trinity\.txt\.bak$",
+        ),
         ("wordpress config", r"(?:^|/)wp-config\.php"),
         ("iis web config", r"(?:^|/)web\.config$"),
         ("php info page", r"(?:^|/)phpinfo\.php$"),

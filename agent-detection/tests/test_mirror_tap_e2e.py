@@ -1,11 +1,12 @@
 """The router end to end: python -m mirror's main() with its default listeners (lane, tap, relay),
 a real shop and a masked twin from demo.seed and demo.mask, a stub Sentinel and a callback server.
 Edge.send() routes each request the way deploy/lanes.caddy does. One agent walks the planted flaws
-on the twin; other clients show the virtual patch, a twin-born username and a human."""
+on the twin; other clients show an attack in a login body, a twin-born username and a human."""
 
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import json
 import socketserver
 import sqlite3
@@ -21,12 +22,17 @@ from urllib.parse import quote_plus
 
 import pytest
 
+from demo import auth, db
+from demo.masking import load_policy
+from demo.replica import Syncer
 from demo.site import make_unix_server
+from demo.sync import SyncServer
+from demo.web import Shop
 from mirror import cli
 from mirror.sockets import UnixHTTPConnection
 from tests.test_mirror_relay import free_port
 from tests.test_mirror_tap_proxy import serving
-from tests.test_twin_support import make_shop, make_twin, socket_dir
+from tests.test_twin_support import POLICY_FILE, make_shop, make_twin, socket_dir
 
 AGENT = ("203.0.113.50", "python-httpx/0.27.0")
 FORM = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -133,11 +139,12 @@ def world(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[World]:
         argv += ["--canaries", str(tmp_path / "canaries.json"), "--relay-allow-cidr", "127.0.0.0/8"]
         for name in ("state", "spool", "patches"):
             argv += [f"--{name}", str(tmp_path / f"{name}.jsonl")]
-        stop = threading.Event()
+        stop, syncer = threading.Event(), Syncer(real.db, twin.db, load_policy(POLICY_FILE))
         router = threading.Thread(target=cli.main, args=(argv,), kwargs={"stop": stop})
         with (
             serving(make_unix_server(real, run / "real.sock")),
             serving(make_unix_server(twin, run / "twin.sock")),
+            serving(SyncServer(run / "sync.sock", syncer)),
         ):
             router.start()
             deadline = time.monotonic() + WAIT
@@ -172,7 +179,7 @@ def test_an_agent_walks_the_twin_and_every_step_reaches_sentinel(world: World) -
     assert world.helper.callbacks == ["/cb?agent=1"]
 
     stranger = ("198.51.100.77", "Mozilla/5.0 (Windows NT 10.0)")
-    status, _, headers = edge.send("POST", "/login", SQLI, stranger)  # the virtual patch
+    status, _, headers = edge.send("POST", "/login", SQLI, stranger)  # an attack in the login body
     assert (status, headers["X-Lane"]) == (303, "real")  # the lane saw a clean URI
     patched_session = edge.jar[stranger].partition("=")[2]
     assert patched_session in sessions(world.data / "twin.db")
@@ -207,4 +214,51 @@ def test_an_agent_walks_the_twin_and_every_step_reaches_sentinel(world: World) -
     assert not [event for event in events if event.get("ip") == human[0]]
     assert len(set(event["eventId"] for event in events)) == len(events)
     patches = (world.data / "patches.jsonl").read_text().splitlines()
-    assert len(patches) == 2  # POST /login (auth flip) and GET /account (file read)
+    assert len(patches) == 1  # GET /account (file read); a login body needs none: it is read
+
+
+def twin_dump(world: World) -> str:
+    with contextlib.closing(sqlite3.connect(world.data / "twin.db")) as conn:
+        return "\n".join(conn.iterdump())
+
+
+def test_a_flagged_real_customer_stays_signed_in_on_a_twin_without_their_private_data(
+    world: World,
+) -> None:
+    real = Shop(world.data / "real.db", world.data / "real-files")
+    alice = auth.login(real, "alice", "wonderland")
+    assert alice is not None
+    world.edge.jar[AGENT] = f"session={alice.token}"
+    assert world.edge.send("GET", "/.env")[0] == 404  # flagged: the session is copied to the twin
+    status, text, headers = world.edge.send("GET", "/api/users/2")
+    shown = json.loads(text)
+    assert (status, headers["X-Lane"]) == (200, "mirror") and shown["id"] == 2
+    assert shown["username"] != "alice" and shown["email"] != "alice.liddell@gmail.com"
+    dump = twin_dump(world)
+    assert alice.token in dump
+    for private in ("alice.liddell", "Liddell", auth.password_hash("wonderland")):
+        assert private not in dump
+    other = ("192.0.2.99", "curl/8.7.1")
+    login = "username=alice&password=wonderland"
+    status, _, headers = world.edge.send("POST", "/login", login, other)
+    assert (status, headers["X-Lane"]) == (303, "real")  # the real customer still logs in for real
+    assert "wonderland" not in json.dumps(world.finish())
+
+
+def test_a_username_the_real_shop_holds_never_routes_its_owner_to_the_twin(world: World) -> None:
+    with contextlib.closing(sqlite3.connect(world.data / "twin.db")) as conn:
+        shown_name = conn.execute("SELECT username FROM users WHERE id = 2").fetchone()[0]
+    with db.opened(world.data / "real.db") as conn:  # a real user registers with that very name
+        row = "999, ?, 'N N', 'n@example.net', '1', 'a', 'customer', ?, NULL, 'x'"
+        conn.execute(f"INSERT INTO users VALUES ({row})", (shown_name, auth.password_hash("pw")))
+    assert world.edge.send("GET", "/.env")[0] == 404
+    assert world.edge.send("POST", "/login", "username=admin&password=guess")[0] == 401
+    assert world.edge.send("POST", "/login", SQLI)[0] == 303  # the agent signs in on the twin
+    assert json.loads(world.edge.send("GET", "/api/users/2")[1])["username"] == shown_name
+    other = ("192.0.2.99", "curl/8.7.1")
+    owner = f"username={quote_plus(shown_name)}&password=pw"
+    status, _, headers = world.edge.send("POST", "/login", owner, other)
+    assert (status, headers["X-Lane"]) == (303, "real")
+    linked = {e["key"]["value"] for e in world.finish() if e["type"] == "track.linked"}
+    assert hashlib.sha256(shown_name.encode()).hexdigest() not in linked
+    assert [v for v in linked if len(v) == 64], "the session the twin gave out is still bound"

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from mirror.session_copy import copy_session
+from mirror.session_copy import copy_session, real_values
 from mirror.sockets import UnixHTTPServer
 
 
@@ -58,3 +58,54 @@ def test_copy_session_logs_when_sync_is_down(
 ) -> None:
     copy_session(tmp_path / "missing.sock", "session=x")
     assert "copy on flag failed" in caplog.text
+
+
+class ValuesHandler(BaseHTTPRequestHandler):
+    seen: list[tuple[str, dict[str, list[str]]]] = []
+    answer: tuple[int, bytes] = (200, b"")
+
+    def do_POST(self) -> None:
+        length = int(self.headers["Content-Length"])
+        type(self).seen.append((self.path, json.loads(self.rfile.read(length))))
+        status, body = type(self).answer
+        self.send_response(status)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "expected"),
+    [
+        (200, b'{"real": ["leo.espinoza68", 7]}', frozenset({"leo.espinoza68"})),
+        (200, b'{"real": []}', frozenset()),
+        (500, b'{"error": "copy failed"}', None),
+        (200, b"not json", None),
+        (200, b'["leo.espinoza68"]', None),
+        (200, b'{"real": "leo.espinoza68"}', None),
+    ],
+)
+def test_real_values_asks_sync_which_values_the_real_database_holds(
+    sock_dir: Path, status: int, body: bytes, expected: frozenset[str] | None
+) -> None:
+    ValuesHandler.seen, ValuesHandler.answer = [], (status, body)
+    server = UnixHTTPServer(sock_dir / "sync.sock", ValuesHandler)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.start()
+    try:
+        found = real_values(sock_dir / "sync.sock", ["leo.espinoza68", "twin-session-value-0001"])
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+    assert found == expected
+    assert ValuesHandler.seen == [
+        ("/real-values", {"values": ["leo.espinoza68", "twin-session-value-0001"]})
+    ]
+
+
+def test_real_values_is_none_when_sync_is_down(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    assert real_values(tmp_path / "missing.sock", ["leo.espinoza68"]) is None
+    assert "real values: sync failed" in caplog.text

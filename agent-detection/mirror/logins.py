@@ -3,8 +3,10 @@ login POST on both lanes, and reads its body:
 
 - a twin-born username (one the twin gave out) puts the login on the track of that value, from any
   IP, and links the client's IP + User-Agent to it;
-- a body that matches a virtual patch (a signature in the form, as an auth flip found it) opens a
-  new track, as the lane does for a patched URI, and copies the session to the twin.
+- an attack payload in the form values (an R3 payload signature from engine.signatures, such as a
+  SQL tautology in the username) opens a new track as an R3 verdict does, critical: IP + User-Agent
+  and IP bind, and the session is copied to the twin. This request goes to the twin too. The lane
+  endpoint cannot see a body, and no virtual patch is needed for one: every signature is checked.
 
 Any other login stays on the real lane.
 """
@@ -14,11 +16,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from email.message import Message
 
+from engine.rules.r3_flags import flag_form
 from mirror.exchange import body_form, login_username
 from mirror.forwarded import Forwarded
 from mirror.keys import twin_born_key
-from mirror.lane import LaneRouter, patch_cause
-from mirror.patches import PatchBook
+from mirror.lane import Cause, LaneRouter
 
 LOGIN_METHOD = "POST"
 # The login routes, with or without one trailing slash, as deploy/lanes.caddy sends them.
@@ -28,7 +30,6 @@ LOGIN_PATHS = frozenset({"/login", "/login/", "/api/session", "/api/session/"})
 @dataclass(frozen=True, slots=True)
 class Logins:
     lane: LaneRouter
-    patches: PatchBook
 
     def track_of(
         self, method: str, path: str, headers: Message[str, str], body: bytes, request_id: str
@@ -55,5 +56,8 @@ class Logins:
         followed = self.lane.follow(known, [fwd.ip_ua_key], request_id)
         if followed is not None:
             return followed.track_id
-        cause = patch_cause(self.patches.match(method, path, body_form(content_type, body)))
-        return "" if cause is None else self.lane.open(fwd, cause, [fwd.ip_ua_key]).track_id
+        signature = flag_form(body_form(content_type, body))
+        if signature is None:
+            return ""
+        cause: Cause = ("R3", f"critical flag: {signature} (login body)")
+        return self.lane.open(fwd, cause, [fwd.ip_ua_key, fwd.ip_key]).track_id
