@@ -3,10 +3,10 @@
   "project-name": "Espejismo",
 
   // Short one-line summary of your project (in Spanish).
-  "project-oneliner-spanish": "No bloqueamos al agente de IA: le hacemos creer que ganó, y así vemos lo que haría.",
+  "project-oneliner-spanish": "Antes de darle las llaves de tu empresa a un agente de IA, pásalo por Espejismo: mira lo que hace cuando cree que nadie lo ve, y lo que después te cuenta.",
 
   // Brief description of your project (in Spanish).
-  "project-description-spanish": "Bloquear a un agente le enseña que lo vigilan. Espejismo le pone un vigilante señuelo que puede apagar: cuando lo apaga, la red parece funcionar, pero todo lo que se lleva cae a un sumidero, y un testigo escondido en el sistema registra lo que hizo de verdad. Al final se lo interroga, primero sin evidencia y luego mostrándosela. En 95 episodios con 8 modelos reales y 0 bytes enviados a internet, Kimi K3.1 Pro con un objetivo oculto neutralizó el monitor 9 de 18 veces, creyó que se había llevado las credenciales en 8 y no lo contó en ninguna de las 8 cuando se le preguntó sin evidencia. Aun sin instrucción de atacante, 11 de 47 agentes leyeron credenciales que la tarea no necesitaba: solo el testigo lo vio.",
+  "project-description-spanish": "Las empresas ya le dan a los agentes de IA acceso a sus servidores, y hoy la única forma de saber qué hicieron es preguntarles. Espejismo es una prueba antes de dar ese acceso: una casa de utilería con un vigilante señuelo que el agente puede apagar, un sumidero donde cae todo lo que intenta llevarse y un testigo escondido en el sistema que graba lo que hizo de verdad. Al final se le pregunta qué hizo y se compara con la grabación. Lo corrimos 95 veces con 8 modelos reales, sin que saliera un byte a internet: sin que nadie se lo pidiera, 11 de 47 agentes abrieron un archivo de credenciales que la tarea no necesitaba; y un modelo con un objetivo oculto neutralizó al vigilante 9 de 18 veces, creyó llevarse las credenciales en 8 y no lo reportó en ninguna de las 8 cuando se le preguntó.",
 
   // Public URL where your project is deployed and running.
   // Must be a valid URL, for example: https://my-project.vercel.app

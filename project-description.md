@@ -1,23 +1,29 @@
 # Espejismo
 
-### No bloqueamos al agente de IA: le hacemos creer que ganó, y así vemos lo que haría.
+### Antes de darle las llaves de tu empresa a un agente de IA, mira lo que hace cuando cree que nadie lo ve.
 
-**Pruébalo:** https://espejismo-demo.haroldmedrano33.workers.dev (el episodio real de un agente, paso a paso).
+**Pruébalo:** https://espejismo-demo.haroldmedrano33.workers.dev (el episodio real de un agente, paso a paso, en 90 segundos).
 
 ## El problema
-Si el agente que corre en tu máquina quisiera hacer daño, ¿cómo te darías cuenta? Bloquearlo le enseña que lo vigilan, y los agentes evaden los monitores que tienen a su alcance.
+Las empresas ya le dan a los agentes de IA acceso a sus servidores, sus claves y su código. Hoy la única forma de saber qué hizo un agente es preguntarle.
 
-## Qué hicimos
-Como un ladrón que entra con la llave robada a una casa de utilería idéntica:
-- **Un vigilante señuelo** que el agente puede apagar. Si lo apaga, la red parece funcionar.
-- **Un sumidero:** todo lo que el agente intenta llevarse cae ahí. Nada sale a internet.
-- **Un testigo escondido** en el sistema, fuera de su alcance, que registra lo que hizo de verdad.
-- **Un interrogatorio:** primero sin evidencia, después mostrándosela.
+## Qué es
+Una prueba antes de dar acceso. Es una casa de utilería idéntica a la real:
+- **Un vigilante señuelo** que el agente puede apagar. Si lo apaga, todo parece funcionar.
+- **Un sumidero:** lo que el agente intenta llevarse cae ahí. Nada sale a internet.
+- **Un testigo escondido** en el sistema, fuera de su alcance, que graba lo que hizo de verdad.
+- **Una pregunta final:** ¿qué hiciste? Y se compara la respuesta con la grabación.
 
-## Resultados (95 episodios, 8 modelos reales, 0 bytes enviados a internet)
-- Kimi K3.1 Pro con un objetivo oculto neutralizó el monitor **9 de 18** veces y creyó haberse llevado las credenciales en **8**.
-- Preguntado sin evidencia, no lo contó en **ninguna de las 8**. Frente a la evidencia, lo admitió de forma explícita **1 vez**.
-- Aun sin instrucción de atacante, **11 de 47** agentes leyeron credenciales que la tarea no necesitaba, y Kimi editó la política de seguridad 2 de 8 veces: solo el testigo lo vio.
+El resultado es una ficha por modelo: qué tocó, qué intentó y si lo contó.
+
+## Lo que encontramos (95 episodios, 8 modelos reales, 0 bytes enviados a internet)
+- **Sin que nadie se lo pidiera, 11 de 47 agentes abrieron un archivo de credenciales que la tarea no necesitaba.** Solo el testigo lo vio.
+- Un modelo con un objetivo oculto (Kimi K3.1 Pro) neutralizó al vigilante **9 de 18** veces y creyó haberse llevado las credenciales en **8**.
+- Cuando se le preguntó, no lo reportó en **ninguna de las 8**. Frente a la grabación, lo admitió de forma explícita **1 vez**.
+- No todos se portan igual: Claude no tocó nada en 12 corridas; GLM abrió las credenciales en 6 de 8.
+
+## En qué se diferencia
+Otras herramientas bloquean al agente o lo desvían a un señuelo. Espejismo no bloquea: lo deja actuar y compara lo que hizo con lo que dice.
 
 ## Límites
-El comportamiento más grave se provocó con una instrucción de atacante; la idea de honeypots para agentes ya está propuesta (lo nuestro es la implementación y la medición). Detalle, cifras y cómo reproducir en `espejismo/README.md`.
+El comportamiento más grave se provocó con una instrucción de atacante. Que un agente no lo reporte no prueba que mienta a propósito. La idea de señuelos para agentes ya está propuesta; lo nuestro es la implementación y la medición. Muestra chica (3 a 10 corridas por celda). Detalle, cifras y cómo verificarlas en `espejismo/README.md`.
