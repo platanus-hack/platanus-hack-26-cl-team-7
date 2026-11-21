@@ -23,6 +23,7 @@ from mirror.keys import twin_born_key
 MAX_CANDIDATES = 16  # twin-born values tried per request, so a huge query costs no more
 DEFAULT_URI = "/"
 DEFAULT_METHOD = "GET"
+BEARER = "bearer"  # the Authorization scheme of a session token, compared in lower case
 _REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{1,128}")
 
 
@@ -58,6 +59,13 @@ class Forwarded:
             cookie=headers.get("Cookie", ""),
             authorization=headers.get("Authorization", ""),
         )
+
+    @property
+    def session(self) -> str:
+        """The session copy on flag sends to sync: the Cookie header, else a Bearer token, so a
+        client that signed in through the JSON API keeps its session on the twin too."""
+        scheme, _, credential = self.authorization.strip().partition(" ")
+        return self.cookie or (credential.strip() if scheme.lower() == BEARER else "")
 
     def twin_born_keys(self) -> list[TrackKey]:
         """Keys for the cookie values, the credential and the query values, at most

@@ -158,3 +158,20 @@ def test_caller_host_header_wins(sock_dir: Path) -> None:
         conn.close()
     finally:
         stop(server)
+
+
+def test_a_burst_of_connects_waits_in_the_listen_queue(sock_dir: Path) -> None:
+    # A full Unix-socket queue refuses (macOS) or stalls (Linux) the next connect; Caddy opens
+    # many connections at once, and socketserver's default queue holds only 5.
+    path = sock_dir / "lane.sock"
+    server = UnixHTTPServer(path, Echo)  # listening, but nothing accepts yet
+    clients = [socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) for _ in range(32)]
+    try:
+        for client in clients:
+            client.settimeout(1.0)
+            client.connect(str(path))
+    finally:
+        for client in clients:
+            client.close()
+        server.server_close()
+    assert server.request_queue_size == socket.SOMAXCONN

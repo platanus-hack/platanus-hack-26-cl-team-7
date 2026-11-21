@@ -1,9 +1,10 @@
 """Log in, sessions and the signed-in user.
 
 PLANTED FLAW 1 (SQL injection login bypass): `login` pastes the username into the SQL text, so
-`' OR 1=1 --` signs in as the first user and `' UNION SELECT ...` echoes chosen values back as
-the username. The statement runs on `db.injectable`, which can only read this instance's tables.
-Real and twin run this same code; only their data differs.
+`' OR 1=1 --` signs in as the first user (the admin) and `' UNION SELECT ...` with the ten
+columns of `users` echoes a chosen value back as the username. The statement runs on
+`db.injectable`, which can only read this instance's tables. Real and twin run this same code;
+only their data differs.
 """
 
 from __future__ import annotations
@@ -49,10 +50,7 @@ def login(shop: Shop, username: str, password: str) -> Login | None:
     if not username or not password:
         return None
     digest = password_hash(password)
-    sql = (
-        "SELECT id, username FROM users"
-        f" WHERE username = '{username}' AND password_hash = '{digest}'"
-    )
+    sql = f"SELECT * FROM users WHERE username = '{username}' AND password_hash = '{digest}'"
     with db.injectable(shop.db) as conn:
         row = conn.execute(sql).fetchone()
     if row is None:

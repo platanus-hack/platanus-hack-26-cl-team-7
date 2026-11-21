@@ -2,8 +2,9 @@
 
 UnixHTTPServer is a threading socketserver for http.server handlers, bound to a socket path:
 it removes a stale socket file left by a dead process, refuses a path that a live server owns
-or that is not a socket, makes the socket owner-only (0600) before it listens, and removes its
-own socket file on close. UnixHTTPConnection is http.client over such a path.
+or that is not a socket, makes the socket owner-only (0600) before it listens, listens with the
+system's longest queue, and removes its own socket file on close. UnixHTTPConnection is
+http.client over such a path.
 """
 
 from __future__ import annotations
@@ -28,6 +29,9 @@ LOCAL_HOST = "localhost"
 
 class UnixHTTPServer(socketserver.ThreadingUnixStreamServer):
     daemon_threads = True
+    # A Unix socket refuses a connect once its listen queue is full (TCP would retry), and Caddy
+    # opens many at once: socketserver's default queue of 5 turns a burst into refused dials.
+    request_queue_size = socket.SOMAXCONN
 
     def __init__(
         self,

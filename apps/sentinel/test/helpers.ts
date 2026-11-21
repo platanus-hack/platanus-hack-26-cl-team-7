@@ -58,6 +58,33 @@ export function setup(client: Anthropic | null = null, now?: () => number) {
 
 export const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
 
+/** Reads Server-Sent Events from a response until `until` holds or `ms` pass. */
+export async function readSSE(res: Response, until: (events: { event: string; data: string; id?: string }[]) => boolean, ms = 1500) {
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  const out: { event: string; data: string; id?: string }[] = [];
+  let buf = "";
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline && !until(out)) {
+    const r = await Promise.race([reader.read(), tick(ms).then(() => ({ done: true, value: undefined }))]);
+    if (r.done) break;
+    buf += decoder.decode(r.value, { stream: true });
+    let i: number;
+    while ((i = buf.indexOf("\n\n")) >= 0) {
+      const block = buf.slice(0, i);
+      buf = buf.slice(i + 2);
+      const m: Record<string, string> = {};
+      for (const line of block.split("\n")) {
+        const k = line.indexOf(":");
+        if (k > 0) m[line.slice(0, k)] = line.slice(k + 1).trim();
+      }
+      if (m.event) out.push({ event: m.event, data: m.data ?? "", id: m.id });
+    }
+  }
+  await reader.cancel();
+  return out;
+}
+
 /* ------------------------------ deception ------------------------------ */
 
 export const TRACK = "trk_0123456789abcdef";

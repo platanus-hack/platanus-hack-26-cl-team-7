@@ -5,7 +5,9 @@ tests/test_edge_caddy.py runs the Caddy rules for real."""
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, urlsplit
@@ -20,11 +22,14 @@ SECRET_QUERY_KEYS = ("current", "new", "repeat")
 QUERY_FILTER = re.compile(r"request>uri query \{(?P<body>[^}]*)\}")
 SOCKET_PATH = re.compile(r"/run/(?:edge|twin)/[a-z]+\.sock")
 REAL_SIDE_VOLUMES = {"edge-sockets", "real-data", "mirror-state"}
-ROUTER_FLAGS = (
-    "--lane --tap --relay --real --twin --sync --sentinel --state --spool --canaries".split()
-)
+ROUTER_FLAGS = [
+    *("--lane", "--tap", "--relay", "--relay-block-host", "--real", "--twin", "--sync"),
+    *("--sentinel", "--state", "--spool", "--canaries"),
+]
 RELAY_PORT = "8097"
 TOKEN_REF = re.compile(r"^\$\{SENTINEL_INGEST_TOKEN:\?[^}]+\}$")
+# Plays `python -m <module> ...` in the compose job scripts: logs the module, fails it for $FAIL.
+FAKE_PYTHON = 'python() { echo "$2" >>"$CALLS"; [ "$2" != "$FAIL" ]; }\n'
 
 
 def _compose() -> dict[str, Any]:
@@ -132,13 +137,14 @@ def test_router_runs_the_contract_cli_with_the_token_from_the_environment() -> N
     assert command[:3] == ["python", "-m", "mirror"]
     assert [arg for arg in command if arg.startswith("--")] == ROUTER_FLAGS
     assert _flag(command, "--sentinel") == "http://sentinel:8787"
+    assert _flag(command, "--relay-block-host") == "${PUBLIC_HOST:-localhost}"
     assert services["sentinel"]["environment"]["SENTINEL_ALLOWED_HOSTS"] == "sentinel"
     for name in ("router", "sentinel"):
         token = services[name]["environment"]["SENTINEL_INGEST_TOKEN"]
         assert TOKEN_REF.match(token), f"{name}: the ingest token must come from the environment"
 
 
-def test_data_jobs_run_once_before_the_shops() -> None:
+def test_data_jobs_finish_before_the_shops_start() -> None:
     services = _services()
     done = {"condition": "service_completed_successfully"}
     assert services["mask"]["depends_on"] == {"seed": done}
@@ -147,9 +153,38 @@ def test_data_jobs_run_once_before_the_shops() -> None:
     assert services["sync"]["depends_on"] == {"mask": done}
     for job in ("seed", "mask"):
         assert services[job]["restart"] == "no" and services[job]["network_mode"] == "none"
-        assert f"test -f /data/{'real' if job == 'seed' else 'twin'}/{job}.done" in str(
-            services[job]["command"]
-        )
+
+
+def _run_job(name: str, root: Path, fail: str = "") -> bool:
+    """Run the compose job's own sh script with /data under root and a recording fake python."""
+    shell, flag, script = _command(_services()[name])
+    assert (shell, flag) == ("sh", "-c")
+    env = {"PATH": os.environ["PATH"], "CALLS": str(root / "calls"), "FAIL": fail}
+    script = FAKE_PYTHON + script.replace("/data/", f"{root}/data/")
+    return subprocess.run(["sh", "-c", script], env=env, check=False, timeout=30).returncode == 0
+
+
+def test_data_jobs_run_until_they_succeed_once_and_a_new_seed_redoes_the_mask(
+    tmp_path: Path,
+) -> None:
+    real = tmp_path / "data" / "real"
+    for side in ("real", "twin"):
+        (tmp_path / "data" / side).mkdir(parents=True)
+
+    def calls() -> list[str]:
+        return (tmp_path / "calls").read_text().split()
+
+    assert not _run_job("seed", tmp_path, fail="demo.seed")
+    (real / "real.db").write_text("half written")
+    assert _run_job("seed", tmp_path)
+    assert not (real / "real.db").exists(), "a seed after a failed one starts from scratch"
+    assert not _run_job("mask", tmp_path, fail="demo.mask")
+    assert _run_job("mask", tmp_path)
+    assert _run_job("seed", tmp_path) and _run_job("mask", tmp_path)
+    assert calls() == ["demo.seed", "demo.seed", "demo.mask", "demo.mask"]
+    (real / "seed.done").unlink()
+    assert _run_job("seed", tmp_path) and _run_job("mask", tmp_path)
+    assert calls()[4:] == ["demo.seed", "demo.mask"]
 
 
 def test_no_engine_follow_service_and_replay_only_on_demand() -> None:

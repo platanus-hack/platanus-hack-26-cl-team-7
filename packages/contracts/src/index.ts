@@ -209,6 +209,11 @@ export const FINDING_KINDS = ["canary_read", "auth_flip", "signature_success"] a
 export const FindingKind = z.enum(FINDING_KINDS);
 export type FindingKind = z.infer<typeof FindingKind>;
 
+/** A finding's fix proposal: being written, written, or given up on after every attempt. */
+export const PROPOSAL_STATUSES = ["pending", "ready", "failed"] as const;
+export const ProposalStatus = z.enum(PROPOSAL_STATUSES);
+export type ProposalStatus = z.infer<typeof ProposalStatus>;
+
 export const DECEPTION_EVENT_TYPES = ["track.opened", "track.linked", "track.action", "finding.confirmed"] as const;
 export type DeceptionEventType = (typeof DECEPTION_EVENT_TYPES)[number];
 
@@ -325,6 +330,8 @@ export const Finding = z.object({
   ts: z.number().int(),
   /** null until the AI has written one (or when AI is off). */
   proposal: FixProposal.nullable(),
+  /** "failed" once the AI gave up on it; a Sentinel restart tries again. "pending" while AI is off. */
+  proposalStatus: ProposalStatus,
 });
 export type Finding = z.infer<typeof Finding>;
 

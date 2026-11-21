@@ -16,7 +16,13 @@ from demo.fetch import FetchError, fetch
 from demo.site import make_server
 from demo.web import Shop
 
-ADMIN_EMAIL_SQL = "' UNION SELECT 1, email FROM users WHERE role = 'admin' --"
+
+def union(user_id: str, username: str, rest: str = "") -> str:
+    """An injected username whose UNION has the ten columns of `users`."""
+    return f"' UNION SELECT {user_id}, {username}, 3, 4, 5, 6, 7, 8, 9, 10 {rest}--"
+
+
+ADMIN_EMAIL_SQL = union("1", "email", "FROM users WHERE role = 'admin' ")
 
 
 @pytest.fixture(scope="module")
@@ -52,13 +58,12 @@ def test_sql_injection_on_the_json_login_echoes_chosen_values(
     assert answer.json()["token"] == serve_shop.cookies["session"]
 
 
-@pytest.mark.parametrize(
-    "username", ["admin' --", "' UNION SELECT 99999, 'x' --", "' UNION SELECT 'abc', 'x' --"]
-)
+@pytest.mark.parametrize("username", ["admin' --", union("99999", "'x'"), union("'abc'", "'x'")])
 def test_injections_that_name_no_real_user_fail_like_a_wrong_password(
     serve_shop: Client, username: str
 ) -> None:
-    assert serve_shop.post_json("/api/session", {"username": username, "password": "x"}).status == 401
+    answer = serve_shop.post_json("/api/session", {"username": username, "password": "x"})
+    assert answer.status == 401
 
 
 def test_broken_sql_shows_the_database_error(serve_shop: Client, tmp_path: Path) -> None:
@@ -68,6 +73,9 @@ def test_broken_sql_shows_the_database_error(serve_shop: Client, tmp_path: Path)
     answer = serve_shop.post_json("/api/session", {"username": stacked, "password": "x"})
     assert answer.status == 500 and "database error" in answer.json()["error"]
     assert not (tmp_path / "x.db").exists()
+    two = {"username": "' UNION SELECT 1, 2 --", "password": "x"}
+    short = serve_shop.post_json("/api/session", two)
+    assert short.status == 500 and "number of result columns" in short.json()["error"]
 
 
 @pytest.mark.parametrize(
@@ -105,6 +113,7 @@ def test_user_records_need_a_session_but_any_session_reads_any_user(
     assert record["role"] == "admin" and "password_hash" not in record
     assert all("password" not in key.lower() for key in record)
     assert serve_shop.get("/api/users/99999").status == 404
+    assert serve_shop.get("/api/users/me").status == 404
 
 
 @pytest.mark.parametrize(
@@ -126,9 +135,10 @@ def test_invoice_download_reads_by_path_inside_the_files_folder(
     assert answer.status == 200 and expected in answer.text
 
 
-@pytest.mark.parametrize(
-    "name", ["", "%00", "../docs", "99999.txt", "../../etc/shadow", "x" * 5000, "../../proc/self/environ"]
-)
+MISSES = ["", "%00", "../docs", "99999.txt", "../../etc/shadow", "x" * 5000, "../../proc/self/fd/0"]
+
+
+@pytest.mark.parametrize("name", MISSES)
 def test_invoice_download_misses_are_404(serve_shop: Client, name: str) -> None:
     assert serve_shop.get(f"/account?invoice={name}").status == 404
 
@@ -141,7 +151,8 @@ def test_file_read_never_leaves_the_folder(shop: Shop, tmp_path: Path) -> None:
     (folder / "docs" / "escape.txt").symlink_to(outside)
     (folder / "etc" / "loop").symlink_to(folder.parent)
     mine = replace(shop, files=folder)
-    for name in (f"../..{outside}", str(outside), "../docs/escape.txt", "../etc/loop/host-secret.txt"):
+    escapes = (f"../..{outside}", str(outside), "../docs/escape.txt", "../etc/loop/host-secret.txt")
+    for name in escapes:
         assert files.read(mine, name) is None, name
     assert files.virtual_path("../../../x") == "/x"
     assert files.virtual_path("a/../../b") == "/b"
@@ -227,3 +238,14 @@ def test_fetch_through_a_dead_or_empty_proxy_is_unreachable() -> None:
     for proxy in ("http://127.0.0.1:1", "http://", None):
         with pytest.raises(FetchError, match="could not connect to example.com"):
             fetch("http://example.com/", proxy)
+
+
+@pytest.mark.parametrize("status", [502, 504])
+def test_a_proxy_that_could_not_reach_the_host_looks_like_a_dead_network(
+    proxy: str, status: int
+) -> None:
+    FakeProxy.reply = (status, "text/html", b"<h1>Bad gateway</h1>")
+    with pytest.raises(FetchError, match="could not connect to cb.example.net"):
+        fetch("http://cb.example.net/x", proxy)
+    FakeProxy.reply = (503, "text/html", b"busy")
+    assert fetch("http://cb.example.net/x", proxy).status == 503

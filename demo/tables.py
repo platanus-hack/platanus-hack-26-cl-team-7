@@ -14,6 +14,8 @@ class TableSql:
     select_all: str
     replace: str
     delete: str
+    order_key: str | None = None  # the column with the id of the order this row belongs to
+    user_key: str | None = None  # the column with the id of the user this row belongs to
 
 
 SQL = {
@@ -31,16 +33,20 @@ SQL = {
         "SELECT * FROM orders ORDER BY id",
         "INSERT OR REPLACE INTO orders VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         "DELETE FROM orders WHERE id = ?",
+        "id",
+        "user_id",
     ),
     "order_items": TableSql(
         "SELECT * FROM order_items ORDER BY id",
         "INSERT OR REPLACE INTO order_items VALUES (?, ?, ?, ?, ?)",
         "DELETE FROM order_items WHERE id = ?",
+        "order_id",
     ),
     "order_events": TableSql(
         "SELECT * FROM order_events ORDER BY id",
         "INSERT OR REPLACE INTO order_events VALUES (?, ?, ?, ?)",
         "DELETE FROM order_events WHERE id = ?",
+        "order_id",
     ),
 }
 SESSION_REPLACE = "INSERT OR REPLACE INTO sessions VALUES (?, ?, ?)"

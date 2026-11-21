@@ -66,8 +66,10 @@ describe("deception contract", () => {
   it("builds read models from the same fields", () => {
     const f = finding as Extract<Event, { type: "finding.confirmed" }>;
     const a = action as Extract<Event, { type: "track.action" }>;
-    const read = Finding.parse({ ...f, proposal: null });
+    const read = Finding.parse({ ...f, proposal: null, proposalStatus: "pending" });
     expect(read.findingId).toBe(f.findingId);
+    expect(Finding.safeParse({ ...f, proposal: null }).success).toBe(false);
+    expect(Finding.safeParse({ ...f, proposal: null, proposalStatus: "writing" }).success).toBe(false);
     const detail = TrackDetail.parse({
       track: {
         trackId: a.trackId,

@@ -7,20 +7,19 @@ and the instance's data, never on which listener or instance served them."""
 from __future__ import annotations
 
 import contextlib
-import json
 import re
 import sys
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import urlsplit
 
 import yaml
 
 from demo import files
 from demo.pages import respond
-from demo.web import TEXT, Call, Reply, Shop, parse_cookies
+from demo.web import TEXT, Call, Reply, Shop, parse_cookies, parse_form, parse_query
 from engine.routes import RouteTable
 from mirror.sockets import UnixHTTPServer
 
@@ -80,17 +79,6 @@ def resolve(routes: tuple[Route, ...], method: str, path: str) -> Match | Route 
     return refused
 
 
-def parse_form(content_type: str, body: bytes) -> dict[str, str]:
-    text = body.decode("utf-8", errors="replace")
-    if content_type.startswith("application/json"):
-        with contextlib.suppress(ValueError):
-            data = json.loads(text)
-            if isinstance(data, dict):
-                return {str(k): str(v) for k, v in data.items()}
-        return {}
-    return dict(parse_qsl(text))
-
-
 class ShopServer(ThreadingHTTPServer):
     daemon_threads = True
 
@@ -110,7 +98,9 @@ INTERNAL_ERROR = Reply(500, TEXT, b"Internal server error\n")
 
 class ShopHandler(BaseHTTPRequestHandler):
     server_version = "DemoShop/0.1"
-    sys_version = ""
+
+    def version_string(self) -> str:
+        return self.server_version
 
     def do_GET(self) -> None:
         self.dispatch()
@@ -141,7 +131,7 @@ class ShopHandler(BaseHTTPRequestHandler):
                 self.command,
                 url.path,
                 found.params,
-                dict(parse_qsl(url.query)),
+                parse_query(url.query),
                 form,
                 server.shop,
                 parse_cookies(self.headers.get("Cookie") or ""),

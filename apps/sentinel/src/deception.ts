@@ -52,6 +52,7 @@ interface FindingRow {
   proposal_summary: string | null;
   proposal_model: string | null;
   proposal_at: number | null;
+  proposal_failed_at: number | null;
 }
 
 type ActionBody = Omit<Extract<DeceptionEvent, { type: "track.action" }>, "type" | "eventId" | "trackId" | "ts">;
@@ -164,7 +165,16 @@ export class DeceptionStore {
   /** Stores the AI's fix proposal and streams the updated finding. False when the finding is gone. */
   setProposal(findingId: string, proposal: FixProposal): boolean {
     const r = this.sql.setProposal.run(proposal.summary, proposal.model, proposal.generatedAt, findingId);
-    const finding = r.changes > 0 ? this.finding(findingId) : null;
+    return this.republish(findingId, r.changes);
+  }
+
+  /** Marks a proposal the AI gave up on and streams the finding. False when it is gone or has a proposal. */
+  setProposalFailed(findingId: string): boolean {
+    return this.republish(findingId, this.sql.setProposalFailed.run(this.now(), findingId).changes);
+  }
+
+  private republish(findingId: string, changes: number | bigint): boolean {
+    const finding = changes > 0 ? this.finding(findingId) : null;
     if (finding) this.bus.publish({ kind: "finding", finding });
     return !!finding;
   }
@@ -274,6 +284,7 @@ function statements(db: DatabaseSync) {
     pruneTracks: p("DELETE FROM tracks WHERE last_seen < ?"),
     pruneFindings: p("DELETE FROM findings WHERE track_id NOT IN (SELECT track_id FROM tracks)"),
     setProposal: p("UPDATE findings SET proposal_summary = ?, proposal_model = ?, proposal_at = ? WHERE finding_id = ?"),
+    setProposalFailed: p("UPDATE findings SET proposal_failed_at = ? WHERE finding_id = ? AND proposal_summary IS NULL"),
   };
 }
 
@@ -326,5 +337,6 @@ function toFinding(r: FindingRow): Finding {
     endpoint: r.endpoint,
     evidence: r.evidence,
     proposal,
+    proposalStatus: proposal ? "ready" : r.proposal_failed_at !== null ? "failed" : "pending",
   };
 }

@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import tempfile
 import threading
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from email.message import Message
-from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
 import pytest
@@ -20,7 +18,7 @@ from engine.routes import RouteTable
 from mirror.contracts import DeceptionEvent, TrackKey, TrackLinked, TrackOpened
 from mirror.forwarded import Forwarded
 from mirror.keys import KeyTable, twin_born_key
-from mirror.lane import REAL, Decision, LaneRouter, copy_session, handler_for
+from mirror.lane import REAL, Decision, LaneRouter, handler_for
 from mirror.patches import ANY_SIGNATURE, Patch, PatchBook
 from mirror.sockets import UnixHTTPConnection, UnixHTTPServer
 
@@ -85,6 +83,11 @@ def test_a_critical_verdict_opens_a_track_on_ip_ua_and_ip(lane: Harness) -> None
     assert lane.copies == ["session=real-cookie-1"]
 
 
+def test_a_bearer_client_has_its_token_copied(lane: Harness) -> None:
+    lane.router.decide(fwd("/.env", authorization="Bearer tok-real-55"))
+    assert lane.copies == ["tok-real-55"]
+
+
 def test_the_track_keeps_the_client_on_the_mirror(lane: Harness) -> None:
     track = lane.router.decide(fwd("/.env")).track_id
     assert lane.copies == []
@@ -140,6 +143,18 @@ def test_a_twin_born_key_wins_over_a_key_of_another_track(lane: Harness) -> None
     lane.router.link(second, token, "req-2")
     assert lane.router.decide(fwd("/", n=3, query="t=twin-token-second")).track_id == second
     assert lane.keys.find([fwd().ip_ua_key]) == (first, fwd().ip_ua_key)
+
+
+def test_follow_moves_a_twin_born_login_to_its_track(lane: Harness) -> None:
+    track = lane.router.decide(fwd("/.env")).track_id
+    user = twin_born_key("mara.quint@example.net")
+    assert user is not None
+    lane.router.link(track, user, "req-1", "twin_born-0")
+    login = fwd("/login", n=2, ip=OTHER_IP, method="POST")
+    assert lane.router.follow([], [login.ip_ua_key], login.request_id) is None
+    assert lane.router.follow([user], [login.ip_ua_key], "req-2") == Decision("mirror", track)
+    assert lane.keys.find([login.ip_ua_key]) == (track, login.ip_ua_key)
+    assert lane.events[-1].event_id == "track.linked:req-2:ip_ua"
 
 
 def test_a_virtual_patch_mirrors_any_client(lane: Harness) -> None:
@@ -231,40 +246,3 @@ def test_lane_endpoint_answers_200_with_headers_on_one_connection(lane_socket: P
     assert answers == [(200, "real", b""), (200, "mirror", b""), (200, "mirror", b"")]
     assert track is not None
     assert track.startswith("trk_")
-
-
-class SyncHandler(BaseHTTPRequestHandler):
-    bodies: list[tuple[str, dict[str, str]]] = []
-    status = 200
-
-    def do_POST(self) -> None:
-        length = int(self.headers["Content-Length"])
-        type(self).bodies.append((self.path, json.loads(self.rfile.read(length))))
-        self.send_response(type(self).status)
-        self.send_header("Content-Length", "0")
-        self.end_headers()
-
-
-@pytest.mark.parametrize("status", [200, 500])
-def test_copy_session_posts_the_cookie_to_sync(
-    sock_dir: Path, status: int, caplog: pytest.LogCaptureFixture
-) -> None:
-    SyncHandler.bodies, SyncHandler.status = [], status
-    server = UnixHTTPServer(sock_dir / "sync.sock", SyncHandler)
-    thread = threading.Thread(target=server.serve_forever)
-    thread.start()
-    try:
-        copy_session(sock_dir / "sync.sock", "session=real-cookie-1")
-    finally:
-        server.shutdown()
-        server.server_close()
-        thread.join()
-    assert SyncHandler.bodies == [("/copy", {"cookie": "session=real-cookie-1"})]
-    assert ("sync answered 500" in caplog.text) is (status == 500)
-
-
-def test_copy_session_logs_when_sync_is_down(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-) -> None:
-    copy_session(tmp_path / "missing.sock", "session=x")
-    assert "copy on flag failed" in caplog.text

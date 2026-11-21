@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Finding, StreamBatch, Track, TrackDetail } from "@sentinel/contracts";
+import type { StreamTap } from "../src/dashboard/store";
 import {
+  DETAIL_REFRESH_MS,
   MAX_TRACKS,
   applyMirror,
   applyToDetail,
@@ -10,6 +12,7 @@ import {
   mergeTracks,
   mirrorChanges,
   proposalState,
+  startMirror,
   useMirror,
 } from "../src/mirror/store";
 
@@ -20,9 +23,11 @@ function track(p: Partial<Track> = {}): Track {
   return { trackId: `trk_${hex(1)}`, ip: "203.0.113.7", userAgent: "python-httpx/0.27.0", rule: "R3", reason: "sql injection", keys: [], openedAt: NOW, lastSeen: NOW, actions: 1, findings: 0, ...p };
 }
 function finding(p: Partial<Finding> = {}): Finding {
-  return { findingId: `fnd_${hex(1)}`, trackId: `trk_${hex(1)}`, ts: NOW, kind: "auth_flip", endpoint: "POST /login", evidence: "401 then 200", proposal: null, ...p };
+  return { findingId: `fnd_${hex(1)}`, trackId: `trk_${hex(1)}`, ts: NOW, kind: "auth_flip", endpoint: "POST /login", evidence: "401 then 200", proposal: null, proposalStatus: "pending", ...p };
 }
 const fix = { summary: "Bind the parameter.", generatedAt: NOW, model: "claude-opus-5-5" };
+const fixed = (p: Partial<Finding> = {}) => finding({ proposal: fix, proposalStatus: "ready", ...p });
+const failed = (p: Partial<Finding> = {}) => finding({ proposalStatus: "failed", ...p });
 const batch = (changes: StreamBatch["changes"]): StreamBatch => ({ epoch: "E1", seq: 1, now: NOW, changes });
 
 describe("mergeTracks", () => {
@@ -48,9 +53,15 @@ describe("mergeTracks", () => {
 
 describe("mergeFindings", () => {
   it("never loses a proposal to an older copy without one", () => {
-    const withFix = finding({ proposal: fix });
+    const withFix = fixed();
     expect(mergeFindings([withFix], [finding()])[0]!.proposal).toEqual(fix);
     expect(mergeFindings([finding()], [withFix])[0]!.proposal).toEqual(fix);
+  });
+
+  it("keeps a failed proposal over an older pending copy, and a later proposal over both", () => {
+    expect(mergeFindings([failed()], [finding()])[0]!.proposalStatus).toBe("failed");
+    expect(mergeFindings([finding()], [failed()])[0]!.proposalStatus).toBe("failed");
+    expect(mergeFindings([failed()], [fixed()])[0]!.proposal).toEqual(fix);
   });
 
   it("sorts newest first", () => {
@@ -71,7 +82,7 @@ describe("stream changes", () => {
 
   it("updates the open track's findings and counters, and leaves other tracks' detail alone", () => {
     const detail: TrackDetail = { track: track(), actions: [], findings: [] };
-    const next = applyToDetail(detail, { tracks: [track({ lastSeen: NOW + 1, findings: 1 })], findings: [finding({ proposal: fix })] });
+    const next = applyToDetail(detail, { tracks: [track({ lastSeen: NOW + 1, findings: 1 })], findings: [fixed()] });
     expect(next.track.findings).toBe(1);
     expect(next.findings[0]!.proposal).toEqual(fix);
     expect(applyToDetail(detail, { tracks: [track({ trackId: `trk_${hex(9)}` })], findings: [] })).toBe(detail);
@@ -80,10 +91,16 @@ describe("stream changes", () => {
 
 describe("proposalState", () => {
   it("says ready, pending while AI works or health is unknown, and unavailable when AI is off", () => {
-    expect(proposalState(finding({ proposal: fix }), false)).toBe("ready");
+    expect(proposalState(fixed(), false)).toBe("ready");
     expect(proposalState(finding(), true)).toBe("pending");
     expect(proposalState(finding(), null)).toBe("pending");
     expect(proposalState(finding(), false)).toBe("unavailable");
+  });
+
+  it("says failed once the AI gave up, unless AI is off now", () => {
+    expect(proposalState(failed(), true)).toBe("failed");
+    expect(proposalState(failed(), null)).toBe("failed");
+    expect(proposalState(failed(), false)).toBe("unavailable");
   });
 });
 
@@ -131,5 +148,114 @@ describe("loadMirror", () => {
     useMirror.getState().select(`trk_${hex(3)}`);
     await vi.waitFor(() => expect(useMirror.getState().detail).toEqual(detail));
     expect(urls[1]).toBe(`/v1/tracks/trk_${hex(3)}`);
+  });
+});
+
+/** Answers each URL prefix with its body; records every URL asked. */
+function stubFetch(routes: [prefix: string, body: (url: string) => unknown][]) {
+  const urls: string[] = [];
+  vi.stubGlobal("fetch", async (url: string) => {
+    urls.push(url);
+    const route = routes.find(([prefix]) => url.startsWith(prefix));
+    return new Response(JSON.stringify(route ? route[1](url) : null), { status: route ? 200 : 404 });
+  });
+  return urls;
+}
+
+describe("startMirror", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  function connect() {
+    let tap: StreamTap | null = null;
+    const stop = startMirror((t) => {
+      tap = t;
+      return () => (tap = null);
+    });
+    return { stop, tap: () => tap, batches: (b: StreamBatch[]) => tap!.batches(b) };
+  }
+
+  it("applies streamed tracks and findings and refetches the open track at most once per interval", async () => {
+    vi.useFakeTimers();
+    useMirror.setState({ data: emptyMirror(), selected: null, detail: null });
+    const fresh: TrackDetail = { track: track({ lastSeen: NOW + 2, actions: 3 }), actions: [], findings: [] };
+    const urls = stubFetch([["/v1/tracks/", () => fresh]]);
+    const s = connect();
+    s.batches([batch([{ kind: "track", track: track() }])]);
+    s.batches([batch([{ kind: "track", track: track({ lastSeen: NOW + 1, actions: 2 }) }, { kind: "finding", finding: finding() }])]);
+    s.batches([batch([{ kind: "block", ip: "192.0.2.1", blocked: true }])]);
+    const state = useMirror.getState();
+    expect(state.selected).toBe(`trk_${hex(1)}`);
+    expect(state.data.tracks.map((t) => t.actions)).toEqual([2]);
+    expect(state.data.findings).toHaveLength(1);
+    expect(urls).toEqual([]);
+    await vi.advanceTimersByTimeAsync(DETAIL_REFRESH_MS);
+    expect(urls).toEqual([`/v1/tracks/trk_${hex(1)}`]);
+    expect(useMirror.getState().detail).toEqual(fresh);
+    s.stop();
+    expect(s.tap()).toBeNull();
+  });
+
+  it("does not refetch the open track for changes to other tracks", async () => {
+    vi.useFakeTimers();
+    const urls = stubFetch([]);
+    useMirror.setState({ data: emptyMirror(), selected: `trk_${hex(1)}`, detail: null });
+    const s = connect();
+    s.batches([batch([{ kind: "track", track: track({ trackId: `trk_${hex(5)}` }) }])]);
+    await vi.advanceTimersByTimeAsync(DETAIL_REFRESH_MS * 2);
+    expect(urls).toEqual([]);
+    expect(useMirror.getState().data.tracks.map((t) => t.trackId)).toContain(`trk_${hex(5)}`);
+    s.stop();
+  });
+
+  it("reloads the first pages when the dashboard resyncs after a new snapshot", async () => {
+    const urls = stubFetch([
+      ["/v1/tracks?", () => ({ items: [], nextCursor: null })],
+      ["/v1/findings?", () => ({ items: [], nextCursor: null })],
+    ]);
+    const s = connect();
+    s.tap()!.resync();
+    await vi.waitFor(() => expect(urls).toHaveLength(2));
+    expect(urls.map((u) => u.split("?")[0])).toEqual(["/v1/tracks", "/v1/findings"]);
+    s.stop();
+  });
+});
+
+describe("track detail", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("shows only the answer to the latest request when two overlap", async () => {
+    const id = `trk_${hex(1)}`;
+    const answers: ((d: TrackDetail) => void)[] = [];
+    vi.stubGlobal("fetch", () => new Promise<Response>((resolve) => answers.push((d) => resolve(new Response(JSON.stringify(d), { status: 200 })))));
+    useMirror.setState({ selected: null, detail: null });
+    useMirror.getState().select(id);
+    useMirror.getState().select(id);
+    await vi.waitFor(() => expect(answers).toHaveLength(2));
+    const older: TrackDetail = { track: track({ actions: 1 }), actions: [], findings: [] };
+    const newer: TrackDetail = { track: track({ actions: 9 }), actions: [], findings: [] };
+    answers[1]!(newer);
+    await vi.waitFor(() => expect(useMirror.getState().detail).toEqual(newer));
+    answers[0]!(older);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(useMirror.getState().detail).toEqual(newer);
+  });
+
+  it("says the track could not load when Sentinel fails, and drops a late answer for a track no longer open", async () => {
+    stubFetch([]);
+    useMirror.setState({ selected: null, detail: null, error: null });
+    useMirror.getState().select(`trk_${hex(7)}`);
+    await vi.waitFor(() => expect(useMirror.getState().error).toBe("Could not load this track"));
+    const late: TrackDetail = { track: track({ trackId: `trk_${hex(8)}` }), actions: [], findings: [] };
+    let answer: (() => void) | undefined;
+    vi.stubGlobal("fetch", () => new Promise<Response>((resolve) => (answer = () => resolve(new Response(JSON.stringify(late), { status: 200 })))));
+    useMirror.getState().select(`trk_${hex(8)}`);
+    useMirror.setState({ selected: `trk_${hex(9)}` });
+    await vi.waitFor(() => expect(answer).toBeDefined());
+    answer!();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(useMirror.getState().detail).toBeNull();
   });
 });

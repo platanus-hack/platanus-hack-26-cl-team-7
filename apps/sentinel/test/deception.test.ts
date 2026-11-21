@@ -56,6 +56,16 @@ describe("deception store: ingest", () => {
     expect(changes).toEqual([]);
   });
 
+  it("stores nothing from a batch when a write fails part way through", () => {
+    const { store, db } = open();
+    db.exec(`CREATE TRIGGER fail_one BEFORE INSERT ON deception_events WHEN NEW.event_id = 'track.action:boom'
+      BEGIN SELECT RAISE(ABORT, 'disk full'); END`);
+    expect(() => store.ingest([dec.opened(), dec.action(), dec.action({ eventId: "track.action:boom" })])).toThrow(/disk full/);
+    expect(count(db, "deception_events")).toBe(0);
+    expect(count(db, "tracks")).toBe(0);
+    expect(db.isTransaction).toBe(false);
+  });
+
   it("builds the same track whatever order the events arrive in", () => {
     const events = [dec.action(), dec.linked(), dec.opened({ ts: T0 + 1 }), dec.opened({ ts: T0, ip: "198.51.100.9" }), dec.finding()];
     const a = open().store;

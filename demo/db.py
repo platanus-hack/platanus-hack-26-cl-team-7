@@ -1,9 +1,10 @@
 """The shop's SQLite storage: one WAL-mode file per instance, the same schema on real and twin.
 
-`injectable` is the connection behind the planted SQL injection. It can only read: an authorizer
-allows SELECT and reads and nothing else (no ATTACH, no PRAGMA, no writes, no extension loading),
-values are capped in size and every statement gets a fixed step budget. An injected query can
-read this instance's own tables, as a real flaw would, and can never touch a host file.
+`injectable` is the connection behind the planted SQL injection. It can only read: the file is
+opened read-only, an authorizer allows SELECT, reads and recursive CTEs and nothing else (no
+ATTACH, no PRAGMA, no writes, no extension loading), values are capped in size and every
+statement gets a fixed step budget. An injected query can read this instance's own tables, as a
+real flaw would, and can never touch a host file.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 
 BUSY_SECONDS = 5.0
+READ_ONLY, EXISTING, CREATE = "ro", "rw", "rwc"  # SQLite URI open modes
 MAX_VALUE_BYTES = 64 * 1024
 PROGRESS_EVERY = 1000  # VM instructions between progress checks
 MAX_PROGRESS_CHECKS = 2000  # about two million VM instructions per injectable statement
@@ -43,19 +45,24 @@ CREATE INDEX IF NOT EXISTS items_by_order ON order_items (order_id);
 CREATE INDEX IF NOT EXISTS events_by_order ON order_events (order_id);
 """
 
-_ALLOWED_ACTIONS = frozenset({sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ})
+_ALLOWED_ACTIONS = frozenset(
+    {sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_RECURSIVE}
+)
 
 
-def connect(path: Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(path, timeout=BUSY_SECONDS)
+def connect(path: Path, mode: str = CREATE) -> sqlite3.Connection:
+    """READ_ONLY never writes, EXISTING never creates a missing file, CREATE may do both."""
+    uri = f"{path.resolve().as_uri()}?mode={mode}"
+    conn = sqlite3.connect(uri, uri=True, timeout=BUSY_SECONDS)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 @contextlib.contextmanager
 def opened(path: Path) -> Iterator[sqlite3.Connection]:
-    """A connection that commits on success, rolls back on error and always closes."""
-    conn = connect(path)
+    """A connection to an existing database that commits on success, rolls back on error and
+    always closes. A shop never creates its database: the seed or the mask does."""
+    conn = connect(path, EXISTING)
     try:
         with conn:
             yield conn
@@ -114,7 +121,7 @@ def _authorize(action: int, arg1: str | None, arg2: str | None, *_: str | None) 
 def injectable(path: Path) -> Iterator[sqlite3.Connection]:
     """A read-only connection for text-built SQL (see the module docstring). The step budget
     covers the connection's whole life, which is one statement."""
-    conn = connect(path)
+    conn = connect(path, READ_ONLY)
     try:
         conn.execute("PRAGMA query_only = ON")
         conn.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, MAX_VALUE_BYTES)

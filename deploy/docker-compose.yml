@@ -1,7 +1,8 @@
 # Mirror-lane stack: Caddy serves one public site; the router (python -m mirror) is the live
 # detector and picks the lane per request; flagged agents reach the twin shop, which runs the same
 # code on masked data; Sentinel stores every track, action and finding.
-# Run from the repository root, with SENTINEL_INGEST_TOKEN set (deploy/.env is gitignored):
+# Run from the repository root, with SENTINEL_INGEST_TOKEN set (deploy/.env is gitignored), and
+# PUBLIC_HOST set to the site's public host name or IP, which the callback relay never reaches:
 #   docker compose -f deploy/docker-compose.yml up --build
 #   docker compose -f deploy/docker-compose.yml --profile eval run --rm replay   (eval replay)
 #
@@ -13,7 +14,7 @@
 #   twin-sockets  /run/twin   twin.sock relay.sock                      twin router twin-egress
 #                                                                       relay-bridge
 #   real-data     /data/real  real.db real-files                        seed mask real sync
-#   twin-data     /data/twin  twin.db twin-files                        mask twin sync
+#   twin-data     /data/twin  twin.db twin-files                        seed mask twin sync
 #   mirror-state  /app/run    canaries.json mirror-keys.jsonl spool     mask router
 # The twin has no network, so its callback fetches leave through two socat bridges: twin-egress
 # (in the twin's network namespace) turns 127.0.0.1:8097 into relay.sock, and relay-bridge (in the
@@ -42,16 +43,19 @@ services:
     restart: "no"
     network_mode: none
     # Runs until it succeeds once; a seed that died halfway starts again from an empty database.
+    # A new seed also deletes the mask's marker, so the twin is masked again from the new data.
     command:
       - sh
       - -c
       - >-
         test -f /data/real/seed.done || {
-        rm -f /data/real/real.db /data/real/real.db-wal /data/real/real.db-shm &&
+        rm -f /data/real/real.db /data/real/real.db-wal /data/real/real.db-shm
+        /data/twin/mask.done &&
         python -m demo.seed --db /data/real/real.db &&
         touch /data/real/seed.done; }
     volumes:
       - real-data:/data/real
+      - twin-data:/data/twin
 
   mask:
     <<: *mirror
@@ -173,6 +177,8 @@ services:
       - /run/edge/tap.sock
       - --relay
       - 127.0.0.1:8097
+      - --relay-block-host
+      - ${PUBLIC_HOST:-localhost}
       - --real
       - /run/edge/real.sock
       - --twin

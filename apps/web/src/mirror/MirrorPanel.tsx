@@ -18,6 +18,10 @@ const FINDING_LABEL: Record<FindingKind, string> = {
   signature_success: "Signature success",
 };
 
+/** Height of one .att-row in index.css; the tracks list shows this many rows before it scrolls. */
+const TRACK_ROW_PX = 44;
+const VISIBLE_TRACKS = 6;
+
 const count = (n: number, noun: string) => `${num(n)} ${noun}${n === 1 ? "" : "s"}`;
 const statusClass = (status: number) => (status >= 500 ? "s5" : status >= 400 ? "s4" : status >= 300 ? "s3" : "s2");
 
@@ -34,6 +38,8 @@ function Proposal({ f }: { f: Finding }) {
         <p className="whitespace-pre-wrap">{f.proposal.summary}</p>
       ) : state === "unavailable" ? (
         <p className="!text-mid">Proposal unavailable: AI is off. Set ANTHROPIC_API_KEY for Sentinel to get fix proposals.</p>
+      ) : state === "failed" ? (
+        <p className="!text-mid">Proposal failed: the AI could not write one. Sentinel tries again when it restarts.</p>
       ) : (
         <div className="flex flex-col gap-2 pt-1" aria-label="Writing fix proposal">
           <Skeleton w="90%" />
@@ -173,10 +179,12 @@ function Tracks() {
         <h2>Mirror lane</h2>
         <span className="r cap">{count(tracks.length, "track")}</span>
       </div>
-      <div role="listbox" aria-label="Tracks, most recently active first" className="scroll" style={{ maxHeight: 44 * 6 }}>
-        {tracks.map((t) => (
-          <TrackRow key={t.trackId} t={t} selected={t.trackId === selected} onSelect={select} />
-        ))}
+      <div className="scroll" style={{ maxHeight: TRACK_ROW_PX * VISIBLE_TRACKS }}>
+        <div role="listbox" aria-label="Tracks, most recently active first">
+          {tracks.map((t) => (
+            <TrackRow key={t.trackId} t={t} selected={t.trackId === selected} onSelect={select} />
+          ))}
+        </div>
         {more && (
           <button type="button" className="mf-open px-6 py-3" onClick={() => void loadOlder()}>
             Load older tracks

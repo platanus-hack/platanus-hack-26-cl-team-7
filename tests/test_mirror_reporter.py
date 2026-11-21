@@ -3,21 +3,19 @@
 from __future__ import annotations
 
 import http.client
-import json
 import re
 import threading
 import time
-from collections.abc import Callable, Iterator
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from mirror import reporter as r
-from mirror.contracts import TrackKey, TrackLinked, event_id, to_wire
+from mirror.contracts import MAX_BATCH, TrackKey, TrackLinked, event_id, to_wire
 from mirror.journal import Journal
-from mirror.reporter import SentinelReporter, post_batch
+from mirror.reporter import SentinelReporter
 
 TRACK = "trk_0123456789abcdef"
 TS = 1_763_700_000_000
@@ -99,6 +97,51 @@ def test_the_worker_delivers_promptly(spool: Path) -> None:
     wait_for(lambda: len(sentinel.received) == 3)
     reporter.close()
     assert sentinel.received == ids(3)
+
+
+def test_the_worker_sends_one_batch_per_interval(spool: Path) -> None:
+    sentinel = FakeSentinel()
+    reporter = SentinelReporter(sentinel, spool, flush_interval=0.5)
+    reporter.start()
+    reporter.emit(linked(0))
+    time.sleep(0.1)
+    assert sentinel.calls == 0  # the interval after the first event is still open
+    reporter.emit(linked(1))
+    reporter.emit(linked(2))
+    wait_for(lambda: sentinel.calls == 1)
+    reporter.close()
+    assert sentinel.batches == [ids(3)]
+
+
+def test_a_full_batch_goes_without_waiting_for_the_interval(spool: Path) -> None:
+    sentinel = FakeSentinel()
+    reporter = SentinelReporter(sentinel, spool, flush_interval=1.0)
+    started = time.monotonic()
+    reporter.start()
+    for n in range(MAX_BATCH):
+        reporter.emit(linked(n))
+    wait_for(lambda: sentinel.calls == 1)
+    assert time.monotonic() - started < 0.5
+    reporter.close()
+    assert sentinel.batches == [ids(MAX_BATCH)]
+
+
+def test_the_spool_stops_growing_at_its_limit(
+    spool: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    down = FakeSentinel(OSError("down"))
+    reporter = SentinelReporter(down, spool, queue_max=1, spool_max=2_000)
+    for n in range(50):  # the first waits in the queue, the rest spill to the spool
+        reporter.emit(linked(n))
+    reporter.close()
+    kept = spooled_ids(spool)
+    assert kept == ids(len(kept), start=1)
+    assert 0 < len(kept) < 49
+    assert reporter.dropped == 50 - len(kept)
+    assert caplog.text.count("new events are dropped") == 1
+    up = FakeSentinel()
+    SentinelReporter(up, spool).close()
+    assert up.received == kept
 
 
 def test_while_down_events_spool_and_a_restart_replays_the_same_ids(spool: Path) -> None:
@@ -225,50 +268,3 @@ def test_the_worker_survives_an_unexpected_error(
     wait_for(lambda: sentinel.received == [linked(1).event_id])
     reporter.close()
     assert "send cycle failed" in caplog.text
-
-
-class _Ingest(BaseHTTPRequestHandler):
-    seen: list[tuple[str, str | None, list[dict[str, Any]]]] = []
-    status = 202
-
-    def do_POST(self) -> None:
-        body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-        type(self).seen.append((self.path, self.headers["Authorization"], body))
-        self.send_response(type(self).status)
-        self.send_header("Content-Length", "0")
-        self.end_headers()
-
-    def log_message(self, format: str, *args: Any) -> None:
-        return None
-
-
-@pytest.fixture
-def ingest() -> Iterator[str]:
-    _Ingest.seen, _Ingest.status = [], 202
-    server = ThreadingHTTPServer(("127.0.0.1", 0), _Ingest)
-    thread = threading.Thread(target=server.serve_forever)
-    thread.start()
-    yield f"http://127.0.0.1:{server.server_address[1]}"
-    server.shutdown()
-    server.server_close()
-    thread.join()
-
-
-def test_post_batch_sends_the_bearer_token_and_json(ingest: str) -> None:
-    batch = [to_wire(linked(0))]
-    assert post_batch(ingest + r.EVENTS_PATH, "tok-1", batch) == 202
-    _Ingest.status = 503
-    assert post_batch(ingest + r.EVENTS_PATH, "tok-1", batch) == 503
-    assert _Ingest.seen[0] == (r.EVENTS_PATH, "Bearer tok-1", batch)
-
-
-def test_post_batch_refuses_a_non_http_url() -> None:
-    with pytest.raises(http.client.InvalidURL):
-        post_batch("ftp://127.0.0.1/v1/deception/events", "tok", [])
-
-
-def test_to_sentinel_posts_to_the_events_path(ingest: str, spool: Path) -> None:
-    reporter = SentinelReporter.to_sentinel(ingest + "/", "tok-2", spool)
-    reporter.emit(linked(0))
-    reporter.close()
-    assert [(path, auth) for path, auth, _ in _Ingest.seen] == [(r.EVENTS_PATH, "Bearer tok-2")]

@@ -6,7 +6,7 @@
  * exported as a test seam.
  */
 import { create } from "zustand";
-import { MAX_PAGE_LIMIT, type Finding, type StreamBatch, type Track, type TrackDetail } from "@sentinel/contracts";
+import { MAX_PAGE_LIMIT, type Finding, type ProposalStatus, type StreamBatch, type Track, type TrackDetail } from "@sentinel/contracts";
 import { tapStream } from "../dashboard/store";
 import { api } from "../sentinel";
 
@@ -15,8 +15,11 @@ import { api } from "../sentinel";
 /** Rows kept in memory. Older tracks stay reachable through "Load older". */
 export const MAX_TRACKS = 1000;
 export const MAX_FINDINGS = 500;
-/** The stream only says a track changed; its actions are refetched at most this often. */
-export const DETAIL_REFRESH_MS = 500;
+/**
+ * The stream only says a track changed; its actions (up to 200, with bodies) are refetched
+ * at most this often, so a fast agent costs one detail request a second.
+ */
+export const DETAIL_REFRESH_MS = 1000;
 
 export interface MirrorData {
   /** Most recently active first. */
@@ -40,13 +43,16 @@ export function mergeTracks(list: Track[], incoming: Track[]): Track[] {
   return [...byId.values()].sort((a, b) => b.lastSeen - a.lastSeen || (a.trackId < b.trackId ? 1 : -1)).slice(0, MAX_TRACKS);
 }
 
-/** A proposal never disappears: an older copy without one does not replace a copy with one. */
+/** How far a finding's proposal has come. It never goes back, so a later copy only moves it forward. */
+const PROPOSAL_STAGE: Record<ProposalStatus, number> = { pending: 0, failed: 1, ready: 2 };
+
+/** A proposal never disappears: an older copy does not replace a copy that is further along. */
 export function mergeFindings(list: Finding[], incoming: Finding[]): Finding[] {
   if (incoming.length === 0) return list;
   const byId = new Map(list.map((f) => [f.findingId, f] as const));
   for (const f of incoming) {
     const known = byId.get(f.findingId);
-    if (!known || f.proposal || !known.proposal) byId.set(f.findingId, f);
+    if (!known || PROPOSAL_STAGE[f.proposalStatus] >= PROPOSAL_STAGE[known.proposalStatus]) byId.set(f.findingId, f);
   }
   return [...byId.values()].sort((a, b) => b.ts - a.ts || (a.findingId < b.findingId ? 1 : -1)).slice(0, MAX_FINDINGS);
 }
@@ -76,12 +82,13 @@ export function applyToDetail(detail: TrackDetail, changes: MirrorData): TrackDe
   return { ...detail, track: mergeTracks([detail.track], track)[0]!, findings: mergeFindings(detail.findings, mine) };
 }
 
-export type ProposalState = "ready" | "pending" | "unavailable";
+export type ProposalState = "ready" | "pending" | "failed" | "unavailable";
 
 /** `aiEnabled` is null while health is unknown: show the proposal as pending, not as missing. */
 export function proposalState(f: Finding, aiEnabled: boolean | null): ProposalState {
   if (f.proposal) return "ready";
-  return aiEnabled === false ? "unavailable" : "pending";
+  if (aiEnabled === false) return "unavailable";
+  return f.proposalStatus === "failed" ? "failed" : "pending";
 }
 
 /* ---------------- store ---------------- */
@@ -127,13 +134,17 @@ export const useMirror = create<MirrorState>((set, get) => ({
 
 let loadCtrl: AbortController | null = null;
 let detailTimer: ReturnType<typeof setTimeout> | undefined;
+/** Detail requests can overlap on a slow link: only the answer to the latest one is shown. */
+let detailSeq = 0;
 
 async function loadDetail(trackId: string): Promise<void> {
+  const seq = ++detailSeq;
+  const current = () => seq === detailSeq && useMirror.getState().selected === trackId;
   try {
     const detail = await api.track(trackId);
-    if (useMirror.getState().selected === trackId) useMirror.setState({ detail, error: null });
+    if (current()) useMirror.setState({ detail, error: null });
   } catch {
-    if (useMirror.getState().selected === trackId) useMirror.setState({ error: "Could not load this track" });
+    if (current()) useMirror.setState({ error: "Could not load this track" });
   }
 }
 
@@ -174,9 +185,9 @@ function onBatches(batches: StreamBatch[]): void {
     }, DETAIL_REFRESH_MS);
 }
 
-/** Connects the mirror lane to the dashboard stream. Returns the disconnect. */
-export function startMirror(): () => void {
-  const untap = tapStream({ batches: onBatches, resync: () => void loadMirror() });
+/** Connects the mirror lane to the dashboard stream (`tap` is replaceable in tests). Returns the disconnect. */
+export function startMirror(tap: typeof tapStream = tapStream): () => void {
+  const untap = tap({ batches: onBatches, resync: () => void loadMirror() });
   return () => {
     untap();
     loadCtrl?.abort();

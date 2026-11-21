@@ -57,6 +57,11 @@ const STEPS: Step[] = [
       CREATE INDEX IF NOT EXISTS findings_track ON findings (track_id, ts);
     `,
   },
+  {
+    // When the AI gave up on a finding's fix proposal, so the dashboard stops showing it as being written.
+    version: 4,
+    sql: "ALTER TABLE findings ADD COLUMN proposal_failed_at INTEGER;",
+  },
 ];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1]!.version;

@@ -10,7 +10,7 @@ import {
   type StreamBatch,
 } from "@sentinel/contracts";
 import { createApp } from "../src/app.ts";
-import { T0, TRACK, dec, setup, tick } from "./helpers.ts";
+import { T0, TRACK, dec, readSSE, setup, tick } from "./helpers.ts";
 
 const TOKEN = "router-token";
 
@@ -123,4 +123,15 @@ describe("GET /v1/tracks and /v1/findings", () => {
     const kinds = frames.flatMap((f) => f.changes.map((c) => c.kind));
     expect(kinds).toEqual(["track", "finding"]);
   });
-});
+
+  it("sends the track and finding changes to a dashboard connected over SSE", async () => {
+    const { app, bus } = withToken();
+    const stream = await app.request(`/v1/stream?after=${bus.epoch}-${bus.lastSeq}`);
+    await post(app, [dec.opened(), dec.action(), dec.finding()]);
+    const got = await readSSE(stream, (es) => es.some((e) => e.event === "batch"));
+    const changes = got.filter((e) => e.event === "batch").flatMap((e) => (JSON.parse(e.data) as StreamBatch).changes);
+    expect(changes).toMatchObject([
+      { kind: "track", track: { trackId: TRACK, actions: 1, findings: 1 } },
+      { kind: "finding", finding: { findingId: "fnd_fedcba9876543210", proposal: null } },
+    ]);
+  });});

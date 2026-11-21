@@ -17,12 +17,11 @@ from demo.site import (
     compile_route,
     load_routes,
     make_server,
-    parse_form,
     resolve,
     serve,
 )
 from demo.store import MAX_CART_LINES, MAX_QUANTITY, add_to_cart, parse_cart
-from demo.web import Call, Shop, parse_cookies
+from demo.web import Call, Shop, parse_cookies, parse_form, parse_query
 from engine.routes import RouteTable
 
 
@@ -80,11 +79,14 @@ def test_parse_form_reads_urlencoded_and_json_objects_only() -> None:
     assert parse_form("application/json", b'{"a": 1}') == {"a": "1"}
     assert parse_form("application/json", b"[1, 2]") == {}
     assert parse_form("application/json", b"{broken") == {}
+    assert parse_query("invoice=&q=a&q=b") == {"invoice": "", "q": "b"}
 
 
 def test_cookie_header_parsing_and_bearer_tokens(shop: Shop) -> None:
     assert parse_cookies("session=abc; cart=1:2") == {"session": "abc", "cart": "1:2"}
-    assert parse_cookies('bad="') == {}
+    messy = "a@b=1; junk; =x; session=tok; session=old"
+    assert parse_cookies(messy) == {"a@b": "1", "session": "tok"}
+    assert parse_cookies("") == {}
     bearer = Call("GET", "/", {}, {}, {}, shop, {"session": "c"}, "Bearer  tok ")
     assert bearer.token == "tok"
     assert Call("GET", "/", {}, {}, {}, shop, {"session": "c"}, "Basic x").token == "c"

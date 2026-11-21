@@ -24,8 +24,7 @@ CANARIES_VERSION = 1
 
 def project(real: Path, policy: Policy) -> Projection:
     """Read the real database through the policy. Opens the real file read-only."""
-    uri = f"{real.resolve().as_uri()}?mode=ro"
-    with contextlib.closing(sqlite3.connect(uri, uri=True, timeout=db.BUSY_SECONDS)) as conn:
+    with contextlib.closing(db.connect(real, db.READ_ONLY)) as conn:
         return Projection(policy, conn)
 
 

@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
-import type Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import type { Finding } from "@sentinel/contracts";
 import { Bus } from "../src/bus.ts";
 import { DeceptionStore } from "../src/deception.ts";
@@ -72,7 +72,42 @@ describe("fix proposals", () => {
     await tick(80);
     expect(failing.calls.parse).toHaveLength(2);
     expect(second.deception.finding(FINDING)!.proposal).toBeNull();
+    expect(second.deception.finding(FINDING)!.proposalStatus).toBe("failed");
+    expect(second.findings.map((f) => f.proposalStatus)).toEqual(["pending", "failed"]);
+    expect(deception.finding(FINDING)!.proposalStatus).toBe("ready");
     fixes.stop();
+    second.fixes.stop();
+  });
+
+  it("tries a failed proposal again after a restart, and never on its own failed frame", async () => {
+    const db = new DatabaseSync(":memory:");
+    const failing = fakeClient({ parse: () => Promise.reject(new Error("down")) });
+    const first = setupFixes(failing.client, { attempts: 1 }, db);
+    first.deception.ingest([dec.opened(), dec.finding()]);
+    await tick(40);
+    expect(failing.calls.parse).toHaveLength(1);
+    expect(first.deception.finding(FINDING)!.proposalStatus).toBe("failed");
+    first.fixes.stop();
+    const { client } = fakeClient({ parse: () => proposal("Second try.") });
+    const again = setupFixes(client, {}, db);
+    await until(() => again.deception.finding(FINDING)?.proposal !== null);
+    expect(again.deception.finding(FINDING)!.proposalStatus).toBe("ready");
+    expect(again.deception.setProposalFailed(FINDING)).toBe(false); // a written proposal stays
+    again.fixes.stop();
+  });
+
+  it("does not retry an answer that fails the same way every time, but retries a rate limit", async () => {
+    const apiError = (status: number) => Anthropic.APIError.generate(status, { type: "error", error: { type: "error", message: "no" } }, "no", new Headers());
+    const bad = fakeClient({ parse: () => Promise.reject(apiError(400)) });
+    const first = setupFixes(bad.client);
+    first.deception.ingest([dec.opened(), dec.finding()]);
+    const limited = fakeClient({ parse: () => Promise.reject(apiError(429)) });
+    const second = setupFixes(limited.client);
+    second.deception.ingest([dec.opened(), dec.finding()]);
+    await tick(80);
+    expect(bad.calls.parse).toHaveLength(1);
+    expect(limited.calls.parse).toHaveLength(3);
+    first.fixes.stop();
     second.fixes.stop();
   });
 
@@ -94,6 +129,16 @@ describe("fix proposals", () => {
     expect(peak).toBe(2);
     expect(calls.parse).toHaveLength(3);
     expect(ids.filter((id) => deception.finding(id)!.proposal === null)).toHaveLength(2);
+    fixes.stop();
+  });
+
+  it("marks a finding failed when the queue is full", async () => {
+    const { client } = fakeClient({ parse: () => new Promise<never>(() => {}) });
+    const { deception, fixes } = setupFixes(client, { concurrency: 1 });
+    const ids = Array.from({ length: 102 }, (_, i) => `fnd_${i.toString(16).padStart(16, "0")}`);
+    deception.ingest([dec.opened(), ...ids.map((findingId) => dec.finding({ findingId }))]);
+    await tick(20);
+    expect(ids.filter((id) => deception.finding(id)!.proposalStatus === "failed")).toEqual([ids[101]]);
     fixes.stop();
   });
 

@@ -1,4 +1,4 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import type { Finding } from "@sentinel/contracts";
@@ -17,13 +17,21 @@ const Proposal = z.object({ summary: z.string().min(1) });
 /** Request lines the model sees from the track, newest first. Response bodies are left out: they hold twin data. */
 const CONTEXT_ACTIONS = 10;
 const CONTEXT_BODY_CHARS = 500;
-/** Findings without a proposal that a restart picks up again. */
+/** Findings without a proposal (failed ones too) that a restart picks up again. */
 const BACKLOG = 20;
 const MAX_QUEUE = 100;
 const MINUTE_MS = 60_000;
 /** Thinking is always on for the model and counts against max_tokens: leave room for it. */
 const MAX_TOKENS = 16_000;
 const CALL_TIMEOUT_MS = 90_000;
+/** API answers that can succeed on a later attempt. Any other 4xx fails the same way again. */
+const RETRYABLE_STATUS = new Set([408, 409, 429]);
+
+/** Network errors, refusals and empty answers have no status and are retried; so are 5xx answers. */
+function retryable(err: unknown): boolean {
+  if (!(err instanceof Anthropic.APIError) || err.status === undefined) return true;
+  return err.status >= 500 || RETRYABLE_STATUS.has(err.status);
+}
 
 export interface FixOptions {
   /** null turns proposals off: findings keep `proposal: null`. */
@@ -72,12 +80,14 @@ export class FixProposer {
     if (this.enabled) for (const f of deception.unproposed(BACKLOG)) this.request(f);
   }
 
+  /** A failed finding streams too; only a restart (the backlog) tries it again. */
   private onFrame(frame: Frame): void {
-    for (const c of frame.changes) if (c.kind === "finding") this.request(c.finding);
+    for (const c of frame.changes) if (c.kind === "finding" && c.finding.proposalStatus === "pending") this.request(c.finding);
   }
 
   private request(finding: Finding): void {
-    if (finding.proposal || this.active.has(finding.findingId) || this.queue.length >= MAX_QUEUE) return;
+    if (finding.proposal || this.active.has(finding.findingId)) return;
+    if (this.queue.length >= MAX_QUEUE) return void this.deception.setProposalFailed(finding.findingId);
     this.active.add(finding.findingId);
     this.queue.push({ id: finding.findingId, attempt: 1 });
     this.pump();
@@ -137,12 +147,18 @@ export class FixProposer {
       this.active.delete(id);
     } catch (err) {
       logApiError("fix", err);
-      if (attempt >= this.attempts || this.stopped) return void this.active.delete(id);
+      if (this.stopped) return void this.active.delete(id);
+      if (attempt >= this.attempts || !retryable(err)) return this.giveUp(id);
       this.later(this.retryMs * 2 ** (attempt - 1), () => {
         this.queue.push({ id, attempt: attempt + 1 });
         this.pump();
       });
     }
+  }
+
+  private giveUp(id: string): void {
+    this.active.delete(id);
+    this.deception.setProposalFailed(id);
   }
 
   private context(f: Finding) {

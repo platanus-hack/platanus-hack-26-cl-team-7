@@ -3,6 +3,8 @@
 The fetch only ever goes out through the instance's --egress-proxy (the twin's is the callback
 relay, which decides what may leave). It never opens a direct connection: without a proxy every
 fetch fails the way an unreachable network does. No proxy bypass list, no environment proxies.
+A proxy that refuses a tunnel, drops the connection or answers 502 or 504 (its own "could not
+reach it") gives that same failure, so a blocked fetch looks like a dead network on both lanes.
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ FETCH_TIMEOUT = 3.0
 MAX_FETCH_BYTES = 64 * 1024
 USER_AGENT = "FreshJuice-ImageFetcher/1.2"
 SCHEMES = {"http": 80, "https": 443}
+GATEWAY_FAILURES = frozenset({502, 504})  # a proxy's answers for an upstream it could not reach
 
 
 @dataclass(frozen=True)
@@ -53,6 +56,8 @@ def fetch(url: str, proxy: str | None) -> Fetched:
     try:
         conn.request("GET", request_target, headers=headers)
         answer = conn.getresponse()
+        if answer.status in GATEWAY_FAILURES:
+            raise unreachable(host)
         body = answer.read(MAX_FETCH_BYTES)
         return Fetched(answer.status, answer.getheader("Content-Type") or "", body)
     except (OSError, http.client.HTTPException) as exc:

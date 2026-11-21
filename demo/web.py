@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 from dataclasses import dataclass, field
-from http.cookies import CookieError, SimpleCookie
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qsl
 
 JSON = "application/json"
 TEXT = "text/plain; charset=utf-8"
@@ -57,13 +58,32 @@ def as_json(data: Any, status: int = 200, headers: dict[str, str] | None = None)
     return Reply(status, JSON, json.dumps(data).encode(), headers or {})
 
 
-def parse_cookies(header: str) -> dict[str, str]:
-    jar: SimpleCookie = SimpleCookie()
-    try:
-        jar.load(header)
-    except CookieError:
+def parse_query(text: str) -> dict[str, str]:
+    """Query or urlencoded form fields; an empty value (`?invoice=`) is kept, a repeat wins."""
+    return dict(parse_qsl(text, keep_blank_values=True))
+
+
+def parse_form(content_type: str, body: bytes) -> dict[str, str]:
+    text = body.decode("utf-8", errors="replace")
+    if content_type.startswith(JSON):
+        with contextlib.suppress(ValueError):
+            data = json.loads(text)
+            if isinstance(data, dict):
+                return {str(k): str(v) for k, v in data.items()}
         return {}
-    return {name: morsel.value for name, morsel in jar.items()}
+    return parse_query(text)
+
+
+def parse_cookies(header: str) -> dict[str, str]:
+    """The name=value pairs of a Cookie header. A malformed pair is skipped, never the whole
+    header, and of two cookies with one name the first wins, as browsers send the closer one
+    first."""
+    jar: dict[str, str] = {}
+    for pair in header.split(";"):
+        name, sep, value = pair.partition("=")
+        if sep and name.strip():
+            jar.setdefault(name.strip(), value.strip())
+    return jar
 
 
 def session_cookie(token: str) -> str:

@@ -12,18 +12,21 @@
 # PIDs, start times and output go to run/.
 #   scripts/stack_local.sh [start [service ...]]   services: sentinel real twin sync router caddy
 #   scripts/stack_local.sh stop | status
-# STACK_EDGE_PORT, SENTINEL_PORT and STACK_RELAY_PORT move the three TCP ports (tests use them).
+# STACK_EDGE_PORT, SENTINEL_PORT and STACK_RELAY_PORT move the three TCP ports, and
+# STACK_READY_TICKS the readiness wait (tests use them). STACK_PUBLIC_HOST names the edge as
+# clients reach it (default localhost): the callback relay never fetches from it.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN="$ROOT/run"
 ALL=(sentinel real twin sync router caddy)
 STARTED=()
-READY_TICKS=100 # readiness checks, 0.1 s apart
+READY_TICKS="${STACK_READY_TICKS:-100}" # readiness checks, 0.1 s apart
 STOP_TICKS=50   # checks for a clean exit after SIGTERM, 0.1 s apart, before SIGKILL
 export STACK_EDGE_PORT="${STACK_EDGE_PORT:-8080}"
 export SENTINEL_PORT="${SENTINEL_PORT:-8787}"
 STACK_RELAY_PORT="${STACK_RELAY_PORT:-8097}"
+STACK_PUBLIC_HOST="${STACK_PUBLIC_HOST:-localhost}"
 TOKEN_FILE="$RUN/sentinel.token"
 # Exit 0 when something accepts connections on the Unix socket in argv[1].
 SOCKET_PROBE='import socket, sys
@@ -98,6 +101,14 @@ all_up() {
   done
 }
 
+# ", no <endpoint>" for each endpoint of the service that does not accept connections.
+missing() {
+  local endpoint
+  for endpoint in $(endpoints_of "$1"); do
+    endpoint_up "$endpoint" || printf ', no %s' "$(describe "$endpoint")"
+  done
+}
+
 wait_ready() {
   local name=$1
   for _ in $(seq 1 "$READY_TICKS"); do
@@ -129,6 +140,7 @@ run_service() {
     router)
       SENTINEL_INGEST_TOKEN="$(cat "$TOKEN_FILE")" exec "$PY" -m mirror \
         --lane run/lane.sock --tap run/tap.sock --relay "127.0.0.1:$STACK_RELAY_PORT" \
+        --relay-block-host "$STACK_PUBLIC_HOST" \
         --real run/real.sock --twin run/twin.sock --sync run/sync.sock \
         --sentinel "http://127.0.0.1:$SENTINEL_PORT" --state run/mirror-keys.jsonl \
         --spool run/mirror-spool.jsonl --canaries run/canaries.json ;;
@@ -203,7 +215,7 @@ start_one() {
   disown "$pid"
   STARTED+=("$name")
   if ! wait_ready "$name"; then
-    echo "$name: failed to start; last lines of run/$name.log:" >&2
+    echo "$name: failed to start$(missing "$name"); last lines of run/$name.log:" >&2
     tail -n 20 "$RUN/$name.log" >&2
     return 1
   fi
@@ -236,9 +248,26 @@ stop_one() {
   rm -f "$RUN/$name.pid" "$RUN/$name.started"
 }
 
+usage() {
+  local IFS='|'
+  echo "usage: $0 [start [${ALL[*]} ...]] | stop | status" >&2
+  exit 2
+}
+
+is_service() {
+  local name
+  for name in "${ALL[@]}"; do
+    [[ "$1" == "$name" ]] && return 0
+  done
+  return 1
+}
+
 start() {
-  local services=("$@")
+  local services=("$@") name
   [[ ${#services[@]} -gt 0 ]] || services=("${ALL[@]}")
+  for name in "${services[@]}"; do
+    is_service "$name" || usage
+  done
   mkdir -p "$RUN"
   touch "$RUN/access.log"
   cd "$ROOT"
@@ -288,5 +317,5 @@ case "${1:-start}" in
   start) shift || true; start "$@" ;;
   stop) stop ;;
   status) status ;;
-  *) echo "usage: $0 [start [sentinel|real|twin|sync|router|caddy ...]] | stop | status" >&2; exit 2 ;;
+  *) usage ;;
 esac

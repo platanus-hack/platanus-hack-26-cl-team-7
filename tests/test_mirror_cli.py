@@ -152,6 +152,7 @@ def test_main_serves_every_listener_with_one_router_until_stopped(run_dir: Path)
         assert lane_answer(run_dir / "lane.x", "/products") == "mirror"
         assert (run_dir / "extra.sock").exists()
         assert len(routers[0].keys) == 2
+        assert routers[0].routes.match("GET", "/products") is not None
     finally:
         stop.set()
         thread.join(WAIT)

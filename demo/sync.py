@@ -38,14 +38,23 @@ class SyncServer(UnixHTTPServer):
 
 
 class SyncHandler(BaseHTTPRequestHandler):
-    def do_POST(self) -> None:
-        if self.path != "/copy" or not isinstance(self.server, SyncServer):
-            return self.reply(404, {"error": "not found"})
+    def read_json(self) -> object:
+        """The JSON body, or None when it is missing, too long or not JSON. The body is read
+        before any answer, so the caller can finish sending it."""
         try:
             length = int(self.headers.get("Content-Length") or 0)
-            data = json.loads(self.rfile.read(length)) if 0 < length <= MAX_COPY_BODY else None
         except ValueError:
-            data = None
+            return None
+        raw = self.rfile.read(min(max(length, 0), MAX_COPY_BODY + 1))
+        try:
+            return json.loads(raw) if 0 < len(raw) <= MAX_COPY_BODY else None
+        except ValueError:
+            return None
+
+    def do_POST(self) -> None:
+        data = self.read_json()
+        if self.path != "/copy" or not isinstance(self.server, SyncServer):
+            return self.reply(404, {"error": "not found"})
         if not isinstance(data, dict) or not isinstance(data.get("cookie"), str):
             return self.reply(400, {"error": 'expected {"cookie": "<value>"}'})
         try:

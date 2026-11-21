@@ -90,3 +90,20 @@ def test_bearer_and_bare_credentials() -> None:
 def test_twin_born_candidates_are_capped() -> None:
     query = "&".join(f"v{n}=value-{n:04d}" for n in range(100))
     assert len(make(query=query).twin_born_keys()) == f.MAX_CANDIDATES
+
+
+@pytest.mark.parametrize(
+    ("cookie", "authorization", "session"),
+    [
+        ("session=s-1; cart=1:2", "Bearer tok-2", "session=s-1; cart=1:2"),
+        ("", "Bearer  tok-2 ", "tok-2"),
+        ("", "bearer tok-3", "tok-3"),
+        ("", "Basic YWxpY2U6eA==", ""),
+        ("", "tok-bare", ""),
+        ("", "", ""),
+    ],
+)
+def test_session_is_the_cookie_else_a_bearer_token(
+    cookie: str, authorization: str, session: str
+) -> None:
+    assert make(cookie=cookie, authorization=authorization).session == session
