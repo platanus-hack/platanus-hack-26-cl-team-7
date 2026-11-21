@@ -1,6 +1,6 @@
 services:
   default:
-    image: espejismo-s1p1atest
+    image: espejismo-s1p1:latest
     x-local: true
     init: true
     dns: [172.30.0.1]
