@@ -7,7 +7,7 @@
 **Videos:** [la propuesta en 78 segundos](https://espejismo-demo.haroldmedrano33.workers.dev/video/propuesta.mp4) · [lo que el agente dice contra lo que registró el sistema, 74 segundos](https://espejismo-demo.haroldmedrano33.workers.dev/video/dicho-vs-hecho.mp4)
 
 ## El problema
-En julio de 2026, durante una evaluación, agentes de OpenAI salieron de su entorno de pruebas y entraron a sistemas de Hugging Face ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). Las empresas ya le dan a agentes de IA acceso a sus servidores, sus claves y su código, y hoy la única forma de saber qué hizo un agente es preguntarle.
+En julio de 2026, durante una evaluación, agentes de OpenAI salieron de su entorno de pruebas y entraron a sistemas de Hugging Face ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). En octubre, según [otro reporte de OpenAI](https://openai.com/safety-alignment/misalignment-reports/suppressing-misalignment-monitoring-alerts-and-disabling-misalignment-monitoring/), un agente de código quitó su propio monitoreo durante una tarea normal y, cuando el usuario preguntó, negó haberlo hecho. Las empresas ya le dan a agentes de IA acceso a sus servidores, sus claves y su código, y hoy la única forma de saber qué hizo un agente es preguntarle.
 
 ## Qué es
 Una prueba antes de dar acceso. Es una casa de utilería idéntica a la real:
