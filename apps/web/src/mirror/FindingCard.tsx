@@ -6,7 +6,8 @@
  */
 import { useState } from "react";
 import type { Finding, Track } from "@sentinel/contracts";
-import { cn } from "../ui";
+import { useDashboard } from "../dashboard/store";
+import { Orb, cn } from "../ui";
 import { agentName, chainTo, vulnOf, type Moment, type Step, type Vuln } from "./moments";
 
 /** The finding as plain text for a ticket or a chat. */
@@ -45,6 +46,25 @@ function CopyDetails({ text }: { text: string }) {
   );
 }
 
+/** Opens the copilot and asks it about this finding. The copilot code loads on first use. */
+function AskCopilot({ text }: { text: string }) {
+  const toggle = useDashboard((s) => s.toggleCopilot);
+  const range = useDashboard((s) => s.data.range);
+  const ask = () => {
+    toggle(true);
+    void import("../copilot/store").then(({ useCopilot }) =>
+      // A copilot message holds 8000 characters at most (CopilotTurn in @sentinel/contracts); long evidence is cut.
+      useCopilot.getState().send(`Explícame esta vulnerabilidad y qué debo arreglar en la tienda real:\n\n${text}`.slice(0, 8000), range),
+    );
+  };
+  return (
+    <button type="button" className="vc-copy vc-ask" onClick={ask}>
+      <Orb size={14} state="idle" />
+      Preguntar a Copilot
+    </button>
+  );
+}
+
 export function FindingCard({ f, track, moments, active }: { f: Finding; track: Track; moments: Moment[]; active: boolean }) {
   const v = vulnOf(f);
   const steps = chainTo(track, moments, f.findingId);
@@ -53,7 +73,10 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
       <header className="vc-h">
         <span className="vc-sev">{v.severity}</span>
         <h4>{v.name}</h4>
-        <CopyDetails text={findingText(f, track, v, steps)} />
+        <span className="vc-actions">
+          <AskCopilot text={findingText(f, track, v, steps)} />
+          <CopyDetails text={findingText(f, track, v, steps)} />
+        </span>
       </header>
       <p className="vc-meta">
         <code>{f.endpoint}</code>
