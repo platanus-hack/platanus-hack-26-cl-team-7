@@ -4,6 +4,8 @@ import { connect, loadHealth, startClock, useDashboard } from "./dashboard/store
 import { useReports } from "./reports/store";
 import { startMirror } from "./mirror/store";
 import { Skeleton } from "./ui";
+import "./copilot/copilot.css";
+import "./copilot/copilot-blocks.css";
 
 const CopilotPanel = lazy(() => import("./copilot/CopilotPanel"));
 const ReportView = lazy(() => import("./reports/ReportView").then((m) => ({ default: m.ReportView })));

@@ -13,10 +13,21 @@ export function clock(ts: number, seconds = true): string {
   return seconds ? `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}` : `${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/** A time with its day when it is not today: "12:59", "yesterday 12:59", "19 Nov 12:59". */
+export function dayClock(ts: number, now = Date.now(), seconds = false): string {
+  const d = new Date(ts);
+  const n = new Date(now);
+  const start = (offset: number) => new Date(n.getFullYear(), n.getMonth(), n.getDate() - offset).getTime();
+  const t = clock(ts, seconds);
+  if (ts >= start(0)) return t;
+  if (ts >= start(1)) return `yesterday ${t}`;
+  return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })} ${t}`;
+}
+
 const nf = new Intl.NumberFormat("en-US");
 export const num = (n: number) => nf.format(n);
 
-export function joinDefined(parts: (string | null | undefined)[], sep = " · "): string | null {
+export function joinDefined(parts: (string | null | undefined)[], sep = ", "): string | null {
   const v = parts.filter((p): p is string => Boolean(p && p.trim()));
   return v.length ? v.join(sep) : null;
 }

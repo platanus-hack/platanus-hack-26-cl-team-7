@@ -1,0 +1,328 @@
+/*
+ * The mirror line: real shop stub, glass line at the catch, the band of earlier decoy
+ * requests, the density strip of loaded ones, proof and fix marks, readout and legend.
+ * Rows: labels at 0, proofs centred at 36, the line at 60, fixes centred at 84, axis at the bottom.
+ */
+.ml-fig {
+  margin: 24px 0 0;
+}
+.ml-box {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+.ml {
+  display: flex;
+  min-width: 560px;
+  height: 116px;
+}
+.ml-real {
+  position: relative;
+  flex: none;
+  width: 104px;
+}
+.ml-label {
+  position: absolute;
+  top: 0;
+  font-size: var(--text-small);
+  line-height: 18px;
+  color: var(--color-fog);
+  white-space: nowrap;
+}
+.ml-stub {
+  position: absolute;
+  left: 0;
+  right: 16px;
+  top: 59px;
+  height: 2px;
+  background: rgba(237, 232, 221, 0.35);
+}
+.ml-decoy {
+  --band: 0px;
+  position: relative;
+  flex: 1;
+  margin-right: 12px;
+}
+.ml-decoy.ml-banded {
+  --band: clamp(150px, 28%, 260px);
+}
+.ml-decoy > .ml-label {
+  left: 14px;
+}
+.ml-catch {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 18px;
+  width: 2px;
+  background: var(--color-glass);
+}
+.ml-track {
+  position: absolute;
+  left: var(--band);
+  right: 0;
+  top: 59px;
+  height: 2px;
+  background: rgba(121, 198, 201, 0.3);
+}
+.ml-axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 18px;
+  font-size: var(--text-small);
+  line-height: 18px;
+  color: var(--color-fog);
+  white-space: nowrap;
+}
+.ml-axis > span {
+  position: absolute;
+  left: -1px;
+}
+.ml-axis > .ml-axis-break {
+  left: calc(var(--band) + 2px);
+}
+.ml-axis > .ml-axis-end {
+  left: auto;
+  right: 0;
+}
+.ml-marks {
+  position: absolute;
+  inset: 0 0 18px;
+  pointer-events: none;
+}
+.ml-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.ml-seg-band {
+  left: 0;
+  width: var(--band);
+}
+.ml-seg-window {
+  left: var(--band);
+  right: 0;
+}
+.ml-band {
+  position: absolute;
+  left: 0;
+  right: 8px;
+  top: 50px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 10px;
+  border-radius: 3px;
+  background: rgba(121, 198, 201, 0.2);
+  font-size: var(--text-small);
+  color: var(--color-paper);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ml-band > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ml-mark {
+  position: absolute;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  border-radius: 3px;
+}
+.ml-mark:focus-visible {
+  outline-offset: 0;
+  z-index: 2;
+}
+.ml-request {
+  top: 48px;
+  height: 24px;
+  min-width: 24px;
+}
+.ml-request span {
+  width: var(--w, 2px);
+  max-width: 18px;
+  height: var(--h, 16px);
+  border-radius: 1px;
+  background: var(--color-glass);
+  opacity: var(--o, 0.75);
+}
+.ml-proof,
+.ml-fix {
+  width: 24px;
+  height: 24px;
+  z-index: 1;
+}
+.ml-proof {
+  top: 24px;
+}
+.ml-fix {
+  top: 72px;
+}
+.ml-proof span,
+.ml-fix span {
+  width: 10px;
+  height: 10px;
+}
+.ml-proof span {
+  background: var(--color-flare);
+  transform: rotate(45deg);
+}
+.ml-fix span {
+  background: var(--color-mend);
+  border-radius: 50%;
+}
+.ml-request.ml-on span,
+.ml-request:hover span {
+  opacity: 1;
+  box-shadow: 0 0 0 1px var(--color-shoal), 0 0 0 2px var(--color-paper);
+}
+.ml-proof.ml-on:not(:focus-visible) span,
+.ml-fix.ml-on:not(:focus-visible) span {
+  box-shadow: 0 0 0 3px var(--color-shoal), 0 0 0 4px var(--color-paper);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ml-new span {
+    animation: mark-in 0.45s ease-out;
+  }
+}
+@keyframes mark-in {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+}
+
+/* ---------- readout and legend share one row ---------- */
+.ml-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 24px;
+  margin-top: 8px;
+}
+.ml-readout {
+  flex: 1 1 320px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-width: 0;
+  min-height: 24px;
+  margin: 0;
+  font-size: var(--text-small);
+  white-space: nowrap;
+}
+.ml-readout.ml-hint {
+  white-space: normal;
+}
+.ml-readout-lead,
+.ml-readout-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.ml-readout-lead {
+  flex: none;
+}
+.ml-readout-line {
+  flex: 0 1 auto;
+}
+.ml-readout-lead > *,
+.ml-readout-line > * {
+  flex: none;
+}
+.ml-readout .ml-key {
+  align-self: center;
+}
+.ml-readout-text {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ml-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ml-key {
+  display: inline-block;
+  flex: none;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+h4 .ml-key,
+.agent-proofs .ml-key,
+.ml-readout .ml-key {
+  margin-right: 0;
+}
+.ml-key-request {
+  width: 4px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--color-glass);
+}
+.ml-key-proof {
+  width: 8px;
+  height: 8px;
+  background: var(--color-flare);
+  transform: rotate(45deg);
+}
+.ml-key-fix {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-mend);
+}
+
+/*
+ * On a phone the line keeps its desktop width and scrolls inside its own box (it opens
+ * on the newest activity), and the readout wraps so the whole request line shows.
+ */
+@media (max-width: 480px) {
+  .ml {
+    min-width: 560px;
+  }
+  .ml-real {
+    width: 72px;
+  }
+  .ml-decoy {
+    margin-right: 10px;
+  }
+  /* The box opens scrolled to the newest activity, so the decoy label sits at that end. */
+  .ml-decoy > .ml-label {
+    left: auto;
+    right: 0;
+  }
+  .ml-decoy.ml-banded {
+    --band: clamp(140px, 30%, 170px);
+  }
+  .ml-band {
+    padding: 0 6px;
+  }
+  .ml-readout {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+  .ml-readout-lead {
+    flex-wrap: wrap;
+  }
+  .ml-readout-line {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+  .ml-readout-text {
+    flex: 0 1 auto;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+  }
+}

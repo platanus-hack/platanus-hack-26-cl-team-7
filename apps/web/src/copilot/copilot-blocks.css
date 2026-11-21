@@ -1,0 +1,255 @@
+/* Copilot answer blocks: tool trace, chart card and prompt input. */
+.trace {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+.tt {
+  position: relative;
+}
+.tl {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 28px;
+  color: var(--color-paper);
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+.tl .g {
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.tt.ok .g {
+  color: var(--color-paper);
+}
+.tt.run .g {
+  color: var(--color-paper);
+}
+.tt.run .g svg {
+  animation: spin 1s linear infinite;
+}
+.tt.err .g {
+  color: var(--color-paper);
+}
+.tl .fn {
+  color: var(--color-paper);
+}
+.tl .args {
+  color: var(--color-fog);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tl .meta {
+  color: var(--color-fog);
+  white-space: nowrap;
+  font-size: var(--text-small);
+}
+.tt.err .meta {
+  color: var(--color-paper);
+}
+.tl .cv {
+  color: var(--color-line-strong);
+  display: grid;
+  place-items: center;
+  transition: transform 0.15s;
+}
+.tt[data-state="open"] .cv {
+  transform: rotate(90deg);
+}
+.tt.run .fn {
+  background: linear-gradient(90deg, var(--color-fog), var(--color-paper), var(--color-fog));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sh 1.6s linear infinite;
+}
+.tt.run .tl::after {
+  content: "";
+  position: absolute;
+  left: 23px;
+  right: 0;
+  top: 27px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-paper), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: scan 1.4s linear infinite;
+}
+@keyframes scan {
+  from {
+    background-position: -40% 0;
+  }
+  to {
+    background-position: 140% 0;
+  }
+}
+.tres {
+  margin: 2px 0 8px 23px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-harbor);
+  border: 1px solid var(--color-line2);
+  color: var(--color-paper);
+  font-size: var(--text-small);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* chart block */
+.ccard {
+  background: var(--color-harbor);
+  border-radius: 14px;
+  padding: 16px 16px 12px;
+}
+.ccard .ch {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 14px;
+}
+.ccard .ch b {
+  font-size: var(--text-body);
+  font-weight: 500;
+  color: var(--color-paper);
+}
+.ccard .ch span {
+  font-size: var(--text-small);
+  color: var(--color-fog);
+}
+.hbars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hbar {
+  display: grid;
+  grid-template-columns: 128px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--text-small);
+  color: var(--color-paper);
+}
+.hbar .track {
+  height: 14px;
+  position: relative;
+}
+.hbar .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 5px;
+  transition: width 0.4s ease;
+}
+.hbar em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  text-align: right;
+}
+.ccard .src {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-line2);
+  font-size: var(--text-small);
+  color: var(--color-fog);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+}
+.ccard .src em {
+  font-style: normal;
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+}
+
+/* prompt input */
+.pi {
+  border-radius: 14px;
+  border: 1px solid var(--color-line);
+  background: var(--color-harbor);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 0 3px rgba(237, 232, 221, 0.07);
+  transition: border-color 0.15s;
+}
+.pi:focus-within {
+  border-color: rgba(237, 232, 221, 0.55);
+}
+.pi textarea {
+  resize: none;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--color-paper);
+  font: inherit;
+  font-size: var(--text-body);
+  padding: 11px 13px 4px;
+  min-height: 44px;
+  max-height: 160px;
+}
+.pi textarea::placeholder {
+  color: var(--color-fog);
+}
+.pi .tb {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 8px 8px;
+}
+.pi .send {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--color-paper);
+  color: var(--color-harbor);
+  display: grid;
+  place-items: center;
+  transition: opacity 0.15s;
+}
+.pi .send:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.empty {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  color: var(--color-fog);
+  font-size: var(--text-body);
+  line-height: 1.55;
+  padding: 0 24px;
+}
+.empty b {
+  color: var(--color-paper);
+  font-weight: 500;
+  font-size: var(--text-body);
+}
+.err {
+  color: var(--color-paper);
+  font-size: var(--text-small);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer,
+  .tt.run .fn {
+    animation: none;
+    background: none;
+    color: var(--color-fog);
+  }
+  .tt.run .g svg,
+  .tt.run .tl::after {
+    animation: none;
+  }
+}
