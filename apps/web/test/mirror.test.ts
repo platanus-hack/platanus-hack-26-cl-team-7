@@ -247,7 +247,7 @@ describe("track detail", () => {
     stubFetch([]);
     useMirror.setState({ selected: null, detail: null, error: null });
     useMirror.getState().select(`trk_${hex(7)}`);
-    await vi.waitFor(() => expect(useMirror.getState().error).toBe("Could not load this caught agent"));
+    await vi.waitFor(() => expect(useMirror.getState().error).toBe("Could not load this track"));
     const late: TrackDetail = { track: track({ trackId: `trk_${hex(8)}` }), actions: [], findings: [] };
     let answer: (() => void) | undefined;
     vi.stubGlobal("fetch", () => new Promise<Response>((resolve) => (answer = () => resolve(new Response(JSON.stringify(late), { status: 200 })))));

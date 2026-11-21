@@ -53,7 +53,7 @@ function Reasoning({ text, seconds, streaming }: { text: string; seconds: number
 }
 
 const ToolLine = memo(function ToolLine({ call }: { call: ToolCall }) {
-  const meta = call.state === "run" ? "reading…" : [call.summary, call.ms !== undefined ? `${call.ms} ms` : null].filter(Boolean).join(", ");
+  const meta = call.state === "run" ? "reading…" : [call.summary, call.ms !== undefined ? `${call.ms} ms` : null].filter(Boolean).join(" · ");
   return (
     <Collapsible.Root className={`tt ${call.state}`}>
       <Collapsible.Trigger className="tl">
@@ -82,8 +82,7 @@ function ToolTrace({ calls }: { calls: ToolCall[] }) {
   );
 }
 
-/** Paper at falling strength: the rank of a row, not a meaning of its own. */
-const SHADES = ["rgba(237,232,221,.9)", "rgba(237,232,221,.7)", "rgba(237,232,221,.55)", "rgba(237,232,221,.42)", "rgba(237,232,221,.32)", "rgba(237,232,221,.24)"];
+const SHADES = ["#5f8fff", "#3d6cf0", "#2b55c9", "#24407f", "#1d3366", "#172a54"];
 
 const ChartCard = memo(function ChartCard({ chart }: { chart: ChartBlock }) {
   const max = Math.max(1, ...chart.rows.map((r) => r.value));
@@ -287,7 +286,7 @@ function PromptInput({ onSubmit, onStop, streaming, disabled }: { onSubmit: (tex
         rows={2}
         value={value}
         disabled={disabled}
-        placeholder={disabled ? "Copilot is unavailable" : "Ask about the gateway feed: attacks and attackers…"}
+        placeholder={disabled ? "Copilot is unavailable" : "Ask about attacks, attackers or patterns…"}
         aria-label="Message the copilot"
         onChange={(e) => {
           setValue(e.target.value);
@@ -350,8 +349,8 @@ export default function CopilotPanel() {
               </div>
             ) : (
               <div>
-                <b>Ask about the gateway feed</b>
-                <p className="mt-2 mb-0">The copilot reads the gateway feed: attack events and attackers. It finds patterns there and explains how to fix them. It cannot read caught agents or their proofs yet.</p>
+                <b>Ask about your attack data</b>
+                <p className="mt-2 mb-0">The copilot reads the events and attackers, finds patterns and explains how to fix them.</p>
               </div>
             )}
           </div>

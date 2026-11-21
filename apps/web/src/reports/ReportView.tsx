@@ -17,7 +17,6 @@ import { Revisions } from "./Revisions";
 import { useReports } from "./store";
 import { Timeline } from "./TimelineChart";
 import { useReport } from "./useReport";
-import "./reports.css";
 
 function VerdictLine({ caseFile }: { caseFile: CaseFile }) {
   return (
@@ -34,7 +33,7 @@ function VerdictLine({ caseFile }: { caseFile: CaseFile }) {
 /** The whole report as read-only content. Safe to render anywhere: it holds no state. */
 export function ReportBody({ report }: { report: Report }) {
   const { caseFile } = report;
-  const analyst = joinDefined([report.analystModel, report.analystTokens && tokensText(report.analystTokens)], " · ");
+  const analyst = joinDefined([report.analystModel, report.analystTokens && tokensText(report.analystTokens)]);
   return (
     <div className="flex flex-col gap-6 pt-[18px]">
       {caseFile && <VerdictLine caseFile={caseFile} />}

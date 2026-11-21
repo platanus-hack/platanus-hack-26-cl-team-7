@@ -1,6 +1,6 @@
 /**
- * Caught agents state (the API calls them tracks; the decoy copy of the shop is the mirror lane).
- * Interface: `useMirror`, `startMirror`, `proposalState`. Behind it: the first pages of /v1/tracks and /v1/findings, kept live by the
+ * Mirror lane state. Interface: `useMirror`, `startMirror`, `proposalState`.
+ * Behind it: the first pages of /v1/tracks and /v1/findings, kept live by the
  * dashboard's stream (track and finding changes), and the selected track's detail,
  * refetched when the stream says that track changed. The pure merge functions are
  * exported as a test seam.
@@ -8,7 +8,6 @@
 import { create } from "zustand";
 import { MAX_PAGE_LIMIT, type Finding, type ProposalStatus, type StreamBatch, type Track, type TrackDetail } from "@sentinel/contracts";
 import { tapStream } from "../dashboard/store";
-import { defaultAgent } from "../caught/summary";
 import { api } from "../sentinel";
 
 /* ---------------- pure merge (test seam) ---------------- */
@@ -95,6 +94,7 @@ export function proposalState(f: Finding, aiEnabled: boolean | null): ProposalSt
 /* ---------------- store ---------------- */
 
 interface MirrorState {
+  open: boolean;
   data: MirrorData;
   /** nextCursor of the last tracks page; null when every track is loaded. */
   tracksCursor: string | null;
@@ -102,17 +102,20 @@ interface MirrorState {
   error: string | null;
   selected: string | null;
   detail: TrackDetail | null;
+  toggle: (open?: boolean) => void;
   select: (trackId: string) => void;
   loadOlder: () => Promise<void>;
 }
 
 export const useMirror = create<MirrorState>((set, get) => ({
+  open: false,
   data: emptyMirror(),
   tracksCursor: null,
   loading: true,
   error: null,
   selected: null,
   detail: null,
+  toggle: (open) => set((s) => ({ open: open ?? !s.open })),
   select: (trackId) => {
     set((s) => ({ selected: trackId, detail: s.detail?.track.trackId === trackId ? s.detail : null }));
     void loadDetail(trackId);
@@ -124,7 +127,7 @@ export const useMirror = create<MirrorState>((set, get) => ({
       const page = await api.tracks({ range: "24h", limit: MAX_PAGE_LIMIT, cursor });
       set((s) => ({ data: { ...s.data, tracks: mergeTracks(s.data.tracks, page.items) }, tracksCursor: page.nextCursor }));
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : "Could not load older caught agents" });
+      set({ error: e instanceof Error ? e.message : "Could not load older tracks" });
     }
   },
 }));
@@ -141,7 +144,7 @@ async function loadDetail(trackId: string): Promise<void> {
     const detail = await api.track(trackId);
     if (current()) useMirror.setState({ detail, error: null });
   } catch {
-    if (current()) useMirror.setState({ error: "Could not load this caught agent" });
+    if (current()) useMirror.setState({ error: "Could not load this track" });
   }
 }
 
@@ -157,13 +160,13 @@ export async function loadMirror(): Promise<void> {
     ]);
     useMirror.setState((s) => {
       const data = applyMirror(s.data, { tracks: tracks.items, findings: findings.items });
-      const selected = s.selected ?? defaultAgent(data.tracks);
+      const selected = s.selected ?? data.tracks[0]?.trackId ?? null;
       return { data, tracksCursor: tracks.nextCursor, loading: false, error: null, selected };
     });
     const selected = useMirror.getState().selected;
     if (selected) void loadDetail(selected);
   } catch (e) {
-    if (!ctrl.signal.aborted) useMirror.setState({ loading: false, error: e instanceof Error ? e.message : "Could not load the caught agents" });
+    if (!ctrl.signal.aborted) useMirror.setState({ loading: false, error: e instanceof Error ? e.message : "Could not load the mirror lane" });
   }
 }
 
@@ -171,7 +174,7 @@ function onBatches(batches: StreamBatch[]): void {
   const changes = mirrorChanges(batches);
   if (changes.tracks.length === 0 && changes.findings.length === 0) return;
   const s = useMirror.getState();
-  const selected = s.selected ?? defaultAgent(changes.tracks);
+  const selected = s.selected ?? changes.tracks[0]?.trackId ?? null;
   useMirror.setState({ data: applyMirror(s.data, changes), selected, detail: s.detail && applyToDetail(s.detail, changes) });
   // New actions are not streamed one by one: refetch the open track, at most once per interval.
   if (selected && detailTimer === undefined && changes.tracks.some((t) => t.trackId === selected))
