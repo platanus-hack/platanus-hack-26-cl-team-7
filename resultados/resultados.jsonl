@@ -17,3 +17,7 @@
 {"model": "mistralai/mistral-large-4-0", "ataque": "es_pe", "defensa": "none", "utilidad": "88% (21/24, IC95 69%–96%)", "ASR": "0% (0/24, IC95 0%–14%)"}
 {"model": "qwen/qwen3.8-omni-flash", "ataque": "es_pe", "defensa": "none", "utilidad": "75% (18/24, IC95 55%–88%)", "ASR": "0% (0/24, IC95 0%–14%)"}
 {"model": "qwen/qwen3.8-omni-flash", "ataque": "en", "defensa": "none", "utilidad": "79% (19/24, IC95 60%–91%)", "ASR": "0% (0/24, IC95 0%–14%)"}
+{"model": "claude-sonnet-5-5", "idioma": "en", "ataque": "none", "defensa": "none", "utilidad": "94% (15/16, IC95 72%–99%)"}
+{"model": "claude-sonnet-5-5", "idioma": "es", "ataque": "none", "defensa": "none", "utilidad": "88% (14/16, IC95 64%–97%)"}
+{"model": "claude-sonnet-5-5", "idioma": "en", "ataque": "none", "defensa": "detector", "utilidad": "31% (5/16, IC95 14%–56%)"}
+{"model": "claude-sonnet-5-5", "idioma": "es", "ataque": "none", "defensa": "detector", "utilidad": "25% (4/16, IC95 10%–49%)"}
