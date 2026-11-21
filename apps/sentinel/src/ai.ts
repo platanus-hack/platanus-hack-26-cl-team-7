@@ -16,7 +16,8 @@ import {
 import type { Bus, Frame } from "./bus.ts";
 import type { Store } from "./store.ts";
 
-export const MODEL = "claude-opus-5-5";
+/** Model for verdicts, reports and fix proposals. SENTINEL_MODEL overrides the default. */
+export const MODEL = process.env.SENTINEL_MODEL || "claude-opus-5-5";
 export const BETAS: Anthropic.Beta.AnthropicBeta[] = ["server-side-fallback-2026-07-01"];
 
 const VERDICT_SYSTEM = `You classify one HTTP request that a web gateway flagged as suspicious.

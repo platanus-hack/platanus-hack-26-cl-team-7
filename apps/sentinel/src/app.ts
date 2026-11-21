@@ -7,7 +7,7 @@ import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { CopilotRequest, IngestBody, IngestEvent, Range, type CopilotEvent, type Health } from "@sentinel/contracts";
-import type { Ai } from "./ai.ts";
+import { MODEL, type Ai } from "./ai.ts";
 import type { Bus, EncodedFrame } from "./bus.ts";
 import type { DeceptionStore } from "./deception.ts";
 import { deceptionRoutes } from "./deception-routes.ts";
@@ -83,7 +83,7 @@ export function createApp({ store, bus, ai, deception, version = "0.1.0", starte
   const rangeOf = (c: Context) => Range.safeParse(c.req.query("range") ?? "1h");
 
   app.get("/health", (c) =>
-    c.json<Health>({ ok: true, version, ai: { enabled: ai.enabled, model: ai.enabled ? "claude-opus-5-5" : null }, uptimeMs: Date.now() - startedAt }),
+    c.json<Health>({ ok: true, version, ai: { enabled: ai.enabled, model: ai.enabled ? MODEL : null }, uptimeMs: Date.now() - startedAt }),
   );
 
   /** Everything the dashboard needs for first paint, in one response. */
