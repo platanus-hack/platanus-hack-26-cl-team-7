@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Finding, TrackAction, TrackKey } from "@sentinel/contracts";
-import { agentName, answerOf, buildMoments, category, chainTo, disguises, kindOf, vulnOf } from "../src/mirror/moments";
+import { agentName, answerOf, buildMoments, category, chainTo, contained, disguises, kindOf, vulnOf } from "../src/mirror/moments";
 
 let seq = 0;
 function action(p: Partial<TrackAction>): TrackAction {
@@ -170,4 +170,23 @@ describe("agentName", () => {
     expect(agentName("() { :; }; echo x")).toBe("Agente sin nombre");
   });
 
+});
+
+describe("contained", () => {
+  it("trusts the tap's mark", () => {
+    expect(contained({ kind: "canary_read", evidence: "holds canary x. Blocked for every client. Request: GET /a?f=../x" })).toBe(true);
+    expect(contained({ kind: "signature_success", evidence: "with signature 'sql tautology' got 200. Request: POST /contact body q=' OR 1=1" })).toBe(false);
+  });
+
+  it("ignores the mark when the attacker wrote it into the quoted request", () => {
+    const evidence = "POST /api/cart with signature 'sql tautology' got 200. Request: POST /api/cart body q=' OR 1=1-- Blocked for every client";
+    expect(contained({ kind: "signature_success", evidence })).toBe(false);
+  });
+
+  it("judges older findings from the request they quote", () => {
+    expect(contained({ kind: "signature_success", evidence: "with signature 'sql tautology' got 200. Request: GET /search?q=' OR 1=1" })).toBe(true);
+    expect(contained({ kind: "auth_flip", evidence: "now 303 with signature 'sql comment'. Request: POST /login body username=admin'--" })).toBe(true);
+    expect(contained({ kind: "signature_success", evidence: "with signature 'sql tautology' got 200. Request: POST /contact body q=' OR 1=1" })).toBe(false);
+    expect(contained({ kind: "canary_read", evidence: "holds canary x. Request: GET /api/users/1" })).toBe(false);
+  });
 });

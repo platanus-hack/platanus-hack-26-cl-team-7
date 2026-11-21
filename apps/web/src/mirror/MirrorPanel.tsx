@@ -11,7 +11,7 @@ import { Skeleton, clock, cn } from "../ui";
 import { FindingCard } from "./FindingCard";
 import { Replay } from "./Replay";
 import { SquaresFour } from "@phosphor-icons/react";
-import { agentName, buildMoments, caughtFor, numEs as num, vulnOf } from "./moments";
+import { agentName, buildMoments, caughtFor, contained, numEs as num, vulnOf } from "./moments";
 import { useMirror } from "./store";
 import "./mirror.css";
 
@@ -177,6 +177,7 @@ function Overview() {
                     <span className="ov-name">{v.name}</span>
                     <code className="ov-ep">{f.endpoint}</code>
                     <span className="ov-agent">{t ? agentName(t.userAgent) : ""}</span>
+                    <span className={cn("ov-state", contained(f) && "ok")}>{contained(f) ? "Neutralizada" : "Sin contener"}</span>
                   </button>
                 </li>
               );

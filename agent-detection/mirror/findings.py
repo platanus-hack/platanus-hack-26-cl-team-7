@@ -44,6 +44,7 @@ from mirror.contracts import (
 )
 from mirror.exchange import Exchange
 from mirror.lane import Emit
+from mirror.logins import LOGIN_METHOD, LOGIN_PATHS
 from mirror.patches import Patch, PatchBook, endpoint_of
 from mirror.sockets import UnixHTTPConnection
 
@@ -53,6 +54,9 @@ PATCH_RULE: RuleId = "R3"  # every signature is an R3 signature
 MAX_TRACKS = 10_000  # tracks whose 401 endpoints are remembered
 MAX_REFUSED = 64  # 401 endpoints remembered per track
 MAX_SEEN = 10_000  # findings remembered for the one-finding-per-signature rule
+# Ends the evidence of a finding that every client's repeat now reaches the twin for; Sentinel
+# shows such a finding as neutralised.
+BLOCKED = "Blocked for every client"
 PROBE_TIMEOUT = 2.0
 PROBE_BYTES = 8  # random bytes in the path of the 404 probe
 
@@ -123,10 +127,16 @@ class FindingRules:
                 found.append(
                     ("signature_success", signature, f"{why}; the 404 page has {baseline}")
                 )
+        # Any client that repeats it reaches the twin: R3 and the patch read the URI, and
+        # mirror.logins reads the body of a login POST. A body signature elsewhere is not caught.
+        blocked = bool(uri_signature) or bool(
+            signature and ex.method == LOGIN_METHOD and ex.path in LOGIN_PATHS
+        )
         findings = []
         for kind, mark, evidence in found:
             if self._first((ex.track_id, kind, ex.method, endpoint, mark)):
-                findings.append(self._confirm(ex, endpoint, uri_signature, kind, evidence))
+                why = f"{evidence}. {BLOCKED}" if blocked else evidence
+                findings.append(self._confirm(ex, endpoint, uri_signature, kind, why))
         return findings
 
     def _remember(self, ex: Exchange, endpoint: str) -> str:

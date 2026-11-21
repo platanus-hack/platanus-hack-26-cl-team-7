@@ -224,6 +224,26 @@ export function vulnOf(f: Pick<Finding, "kind" | "evidence">): Vuln {
   return SIGNATURE_VULNS.find(([re]) => re.test(sig))?.[1] ?? FILE_VULN;
 }
 
+/** The tap ends the evidence of a finding with this when every client's repeat reaches the twin (agent-detection/mirror/findings.py). */
+const BLOCKED = "Blocked for every client";
+const LOGIN_PATHS = new Set(["/login", "/login/", "/api/session", "/api/session/"]);
+
+/**
+ * Whether Sentinel already keeps this attack out of the real shop, for any client. The tap marks it:
+ * the router and the virtual patch read the URI, and the login check reads a login POST's body;
+ * a body signature anywhere else is not caught. Findings stored before that mark are judged from
+ * the request they quote: a signature with no body, or on a login POST, was caught.
+ */
+export function contained(f: Pick<Finding, "kind" | "evidence">): boolean {
+  // Only the part the tap writes counts: the quoted request after " Request: " is the attacker's own text.
+  if ((f.evidence.split(" Request: ", 1)[0] ?? "").endsWith(`${BLOCKED}.`)) return true;
+  if (f.kind === "canary_read" || !/signature '[^']+'/.test(f.evidence)) return false;
+  const req = /Request: (\S+) (\S+)( body )?/.exec(f.evidence);
+  if (!req) return false;
+  const [, method, target, body] = req;
+  return !body || (method === "POST" && LOGIN_PATHS.has((target ?? "").split("?")[0] ?? ""));
+}
+
 /** What the decoy answer proved, from evidence like "got 200, 723 bytes; the 404 page has 10". */
 export function answerOf(f: Pick<Finding, "evidence">): string {
   const m = /got (\d{3}), (\d+) bytes; the 404 page has (\d+)/.exec(f.evidence);

@@ -235,6 +235,22 @@
   color: var(--color-ash);
 }
 
+.vc-actions {
+  align-items: center;
+}
+.vc-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-mid);
+}
+.vc-status.ok {
+  color: var(--c-ok);
+}
+
 /* The trace as a log, always open. */
 .log {
   list-style: none;

@@ -1,16 +1,17 @@
 /**
  * One confirmed vulnerability: severity, name, endpoint, weak point, and the trace from the catch to
- * the proof as a log, always open. "Copiar detalles" puts the whole finding on the clipboard as text.
+ * the proof as a log, always open, and whether Sentinel already keeps the attack out of the real shop.
+ * "Preguntar a Copilot" asks the copilot about it.
  * Interface: `<FindingCard f track moments active />`.
  * Request lines and evidence are attacker controlled; React renders them as text only.
  */
-import { useState } from "react";
 import type { Finding, Track } from "@sentinel/contracts";
 import { useDashboard } from "../dashboard/store";
 import { Orb, cn } from "../ui";
-import { agentName, chainTo, vulnOf, type Moment, type Step, type Vuln } from "./moments";
+import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
+import { agentName, chainTo, contained, vulnOf, type Moment, type Step, type Vuln } from "./moments";
 
-/** The finding as plain text for a ticket or a chat. */
+/** The finding as plain text, for the copilot question. */
 export function findingText(f: Finding, track: Track, v: Vuln, steps: Step[]): string {
   const lines = [
     `${v.severity.toUpperCase()} · ${v.name}`,
@@ -25,25 +26,6 @@ export function findingText(f: Finding, track: Track, v: Vuln, steps: Step[]): s
     `Evidencia: ${f.evidence}`,
   ];
   return lines.join("\n");
-}
-
-function CopyDetails({ text }: { text: string }) {
-  const [done, setDone] = useState(false);
-  if (typeof navigator === "undefined" || !navigator.clipboard) return null;
-  const copy = () => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setDone(true);
-        setTimeout(() => setDone(false), 1500);
-      })
-      .catch(() => undefined);
-  };
-  return (
-    <button type="button" className="vc-copy" onClick={copy}>
-      {done ? "Copiado" : "Copiar detalles"}
-    </button>
-  );
 }
 
 /** Opens the copilot and asks it about this finding. The copilot code loads on first use. */
@@ -74,8 +56,18 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
         <span className="vc-sev">{v.severity}</span>
         <h4>{v.name}</h4>
         <span className="vc-actions">
+          {contained(f) ? (
+            <span className="vc-status ok">
+              <CheckCircle size={16} weight="fill" aria-hidden />
+              Ya la neutralizamos
+            </span>
+          ) : (
+            <span className="vc-status">
+              <WarningCircle size={16} weight="fill" aria-hidden />
+              Sin contener
+            </span>
+          )}
           <AskCopilot text={findingText(f, track, v, steps)} />
-          <CopyDetails text={findingText(f, track, v, steps)} />
         </span>
       </header>
       <p className="vc-meta">

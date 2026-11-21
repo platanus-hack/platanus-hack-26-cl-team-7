@@ -11,7 +11,7 @@ import pytest
 from engine.routes import RouteTable
 from mirror.canaries import Canaries
 from mirror.contracts import DeceptionEvent, FindingConfirmed
-from mirror.findings import FindingRules
+from mirror.findings import BLOCKED, FindingRules
 from mirror.patches import PatchBook
 from tests.test_mirror_findings import FORM, NOT_FOUND, REPO, Rules, write_canaries
 
@@ -41,6 +41,7 @@ def test_a_body_signature_on_an_ordinary_route_is_reported_without_a_patch(rules
     [finding] = rules.events
     assert isinstance(finding, FindingConfirmed)
     assert "signature 'sql tautology'" in finding.evidence
+    assert BLOCKED not in finding.evidence  # a repeat from a new client reaches the real shop
     assert len(rules.patches) == 0
     assert rules.patches.match("POST", "/api/cart", "") is None
 
@@ -54,6 +55,9 @@ def test_a_login_body_signature_starts_no_patch_because_logins_reads_every_body(
     assert rules.check(**login, status=401) == []
     assert rules.check(**login, status=302, request_id="req-2") == ["auth_flip"]
     assert len(rules.patches) == 0
+    finding = rules.events[-1]
+    assert isinstance(finding, FindingConfirmed)
+    assert BLOCKED in finding.evidence  # mirror.logins reads every login body
 
 
 def test_a_uri_signature_on_a_post_route_still_starts_a_patch(rules: Rules) -> None:

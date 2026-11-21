@@ -19,7 +19,7 @@ from mirror import findings
 from mirror.canaries import Canaries
 from mirror.contracts import DeceptionEvent, FindingConfirmed
 from mirror.exchange import Exchange
-from mirror.findings import FindingRules, NotFoundSize
+from mirror.findings import BLOCKED, FindingRules, NotFoundSize
 from mirror.patches import PatchBook
 from mirror.sockets import UnixHTTPServer
 from tests.test_mirror_tap_proxy import serving
@@ -142,6 +142,8 @@ def test_an_auth_flip_needs_a_401_then_success_with_a_signature(make: Callable[[
     assert "signature 'sql tautology'" in finding.evidence
     assert finding.evidence.endswith("body username=%27+OR+1%3D1+--&password=x")
     assert len(rules.patches) == 0  # a signature only in the body starts no patch
+    assert BLOCKED in finding.evidence  # mirror.logins checks every login body
+
 
 
 def test_a_401_counts_only_for_its_track_and_endpoint(make: Callable[[], Rules]) -> None:
@@ -183,6 +185,7 @@ def test_signature_success_needs_2xx_and_a_body_larger_than_the_404_page(
     finding = rules.events[-1]
     assert isinstance(finding, FindingConfirmed)
     assert "signature 'path traversal' got 200, 32 bytes; the 404 page has 10" in finding.evidence
+    assert f"the 404 page has 10. {BLOCKED}. Request:" in finding.evidence
     assert rules.patches.match("GET", "/account", "invoice=../../etc/shadow") is not None
 
 
