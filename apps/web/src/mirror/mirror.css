@@ -1,4 +1,4 @@
-/* Mirror lane view. Reuses the shell, section and row styles of index.css, which loads
+/* Sentinel's one screen. Reuses the shell, section and row styles of index.css, which loads
    after this file: selectors that change those styles name both classes. */
 .mirror-left {
   display: flex;
@@ -9,14 +9,62 @@
 .mirror-left > .sect {
   flex: 1;
 }
-
-.att-row.mt-cols {
-  grid-template-columns: 1fr 40px 56px 56px;
-  gap: 8px;
+.right.mirror-right {
+  grid-template-rows: 1fr;
 }
+
+/* The selected agent: roomy header, then proofs, then its requests. */
+.dh.mv-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 32px 24px;
+}
+.mv-head .ip {
+  font-size: 26px;
+}
+.mv-head .sub {
+  margin-top: 6px;
+  font-size: 15px;
+}
+.mv-proofs {
+  padding: 8px 32px 0;
+}
+.mv-h {
+  margin: 0;
+  padding: 28px 32px 10px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* The agents list: two lines a row, more air. */
+.att-row.mt-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  height: auto;
+  padding: 16px 24px;
+}
+.mt-ip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mt-why {
+  color: var(--color-mid);
+  font-size: 13px;
+}
+
 .thead.ma-cols,
 .trow.ma-cols {
-  grid-template-columns: 96px 72px 1fr 88px 56px;
+  grid-template-columns: 96px 1fr 56px;
+}
+.trow.ma-cols {
+  height: 52px;
+  padding: 0 32px;
 }
 .mstatus.s2 {
   color: var(--color-green);
@@ -35,12 +83,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  padding: 12px 24px 16px;
+  padding: 12px 32px 18px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-line2);
 }
-.ma-bodies pre,
-.mf-ev {
+.ma-bodies pre {
   margin: 4px 0 0;
   max-height: 220px;
   overflow: auto;
@@ -53,52 +100,51 @@
   user-select: text;
 }
 
-.mkeys {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 12px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.mkeys li {
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-ash);
-  border: 1px solid var(--color-line);
-  border-radius: 6px;
-  padding: 2px 6px;
-}
-.mkeys b {
-  font-weight: 500;
-  color: var(--color-mid);
-}
-
+/* A proof: what worked, one line of evidence, and the fix. */
 .mf {
-  padding: 14px 0 16px;
+  padding: 22px 0 24px;
   border-bottom: 1px solid var(--color-line2);
 }
 .mf header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  font-size: 13px;
+  font-size: 15px;
 }
 .mf-kind {
   flex: none;
   color: var(--color-ember);
   font-weight: 500;
 }
+.mf-ev {
+  margin: 8px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-mid);
+  user-select: text;
+}
+.rep.mf-fix {
+  margin: 16px 0 0;
+}
+.mf-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
 .mf-open {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--color-blue);
 }
 .mf-open:hover {
   text-decoration: underline;
+}
+.att-row.mt-row > .mt-why {
+  text-align: left;
+  justify-self: stretch;
 }
