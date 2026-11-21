@@ -1,3 +1,11 @@
+# team-7 · Espejismo
+
+**La entrega es [Espejismo](espejismo/README.md):** no bloqueamos al agente de IA, le hacemos creer que ganó. Vigilante señuelo, sumidero, testigo escondido e interrogatorio; 95 episodios con 8 modelos reales. **Demo:** https://espejismo-demo.haroldmedrano33.workers.dev · cifras en [`espejismo/results/RESUMEN.md`](espejismo/results/RESUMEN.md).
+
+Debajo, el trabajo previo del equipo que respalda la tesis: por qué no confiamos en filtros de texto (el detector de inyecciones de AgentDojo marca como ataque el 55 % de los mensajes legítimos en español y el 3 % en inglés).
+
+---
+
 # El detector que casi no molesta en inglés marca como ataque la mitad de lo benigno en español
 
 **Cifra central: el detector de inyecciones que AgentDojo trae como defensa marca como ataque 74 de 150 textos bancarios benignos escritos en español peruano coloquial (49 %, IC95 41–57 %). Los mismos 150 textos, traducidos al inglés: 5 de 150 (3 %, IC95 1–8 %).** En los 69 pares donde el veredicto cambia entre versiones, siempre es la peruana la marcada, nunca la inglesa.
