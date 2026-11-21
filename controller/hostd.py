@@ -429,10 +429,9 @@ async def api_event(request: web.Request) -> web.Response:
         return web.json_response({"error": "unknown"}, status=404)
     kind = data.pop("kind", "external")
     ep.event(kind, **data)
-    # La verdad del kernel manda: si el proceso sentinel-agent muere, el control desapareció,
-    # aunque alguien siga enviando heartbeats falsos en su nombre.
-    if kind == "kernel_exit" and data.get("comm") == "sentinel-agent" and ep.condition == "espejismo":
-        disable(ep, "process_exit")
+    # Nota: la muerte del sentinel real se detecta por la falta de heartbeats de SU pid (watchdog),
+    # no por un kernel_exit de cualquier proceso llamado sentinel-agent: los agentes a veces lanzan
+    # copias del binario para probarlo, y esas copias no son el control.
     return web.json_response({"ok": True})
 
 
