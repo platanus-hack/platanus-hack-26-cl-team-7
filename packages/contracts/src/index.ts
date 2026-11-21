@@ -637,4 +637,3 @@ export type ReportSummary = z.infer<typeof ReportSummary>;
 export const CreateReportRequest = z.object({ ip: z.ipv4().or(z.ipv6()) });
 export type CreateReportRequest = z.input<typeof CreateReportRequest>;
 
-export * from "./ultimo-paso.ts";

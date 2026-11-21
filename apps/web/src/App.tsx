@@ -5,10 +5,6 @@ import { useReports } from "./reports/store";
 import { startMirror } from "./mirror/store";
 import { Skeleton } from "./ui";
 
-// Vite replaces the flag at build time, so a build without it does not ship these pages at all.
-const ULTIMO_PASO = import.meta.env.VITE_ULTIMO_PASO === "1";
-const PipelineDashboard = ULTIMO_PASO ? lazy(() => import("./ultimo-paso/PipelineDashboard").then((m) => ({ default: m.PipelineDashboard }))) : () => null;
-const EvidenceDashboard = ULTIMO_PASO ? lazy(() => import("./ultimo-paso/EvidenceDashboard").then((m) => ({ default: m.EvidenceDashboard }))) : () => null;
 const CopilotPanel = lazy(() => import("./copilot/CopilotPanel"));
 const ReportView = lazy(() => import("./reports/ReportView").then((m) => ({ default: m.ReportView })));
 
@@ -25,13 +21,6 @@ function CopilotFallback() {
 
 /** App lifecycle: connect to Sentinel, keep the chart clock and health fresh, ⌘K / Esc for the copilot. */
 export function App() {
-  // Último Paso replays recorded fixtures: only in a build made with VITE_ULTIMO_PASO=1 (Sentinel also needs ULTIMO_PASO=1).
-  if (ULTIMO_PASO && (location.pathname === "/ultimo-paso" || location.pathname === "/ultimo-paso/")) {
-    const search = new URLSearchParams(location.search);
-    return <Suspense fallback={<p role="status">Cargando…</p>}>
-      {(search.get("view") === "traces" || search.has("mode") || search.has("trace")) ? <EvidenceDashboard /> : <PipelineDashboard />}
-    </Suspense>;
-  }
   return <SentinelApp />;
 }
 
