@@ -45,6 +45,8 @@ Cloudflare lanzó el 21/10/2026 una protección que retiene la respuesta de un a
 - En Espejismo el caso más grave se provocó con una instrucción de atacante, y en 16 a 22 de 35 corridas sin ella el agente escribió que sospechaba estar en una prueba.
 
 ## Verlo
+- **El panel de Reaper, funcionando en línea:** https://neowaf.paoloose.site (botón «Modo demo», 7 pasos).
+- La web y las láminas: https://reaper.haroldmedrano33.workers.dev
 - Las 95 corridas reales de Espejismo, lo que cada agente reportó contra lo que registró el sistema: https://espejismo-demo.haroldmedrano33.workers.dev/explorar
 - Videos: [la propuesta](https://espejismo-demo.haroldmedrano33.workers.dev/video/propuesta.mp4) · [lo dicho contra lo registrado](https://espejismo-demo.haroldmedrano33.workers.dev/video/dicho-vs-hecho.mp4)
 - El panel de Reaper corre en local con `pnpm install && pnpm start` (modo de repetición, sin credenciales).
