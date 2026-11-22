@@ -9,6 +9,13 @@
 ## El problema
 Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelven a probar, a velocidad de máquina. En julio de 2026, durante una evaluación, agentes de OpenAI entraron a sistemas de Hugging Face y nadie lo vio a tiempo ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). Quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.
 
+## Por qué importa
+- **En la web ya hay más máquinas que personas.** El tráfico automatizado superó al humano en mayo de 2026, empujado por agentes y crawlers de IA ([Cloudflare, 27/09/2026](https://blog.cloudflare.com/cloudflares-2026-annual-founders-letter/)).
+- **Ya existe el agente que ataca solo.** Google documentó el 16/11/2026 el primer marco que descubre y explota fallas web «without a human in the loop» ([GTIG](https://cloud.google.com/blog/topics/threat-intelligence/agentic-threat-activity-crosses-a-significant-threshold)).
+- **La mayoría está sin escudo.** El 65,2 % de los sitios no tiene delante ningún proxy ni CDN de los grandes proveedores ([W3Techs, 22/11/2026](https://w3techs.com/technologies/overview/proxy)).
+- **En Chile hay reloj.** La Ley 21.663 da a los servicios esenciales un máximo de 3 horas para la alerta temprana de un incidente significativo; 3.258 instituciones ya están inscritas para reportar ([ANCI, Balance 2025](https://anci.gob.cl/documents/4866/Palabras_Balance_2025.pdf)).
+- **Con mesura:** los agentes de IA todavía son una fracción chica del tráfico (4,2 % de las solicitudes HTML en 2025, según Cloudflare Radar) y no encontramos un caso documentado en Chile o Perú. Lo que cambió en 2026 es la velocidad con que crece.
+
 ## Qué hace
 | Paso | Qué hace | Dónde está |
 |---|---|---|
