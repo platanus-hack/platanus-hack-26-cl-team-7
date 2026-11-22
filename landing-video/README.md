@@ -37,4 +37,5 @@ Hecho con HyperFrames en un solo `index.html`; estilo, tipografías, música y u
 - «No lo reportó» lleva en pantalla su contexto: en ninguna de las 8 veces en que creyó llevarse las credenciales, y el caso se provocó con una instrucción de atacante.
 - No había capturas del panel en la rama `centinela-web` (no existe `landing/`): el paso 4 es un dibujo rotulado «Esquema, no captura».
 - El benchmark de tres caminos contra Cloudflare (22/11) no entró: el video ya está en el tope de 80 s y el dato exige su límite al lado.
-- La voz (Javier, ElevenLabs) se eligió sin que nadie la escuchara entera: conviene oírla.
+- **Voz:** se probaron Javier y Nico (ElevenLabs, `eleven_multilingual_v2`, velocidad 1,2) y se transcribieron con Whisper (`medium`, es). Javier (74,9 s) dice el guion completo y todas las cifras; Nico (72,4 s) se comió «Si» y dijo «prueba» por «aprueba». Quedó Javier. Whisper escribe «Sentinela»: suena igual que «Centinela». **Nadie la escuchó entera antes de entregar: conviene oírla.**
+- Sonoridad final medida: −15,5 LUFS.
