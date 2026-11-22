@@ -16,6 +16,9 @@ IGNORED_HEADERS = frozenset({"date"})
 SET_COOKIE = "set-cookie"
 SESSION_VALUE = re.compile(r"(?<![\w-])session=[^;]*")
 BLANK_SESSION = "session=<value>"
+# The decoy path robots.txt gives each client (mirror.markers): it differs per client, not per lane.
+MARKER = re.compile(rb"/admin-backup-[0-9a-f]{12}/")
+BLANK_MARKER = b"/admin-backup-<marker>/"
 HUMAN = "human"
 # What a twin answer must never show: our sockets, the run folder, the loopback address the
 # services listen on, the relay port and host paths.
@@ -39,10 +42,11 @@ class Answer:
 
 
 def comparable(status: int, headers: Iterable[tuple[str, str]], body: bytes) -> Answer:
-    """The response without Date and with session cookie values blanked. Header names are lower
-    case and sorted, so only names and values count, not their order."""
+    """The response without Date and with session cookie values and robots.txt markers blanked.
+    Header names are lower case and sorted, so only names and values count, not their order."""
     kept = sorted(_normal(name.lower(), value) for name, value in headers)
-    return Answer(status, tuple(pair for pair in kept if pair[0] not in IGNORED_HEADERS), body)
+    shown = tuple(pair for pair in kept if pair[0] not in IGNORED_HEADERS)
+    return Answer(status, shown, MARKER.sub(BLANK_MARKER, body))
 
 
 def _normal(name: str, value: str) -> tuple[str, str]:

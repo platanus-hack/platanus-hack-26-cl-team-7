@@ -42,6 +42,17 @@ def test_comparable_ignores_date_order_and_session_values() -> None:
     assert all(name != "date" for name, _ in real.headers)
 
 
+def test_comparable_blanks_the_robots_marker_and_nothing_near_it() -> None:
+    robots = b"User-agent: *\nAllow: /\nDisallow: /admin-backup-%s/\n"
+    real = comparable(200, [], robots % b"0123456789ab")
+    twin = comparable(200, [], robots % b"ba9876543210")
+    assert differences(real, twin) == []
+    for other in (b"0123456789a", b"0123456789AB", b"0123456789abc"):
+        assert differences(real, comparable(200, [], robots % other)) != []
+    changed = robots.replace(b"Allow", b"Deny") % b"0123456789ab"
+    assert differences(real, comparable(200, [], changed)) != []
+
+
 def test_differences_name_status_headers_and_first_body_byte() -> None:
     real = comparable(200, [("Set-Cookie", "cart=1:2; Path=/")], b"abcdef")
     twin = comparable(404, [("Set-Cookie", "cart=9:9; Path=/"), ("X-Extra", "1")], b"abXdef!")

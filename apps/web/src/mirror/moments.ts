@@ -63,6 +63,8 @@ export function agentName(ua: string): string {
 
 /** Why the router caught an agent, in plain Spanish. */
 export function caughtFor(t: Pick<Track, "rule" | "reason">): string {
+  // The router's swarm link (agent-detection/mirror/swarm.py) opens its tracks as R1 with this reason.
+  if (t.reason.startsWith("swarm link")) return "Usó una ruta señuelo que solo recibió otro agente";
   if (t.rule === "R1") return "Buscó páginas que no existen";
   if (t.rule === "R2") return "Revisó muchas páginas muy rápido";
   const sig = /critical flag: ([^(]+)/.exec(t.reason)?.[1]?.trim();

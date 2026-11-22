@@ -99,7 +99,52 @@ rate on anomalous requests is expected for R3 alone: many CSIC anomalies are par
 tampering or sit in POST bodies, which Caddy does not log. In the replayed sessions, R1 still
 catches every CSIC session because the demo site has no /tienda1 routes.
 
+## Swarm link (mirror lane)
+
+The mirror router links two identities when one asks for the decoy path that only the other
+was given in its robots.txt (`mirror/swarm.py`). `uv run python -m eval.swarm` sends eight scripted
+groups through the lane router twice, with and without the link, and prints this table.
+
+**Limits first.** Every group is a script we wrote, not traffic from a real swarm of LLM agents:
+the table shows that the mechanism does what it is meant to do, not how often real swarms share a
+robots.txt path. A swarm that drops such paths before it shares (row `swarm_stripping`) is not
+linked at all. The link needs one member to read robots.txt and another to act on it; a swarm
+that never reads robots.txt is judged by R1, R2 and R3 alone, as before. All requests of a group
+happen at once, the hardest case for the R1 and R2 windows.
+
+| Group | Identities | Mirror, rules only | Mirror, with link | Linked | Expected | Tracks | Real after link | Pass |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| swarm_shared | 6 | 0 | 6 | 6 | 6 | 1 | 4 | yes |
+| rotating_agent | 6 | 0 | 6 | 6 | 6 | 1 | 4 | yes |
+| swarm_isolated | 6 | 0 | 0 | 0 | 0 | 0 | 0 | yes |
+| swarm_stripping | 6 | 0 | 0 | 0 | 0 | 0 | 0 | yes |
+| crawler_fleet | 8 | 0 | 0 | 0 | 0 | 0 | 0 | yes |
+| shared_address | 12 | 0 | 0 | 0 | 0 | 0 | 0 | yes |
+| solo_scanner | 1 | 1 | 1 | 0 | 0 | 1 | 0 | yes |
+| humans | 200 | 1 | 1 | 0 | 0 | 1 | 0 | yes |
+
+- **Mirror, rules only / with link:** identities whose last request took the mirror lane.
+- **Linked:** identities only the link put there. **Expected** is what the script must give.
+- **Real after link:** requests of linked identities that still reached the real shop after the
+  first link. In `swarm_shared` each later worker sends one page before it uses the shared path.
+- `rotating_agent` is one address that changes its User-Agent on every request, the case the
+  IP + User-Agent session key misses.
+- The five control rows (`swarm_isolated`, `crawler_fleet`, `shared_address`, `solo_scanner`,
+  `humans`) end exactly as the rules alone leave them: 0 linked.
+
+Two more checks guard the ordinary detection:
+
+- `tests/test_swarm_invariance.py` replays every labeled request of both eval splits (humans,
+  scanners, CSIC) through both routers, each identity holding a marker. Lanes and events match
+  request for request.
+- `make eval-ci` is unchanged: the log engine does not use the link.
+
+`scripts/e2e_mirror.py` check 9 runs the link on the live stack (Caddy, router, shops, Sentinel):
+two clean clients end on one track and a third beside them stays on the real shop.
+
 ## Not measured
+
+- **Real LLM swarms.** No run with LLM agents that share memory. The swarm rows above are scripts.
 
 - **AI-agent recall.** There are no lab traces (CAI, PentestGPT, hackingBuddyGPT) yet, so
   `probing_ai` has 0 sessions in both splits.

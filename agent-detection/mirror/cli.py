@@ -1,9 +1,8 @@
 """python -m mirror: the attacker mirror router, in one process.
 
 One Router holds the key table, patch book and reporter. Each listener in LISTENERS takes it and
-returns a server (the lane endpoint, the tap, the callback relay), so all share the same keys.
-main() serves each listener on its own thread until SIGINT or SIGTERM, then closes the servers,
-flushes the reporter and closes the journals. A listener that cannot start exits with code 2.
+returns a server (lane endpoint, tap, callback relay, robots.txt), so all share the same keys.
+main() serves each on its own thread until a signal, then closes everything; exit 2 on no start.
 """
 
 from __future__ import annotations
@@ -35,6 +34,7 @@ from mirror.relay import relay_listener
 from mirror.reporter import SentinelReporter
 from mirror.session_copy import copy_session
 from mirror.sockets import UnixHTTPServer
+from mirror.swarm import lane_router, robots_listener
 from mirror.tap import tap_listener
 
 INGEST_ENV = "SENTINEL_INGEST_TOKEN"
@@ -95,7 +95,7 @@ def lane_listener(router: Router) -> socketserver.BaseServer:
     return UnixHTTPServer(router.config.lane, handler_for(router.lane))
 
 
-LISTENERS: tuple[Listener, ...] = (lane_listener, tap_listener, relay_listener)
+LISTENERS: tuple[Listener, ...] = (lane_listener, tap_listener, relay_listener, robots_listener)
 
 
 def build_router(config: RouterConfig, token: str) -> Router:
@@ -104,7 +104,7 @@ def build_router(config: RouterConfig, token: str) -> Router:
     keys = KeyTable.load(config.state)
     patches = PatchBook.load(config.patches, routes)
     reporter = SentinelReporter.to_sentinel(config.sentinel, token, config.spool)
-    lane = LaneRouter(detector, keys, patches, reporter.emit, partial(copy_session, config.sync))
+    lane = lane_router(detector, keys, patches, reporter.emit, partial(copy_session, config.sync))
     return Router(config, routes, keys, patches, reporter, lane, Grants())
 
 

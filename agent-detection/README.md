@@ -9,6 +9,11 @@ The engine reads that log, groups requests by IP + User-Agent and applies three 
 
 Verdicts go to a webhook and show on a one-page dashboard.
 
+The mirror router (`python -m mirror`) sends a flagged session to a twin of the site. Its swarm
+link (`mirror/swarm.py`) also links two identities that share one decoy path: each client gets its
+own `Disallow` line in robots.txt, and a request for another client's path puts both on one
+track. `MIRROR_SWARM_LINK=0` turns it off. Results: `eval/RESULTS.md`, section "Swarm link".
+
 Plan: `plans/ai-agent-detection-v0-plan.html`. Gates: `CONSTRAINTS.md`. Results: `eval/RESULTS.md`.
 
 ## Run
@@ -19,6 +24,7 @@ All commands run from this folder.
 uv sync
 make check                          # size, floor, lint, types, secrets, tests + changed-line coverage
 make eval-ci                        # labeled replay, test-set lock, baseline
+uv run python -m eval.swarm         # swarm link: scripted swarms and control groups
 bash scripts/stack_local.sh start   # demo site :8081, Caddy :8080, dashboard :8090, engine
 bash scripts/stack_local.sh stop
 ```

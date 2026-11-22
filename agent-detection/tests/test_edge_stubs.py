@@ -1,14 +1,14 @@
 """Shared harness for tests/test_edge_*.py: deploy/Caddyfile.local run by a real Caddy against
 stub Unix-socket services. It holds no tests (the test_edge_ name keeps it with the edge tests).
 
-The stubs stand in for the real shop (run/real.sock), the router's lane endpoint (run/lane.sock)
-and its tap (run/tap.sock). The lane stub puts any User-Agent with "agent" in it on the mirror
-lane. Every stub answers the same body, and each sends its own Server, Via and X-Powered-By
-values, so a response header that survives the edge would tell the lanes apart. The tap also sends
-a second, older Date, as a proxy that copies the twin's Date beside its own would. Each stub's
-listen queue holds one connection, so a burst overflows it and refuses dials, as a busy router
-would. A dropping stub reads the request and closes the connection without an answer. Caddy must
-be on PATH (Homebrew caddy locally; CI needs an install step).
+The stubs stand in for the real shop (run/real.sock), the router's lane endpoint (run/lane.sock),
+its tap (run/tap.sock) and its robots listener (run/robots.sock). The lane stub puts any User-Agent
+with "agent" in it on the mirror lane. Every stub answers the same body, and each sends its own
+Server, Via and X-Powered-By values, so a response header that survives the edge would tell the
+lanes apart. The tap also sends a second, older Date, as a proxy that copies the twin's Date beside
+its own would. Each stub's listen queue holds one connection, so a burst overflows it and refuses
+dials, as a busy router would. A dropping stub reads the request and closes the connection without
+an answer. Caddy must be on PATH (Homebrew caddy locally; CI needs an install step).
 """
 
 from __future__ import annotations
@@ -158,6 +158,7 @@ class Edge:
     real: Stub
     lane: Stub
     tap: Stub
+    robots: Stub
 
     def send(
         self,
@@ -204,7 +205,7 @@ def edge_fixture() -> Iterator[Edge]:
         port = _free_port()
         stubs = [
             serve(Stub(name, extra=EXTRA_HEADERS.get(name, ())), root / "run" / f"{name}.sock")
-            for name in ("real", "lane", "tap")
+            for name in ("real", "lane", "tap", "robots")
         ]
         # The Caddyfile's socket and log paths are relative, so they resolve inside root.
         command = [caddy_bin, "run", "--config", str(CADDYFILE), "--adapter", "caddyfile"]

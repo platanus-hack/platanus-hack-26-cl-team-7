@@ -4,7 +4,8 @@
 #   real      real shop on run/real.sock, data in run/real.db and run/real-files
 #   twin      twin shop on run/twin.sock, masked data in run/twin.db, egress only via the relay
 #   sync      real-side sync service on run/sync.sock (public rows, copy on flag)
-#   router    lane endpoint run/lane.sock, tap run/tap.sock, callback relay 127.0.0.1:8097
+#   router    lane endpoint run/lane.sock, tap run/tap.sock, robots.txt run/robots.sock,
+#             callback relay 127.0.0.1:8097
 #   caddy     public edge on :8080 (deploy/Caddyfile.local, JSON log in run/access.log)
 # Before the first start, demo.seed writes run/real.db and demo.mask writes run/twin.db and
 # run/canaries.json; each runs until it succeeds once (run/seed.done, run/mask.done). The ingest token for
@@ -41,7 +42,7 @@ endpoints_of() {
     real) echo "sock:real.sock" ;;
     twin) echo "sock:twin.sock" ;;
     sync) echo "sock:sync.sock" ;;
-    router) echo "sock:lane.sock sock:tap.sock port:$STACK_RELAY_PORT" ;;
+    router) echo "sock:lane.sock sock:tap.sock sock:robots.sock port:$STACK_RELAY_PORT" ;;
     caddy) echo "port:$STACK_EDGE_PORT" ;;
   esac
 }

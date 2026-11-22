@@ -7,9 +7,9 @@ Stops any running stack, deletes the router's keys, spool and patches from earli
 Benign requests only: the one flag is GET /.env, which R3 marks critical. The planted flaws on the
 twin are covered by tests/test_twin_*.py and tests/test_mirror_tap_e2e.py, not here.
 
-Checks: 1 routing, 2 recording, 3 real data untouched, 4 follow keys, 5 lane parity,
-6 performance, 7 humans, 8 resilience. Each prints PASS or FAIL with its evidence; the report
-holds them all. Exit code 0 when every check passes, 1 when one fails, 2 when the stack fails.
+Checks: 1 routing, 2 recording, 3 real data untouched, 4 follow keys, 5 lane parity, 6 performance,
+7 humans, 8 resilience, 9 swarm link. Each prints PASS or FAIL with its evidence; the report holds
+them all. Exit code 0 when every check passes, 1 when one fails, 2 when the stack fails.
 Loopback only: the clients are 127.0.0.1 (flagged) and ::1 (clean, or following a twin cookie).
 It takes about seven minutes: the human replay keeps the sessions' recorded pace.
 """
@@ -25,7 +25,7 @@ import secrets
 import sys
 import time
 
-from e2e import ops, parity, routing, stack
+from e2e import ops, parity, routing, stack, swarm
 from e2e.context import Ctx
 from e2e.wire import NET_ERRORS, Stream, sentinel
 
@@ -71,6 +71,7 @@ def main(argv: list[str] | None = None) -> int:
 def _run(ctx: Ctx, human_speed: float) -> None:
     ctx.stream.start()
     routing.run(ctx)
+    swarm.run(ctx)
     humans = ops.Humans(ctx.run, human_speed)
     humans.start()
     differences = parity.parity(ctx)

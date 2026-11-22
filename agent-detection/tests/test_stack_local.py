@@ -22,9 +22,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 SERVICES = ("sentinel", "real", "twin", "sync", "router", "caddy")
-FAKE_UV = """#!/bin/sh
-echo "$FAKE_PYTHON"
-"""
+FAKE_UV = '#!/bin/sh\necho "$FAKE_PYTHON"\n'
 FAKE_PYTHON = """#!{python}
 import os, socket, sys, time
 from pathlib import Path
@@ -46,7 +44,8 @@ def opt(name):
 if module == "listen":
     who, endpoints = rest[0], rest[1:]
 elif module == "mirror":
-    who, endpoints = "router", [opt("--lane"), opt("--tap"), "port:" + opt("--relay").split(":")[1]]
+    relay = "port:" + opt("--relay").split(":")[1]
+    who, endpoints = "router", [opt("--lane"), opt("--tap"), "run/robots.sock", relay]
 else:
     who, endpoints = Path(opt("--socket")).stem, [opt("--socket")]
 Path("run", who + ".seen-token").write_text(os.environ.get("SENTINEL_INGEST_TOKEN", ""))

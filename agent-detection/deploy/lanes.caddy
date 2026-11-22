@@ -1,11 +1,13 @@
 # Lane rules shared by deploy/Caddyfile (compose) and deploy/Caddyfile.local, so both edges route
 # the same way. Use inside a site block: `import lanes <socket dir>`, where the directory holds
-# lane.sock (router lane endpoint), tap.sock (router tap) and real.sock (real shop).
+# lane.sock (router lane endpoint), tap.sock (router tap), robots.sock (router robots.txt) and
+# real.sock (real shop).
 #
 # Per request, in order:
 #   1. delete the client's copies of the lane headers, then set X-Client-Ip and X-Request-Id;
 #   2. ask the router's lane endpoint (GET /lane) which lane the request takes;
-#   3. the mirror lane and every login POST go to the tap, the rest to the real shop;
+#   3. GET /robots.txt goes to the router's robots listener; the mirror lane and every login
+#      POST go to the tap, the rest to the real shop;
 #   4. delete response headers that name the software or could tell the lanes apart.
 # The router is down when the lane endpoint cannot be reached or does not answer in time: the
 # request then fails OPEN to the real shop, and so does a real-lane login POST whose tap cannot be
@@ -84,6 +86,25 @@
 			}
 		}
 		vars edge_stage routed
+
+		# GET /robots.txt comes from the router on both lanes (mirror.robots), so the two lanes
+		# answer alike: the file carries one decoy path per client, and the router reports a
+		# mirror-lane read as the tap would. On the real lane a router that cannot be reached
+		# fails open to the real shop; on the mirror lane it keeps its error, as the tap does.
+		# The path is compared exactly: /ROBOTS.TXT or /./robots.txt goes to the shop, as before.
+		@robots {
+			method GET
+			expression `{http.request.uri.path} == "/robots.txt"`
+		}
+		@robots_real {
+			method GET
+			expression `{http.request.uri.path} == "/robots.txt"`
+			not header X-Lane mirror
+		}
+		vars @robots_real edge_stage lane
+		reverse_proxy @robots unix/{args[0]}/robots.sock {
+			import dial_retry
+		}
 
 		@mirror header X-Lane mirror
 		import tap @mirror {args[0]}

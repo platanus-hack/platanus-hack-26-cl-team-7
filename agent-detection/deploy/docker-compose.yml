@@ -11,6 +11,7 @@
 # real-side sockets. Services without network_mode none are the ones that need TCP: Caddy (public
 # port), the router (Sentinel, callback relay) and Sentinel (dashboard, AI).
 #   edge-sockets  /run/edge   real.sock lane.sock tap.sock sync.sock    real sync router caddy
+#                             robots.sock (beside lane.sock)             router caddy
 #   twin-sockets  /run/twin   twin.sock relay.sock                      twin router twin-egress
 #                                                                       relay-bridge
 #   real-data     /data/real  real.db real-files                        seed mask real sync
@@ -167,6 +168,8 @@ services:
       - sentinel
     environment:
       SENTINEL_INGEST_TOKEN: ${SENTINEL_INGEST_TOKEN:?set SENTINEL_INGEST_TOKEN in deploy/.env}
+      # 0 turns the swarm link off (mirror/swarm.py): robots.txt is then the shop's own.
+      MIRROR_SWARM_LINK: ${MIRROR_SWARM_LINK:-1}
     command:
       - python
       - -m
