@@ -1,0 +1,12 @@
+{
+ "history": [
+  {
+   "at": "2026-11-22T03:41:50.764Z",
+   "mode": "hook",
+   "host": "claude",
+   "decision": "block",
+   "reason": "landing/index.html is a tasteskill page with no build armed: told how to arm it",
+   "stopHookActive": false
+  }
+ ]
+}
