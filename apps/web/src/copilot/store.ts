@@ -144,7 +144,7 @@ export const useCopilot = create<CopilotState>((set, get) => ({
       }
     } catch (e) {
       const aborted = e instanceof DOMException && e.name === "AbortError";
-      push(aborted ? { type: "done", at: Date.now(), reasoningMs: 0 } : { type: "error", code: "network", message: "Sentinel is not reachable." });
+      push(aborted ? { type: "done", at: Date.now(), reasoningMs: 0 } : { type: "error", code: "network", message: "Reaper is not reachable." });
     } finally {
       ctrl = null;
       if (raf) cancelAnimationFrame(raf);

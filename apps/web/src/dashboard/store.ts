@@ -30,7 +30,7 @@ export interface LiveData {
   range: Range;
   bucketMs: number;
   now: number;
-  /** Sentinel process identity. A different epoch means our state no longer matches the server. */
+  /** Reaper process identity. A different epoch means our state no longer matches the server. */
   epoch: string;
   seq: number;
   series: SeriesPoint[];
@@ -76,7 +76,7 @@ export function pruneAttackers(data: LiveData, now: number): LiveData {
   return attackers === data.attackers ? data : { ...data, attackers };
 }
 
-/** True when the stream belongs to another Sentinel process than our snapshot: reload, do not apply. */
+/** True when the stream belongs to another Reaper process than our snapshot: reload, do not apply. */
 export const isStaleEpoch = (data: LiveData, epoch: string) => epoch !== data.epoch;
 
 /** Splits batches into those we can apply and tells whether any came from another epoch (then reload). */
@@ -364,7 +364,7 @@ function openStream(epoch: string, seq: number) {
     if (source !== es) return;
     try {
       const ready = JSON.parse((ev as MessageEvent<string>).data) as { epoch: string; seq: number };
-      // Sentinel restarted: our snapshot belongs to the old process.
+      // Reaper restarted: our snapshot belongs to the old process.
       if (isStaleEpoch(useDashboard.getState().data, ready.epoch)) reloadSnapshot();
     } catch {
       /* ignore malformed frame */

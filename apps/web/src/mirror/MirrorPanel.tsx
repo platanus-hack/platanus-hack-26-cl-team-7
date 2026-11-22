@@ -1,5 +1,5 @@
 /**
- * Sentinel's one screen. Interface: `<MirrorPanel sidebarOverlay={…} />`.
+ * Reaper's one screen. Interface: `<MirrorPanel sidebarOverlay={…} />`.
  * Left: the Dashboard link and the live list of caught agents, always open.
  * Middle: the Dashboard (all vulnerabilities) or the selected agent (graph, vulnerabilities, requests).
  * Right: the copilot, when open.

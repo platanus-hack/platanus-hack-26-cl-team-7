@@ -6,7 +6,7 @@ OWASP Top 10:2025: A07:2025 Authentication Failures. CWE-307 (excessive authenti
 The login accepts unlimited attempts, so lists of leaked username and password pairs can be tried at speed. Reused passwords then give access.
 
 ## Signals in the logs
-- Many failed logins from one IP in a short time (Sentinel: 5 in 60 s).
+- Many failed logins from one IP in a short time (Reaper: 5 in 60 s).
 - Many different usernames from one IP, or one password across many usernames (password spray).
 - A 200 on `/login` among many 401s: one account may be taken over. The log does not show which account.
 

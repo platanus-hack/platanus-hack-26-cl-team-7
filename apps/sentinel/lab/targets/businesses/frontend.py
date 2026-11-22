@@ -24,7 +24,7 @@ def directory(businesses):
 <span>{escape(b.sector)}</span><strong>{escape(b.name)}</strong><div>{escape(PRODUCT[b.slug][1])}</div>
 <span class="open">Abrir servicio <span aria-hidden="true">↗</span></span></a>''' for b in businesses)
     return page("Servicios de prueba", "directory", f'''<main class="frame">
-<header class="directory-heading"><p>Último Paso</p><h1>Servicios de prueba</h1>
+<header class="directory-heading"><p>Reaper</p><h1>Servicios de prueba</h1>
 <p>Completa una operación en cualquiera de los cuatro proyectos. Los datos de estas aplicaciones son ficticios.</p></header>
 <div class="directory-grid">{cards}</div></main>''')
 

@@ -38,7 +38,7 @@ export interface AppDeps {
   heartbeatMs?: number;
   /** Extra origins allowed to call the API. The bundled web app is same-origin and needs none. */
   allowedOrigins?: string[];
-  /** Folder with the built web app. When it holds an index.html, Sentinel serves it at "/". */
+  /** Folder with the built web app. When it holds an index.html, Reaper serves it at "/". */
   webRoot?: string;
   presentationRoot?: string;
   /** Host names the API answers besides localhost. Anything else is refused, which stops DNS rebinding. */
@@ -222,7 +222,7 @@ export function createApp({ store, bus, ai, deception, version = "0.1.0", starte
   app.post("/copilot/messages", bodyLimit({ maxSize: 512 * 1024, onError: (c) => fail(c, 413, "too_large", "Body over 512 KB") }), async (c) => {
     const parsed = CopilotRequest.safeParse(await c.req.json().catch(() => undefined));
     if (!parsed.success) return fail(c, 400, "invalid_request", z.prettifyError(parsed.error));
-    if (!ai.enabled) return fail(c, 503, "ai_unavailable", "AI is not configured. Set ANTHROPIC_API_KEY for Sentinel.");
+    if (!ai.enabled) return fail(c, 503, "ai_unavailable", "AI is not configured. Set ANTHROPIC_API_KEY for Reaper.");
     c.header("Cache-Control", "no-store");
     return streamSSE(c, async (stream) => {
       const ctrl = new AbortController();

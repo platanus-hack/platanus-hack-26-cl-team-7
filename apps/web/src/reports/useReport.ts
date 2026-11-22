@@ -16,7 +16,7 @@ export type ReportState =
 
 export function errorText(e: unknown): string {
   if (e instanceof ApiRequestError) return e.message;
-  return e instanceof Error && e.name !== "AbortError" ? e.message : "Sentinel did not answer. Try again.";
+  return e instanceof Error && e.name !== "AbortError" ? e.message : "Reaper did not answer. Try again.";
 }
 
 /** Maps a failed request to a view state. AI off is a notice, not an error. */

@@ -36,7 +36,7 @@ function TitleBar({ view, select }: { view: View; select: (view: View) => void }
           Reaper está desconectado
         </span>
       )}
-      <nav className="sentinel-views" aria-label="Vistas de Centinela">
+      <nav className="sentinel-views" aria-label="Vistas de Reaper">
         <a className="ask" href="/presentacion/">Presentación</a>
         <button type="button" className="ask" aria-pressed={view === "experiments"} onClick={() => select("experiments")}>Experimentos</button>
         <button type="button" className="ask" aria-pressed={view === "mirror"} onClick={() => select("mirror")}>Mirror</button>

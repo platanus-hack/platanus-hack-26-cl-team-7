@@ -98,12 +98,12 @@ describe("HTTP API", () => {
   it("serves the web app with immutable assets, a fresh shell and JSON 404s under /v1", async () => {
     const dir = mkdtempSync(join(tmpdir(), "sentinel-web-"));
     mkdirSync(join(dir, "assets"));
-    writeFileSync(join(dir, "index.html"), "<!doctype html><title>Sentinel</title>");
+    writeFileSync(join(dir, "index.html"), "<!doctype html><title>Reaper</title>");
     writeFileSync(join(dir, "assets", "app-abc123.js"), "console.log(1)");
     const { store, bus, ai, deception } = setup();
     const app = createApp({ store, bus, ai, deception, webRoot: dir });
     const home = await app.request("/");
-    expect(await home.text()).toContain("<title>Sentinel</title>");
+    expect(await home.text()).toContain("<title>Reaper</title>");
     const deep = await app.request("/attackers/203.0.113.42");
     expect(deep.status).toBe(200);
     expect(deep.headers.get("Cache-Control")).toBe("no-cache");

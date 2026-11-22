@@ -1,5 +1,5 @@
 /**
- * The attack path of one caught agent as a small graph (React Flow): agent -> Sentinel -> fake copy,
+ * The attack path of one caught agent as a small graph (React Flow): agent -> Reaper -> fake copy,
  * with the path to the real shop blocked. Interface: `<AttackGraph track moment shot decoys />`.
  * Each time `shot` changes, up to 5 requests travel to the fake copy and back (Motion), coloured by
  * what the agent got. Strings from the track render as text only.
@@ -73,7 +73,7 @@ const CardNodeView = memo(function CardNodeView({ data }: NodeProps<CardNode>) {
 type PacketData = { hop: 0 | 1; shot: number; count: number; back: string };
 type PacketEdgeT = Edge<PacketData, "packet">;
 
-/** An edge that carries requests: hop 0 is agent -> Sentinel, hop 1 is Sentinel -> fake copy. */
+/** An edge that carries requests: hop 0 is agent -> Reaper, hop 1 is Reaper -> fake copy. */
 function PacketEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, style }: EdgeProps<PacketEdgeT>) {
   const [path] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
   const line = useRef<SVGPathElement>(null);
@@ -131,7 +131,7 @@ function PacketEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
   );
 }
 
-/** The path Sentinel keeps closed: to the real shop. */
+/** The path Reaper keeps closed: to the real shop. */
 function BlockedEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }: EdgeProps) {
   const [path] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
   return <BaseEdge id={id} path={path} style={{ stroke: "var(--c-danger)", strokeOpacity: 0.45, strokeDasharray: "3 5", strokeWidth: 1.25 }} />;
@@ -177,7 +177,7 @@ export function AttackGraph({ track, moment, shot, decoys }: { track: Track; mom
     [shot, count, back],
   );
   return (
-    <div className="ag" role="img" aria-label="Ruta del ataque: el agente pasa por Sentinel a la copia falsa; la tienda real está bloqueada.">
+    <div className="ag" role="img" aria-label="Ruta del ataque: el agente pasa por Reaper a la copia falsa; la tienda real está bloqueada.">
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -3,7 +3,7 @@ import { z } from "zod";
 export * from "./evidence-demo.ts";
 export * from "./experiments.ts";
 
-/** Sentinel API version prefix. Every route lives under it. */
+/** Reaper API version prefix. Every route lives under it. */
 export const API_PREFIX = "/v1";
 export const DEFAULT_PORT = 8787;
 
@@ -147,7 +147,7 @@ export const Snapshot = z.object({
   attackers: z.array(Attacker),
   /** Stream position this snapshot includes. Connect with `?after=${epoch}-${seq}`. */
   seq: z.number().int(),
-  /** Changes on every Sentinel restart. A different epoch means the client must reload the snapshot. */
+  /** Changes on every Reaper restart. A different epoch means the client must reload the snapshot. */
   epoch: z.string(),
 });
 export type Snapshot = z.infer<typeof Snapshot>;
@@ -333,7 +333,7 @@ export const Finding = z.object({
   ts: z.number().int(),
   /** null until the AI has written one (or when AI is off). */
   proposal: FixProposal.nullable(),
-  /** "failed" once the AI gave up on it; a Sentinel restart tries again. "pending" while AI is off. */
+  /** "failed" once the AI gave up on it; a Reaper restart tries again. "pending" while AI is off. */
   proposalStatus: ProposalStatus,
 });
 export type Finding = z.infer<typeof Finding>;
@@ -443,7 +443,7 @@ export const LOG_STORES = ["sen", "acc", "eng"] as const;
 export const LogStore = z.enum(LOG_STORES);
 export type LogStore = z.infer<typeof LogStore>;
 export const LOG_STORE_LABEL: Record<LogStore, string> = {
-  sen: "Sentinel events",
+  sen: "Reaper events",
   acc: "Access log",
   eng: "Engine verdicts",
 };

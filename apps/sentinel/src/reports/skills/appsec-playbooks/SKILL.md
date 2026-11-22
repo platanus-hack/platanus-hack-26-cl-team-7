@@ -1,6 +1,6 @@
 ---
 name: appsec-playbooks
-description: Use when proposing a code-level fix for a web attack seen in Sentinel logs (SQL injection, XSS, path traversal, credential stuffing, prompt injection, jailbreak). One playbook per attack type with root cause, CWE, OWASP Top 10:2025 category, the fix and how to test it.
+description: Use when proposing a code-level fix for a web attack seen in Reaper logs (SQL injection, XSS, path traversal, credential stuffing, prompt injection, jailbreak). One playbook per attack type with root cause, CWE, OWASP Top 10:2025 category, the fix and how to test it.
 ---
 
 # AppSec playbooks

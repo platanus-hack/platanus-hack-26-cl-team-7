@@ -1,7 +1,7 @@
 import { API_PREFIX, DEFAULT_PORT, type IngestEvent } from "@sentinel/contracts";
 
 /**
- * Sends demo attack traffic to Sentinel. All IPs come from documentation ranges
+ * Sends demo attack traffic to Reaper. All IPs come from documentation ranges
  * (RFC 5737), so they never point at a real host. Location hints travel with the
  * events, the same way a CDN header would.
  */
@@ -117,7 +117,7 @@ async function tick(): Promise<void> {
     if (failures) console.log("[sim] connected");
     failures = 0;
   } catch {
-    if (failures++ % 20 === 0) console.log(`[sim] waiting for Sentinel at ${BASE}…`);
+    if (failures++ % 20 === 0) console.log(`[sim] waiting for Reaper at ${BASE}…`);
   }
 }
 

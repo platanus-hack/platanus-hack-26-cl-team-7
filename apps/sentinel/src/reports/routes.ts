@@ -21,7 +21,7 @@ const IpParam = CreateReportRequest.shape.ip;
 export function reportRoutes(service: ReportService | null): Hono {
   const app = new Hono();
   if (!service) {
-    app.all("*", (c) => fail(c, 503, "AI_DISABLED", "Incident reports are off. Set ANTHROPIC_API_KEY for Sentinel and restart it."));
+    app.all("*", (c) => fail(c, 503, "AI_DISABLED", "Incident reports are off. Set ANTHROPIC_API_KEY for Reaper and restart it."));
     return app;
   }
 
@@ -29,7 +29,7 @@ export function reportRoutes(service: ReportService | null): Hono {
     const body = CreateReportRequest.safeParse(await json(c));
     if (!body.success) return fail(c, 400, "BAD_INPUT", z.prettifyError(body.error));
     const result = service.create(body.data.ip);
-    if ("error" in result) return fail(c, 404, "NOT_FOUND", "Sentinel has not seen this IP.");
+    if ("error" in result) return fail(c, 404, "NOT_FOUND", "Reaper has not seen this IP.");
     return c.json(result.report, result.created ? 202 : 200);
   });
 

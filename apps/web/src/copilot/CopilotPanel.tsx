@@ -340,12 +340,12 @@ export default function CopilotPanel() {
             {aiOff ? (
               <div>
                 <b>AI is unavailable</b>
-                <p className="mt-2 mb-0">Set ANTHROPIC_API_KEY for Sentinel and restart it. Detection keeps running with rules in the meantime.</p>
+                <p className="mt-2 mb-0">Set ANTHROPIC_API_KEY for Reaper and restart it. Detection keeps running with rules in the meantime.</p>
               </div>
             ) : offline ? (
               <div>
-                <b>Sentinel is not reachable</b>
-                <p className="mt-2 mb-0">The copilot answers when the Sentinel service is running.</p>
+                <b>Reaper is not reachable</b>
+                <p className="mt-2 mb-0">The copilot answers when the Reaper service is running.</p>
               </div>
             ) : (
               <div>
