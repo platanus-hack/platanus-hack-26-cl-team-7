@@ -17,9 +17,8 @@ fails, **[review]** means only a reviewer catches it.
 | `tools/simulator` | Demo traffic generator (typecheck only, no tests) | Product |
 | `agent-detection/` | Detection engine, mirror lane (router, twin, tap, relay), demo shop, eval. Has its own `CONSTRAINTS.md` | Product |
 | `apps/sentinel/src/reports/skills/` | AppSec playbooks the report agent loads. A change here changes model behavior | Product, prompt |
-| `.agents/skills/` | Skills for coding agents (vendored `mastra`). The product never loads them | Tooling |
 | `evidencia-agentes/`, `experiments/` | Recorded evidence and benchmark data | Data, read-only |
-| `related_experiments/` | Archived research, including `demo-david/`. Published numbers come from it | Archive, read-only |
+| `related_experiments/` | Retained Espejismo and Ultimo Paso research and evidence demo inputs | Archive, read-only |
 | `landing/`, `media/`, `reports/` | Web, pitch video and research (notes in `reports/notes/`) | Content |
 
 The product is **Reaper**. In code it is still `sentinel` (`@sentinel/*`, `apps/sentinel`, `SENTINEL_*`).

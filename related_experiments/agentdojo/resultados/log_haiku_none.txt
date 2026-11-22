@@ -1,1 +1,0 @@
-{"model": "claude-haiku-5-5", "ataque": "none", "defensa": "none", "utilidad": "50% (4/8, IC95 22%–78%)"}
