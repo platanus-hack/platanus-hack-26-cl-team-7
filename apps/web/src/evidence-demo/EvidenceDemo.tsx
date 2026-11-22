@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DemoObservation, EvidenceDemoBundle, RecordedBankRun, SyntheticDetectorRun } from "@sentinel/contracts";
+import type { DemoObservation, EvidenceDemoBundle, EvidenceDemoEvaluation, RecordedBankRun, SyntheticDetectorRun } from "@sentinel/contracts";
 import { api } from "../sentinel";
 import { Section } from "../reports/parts";
 import "./evidence-demo.css";
@@ -111,11 +111,34 @@ export function DetectorEvidence({ run }: { run: SyntheticDetectorRun }) {
   );
 }
 
+const providerStatus = { completed: "Completado", unconfigured: "Sin configurar", failed: "No disponible", no_finding: "Sin hallazgo confirmado" } as const;
+
+function Evaluation({ result, openEvidence }: { result: EvidenceDemoEvaluation; openEvidence: (id: string) => void }) {
+  const { research } = result;
+  return (
+    <Section title="Evaluación asistida">
+      <p>OpenRouter · {providerStatus[result.planner]} · {result.first === "benign" ? "Tráfico legítimo primero" : "Rutas fuera del contrato primero"}</p>
+      {!result.detector && <p role="status">El detector local no pudo ejecutarse. El replay guardado sigue disponible.</p>}
+      <p>Firecrawl · {providerStatus[research.status]} {research.source && <a className="underline" href={research.source} target="_blank" rel="noreferrer">MITRE CWE-22</a>}</p>
+      {research.mitigations.length > 0 && <ul className="list-disc pl-5">{research.mitigations.map((item) => <li key={item}>{item}</li>)}</ul>}
+      {research.evidenceIds.length > 0 && <div className="ed-nav" aria-label="Evidencia del hallazgo">
+        {research.evidenceIds.map((id, index) => <button type="button" className="ed-button" key={id} onClick={() => openEvidence(id)}>
+          {index === 0 ? "Evidencia del cliente" : "Evidencia del servicio"}
+        </button>)}
+      </div>}
+    </Section>
+  );
+}
+
 export function EvidenceDemo() {
   const [bundle, setBundle] = useState<EvidenceDemoBundle>();
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   const [view, setView] = useState<"bank" | "detector">("bank");
+  const [evaluation, setEvaluation] = useState<EvidenceDemoEvaluation>();
+  const [evaluating, setEvaluating] = useState(false);
+  const [evaluationFailed, setEvaluationFailed] = useState(false);
+  const [evidenceId, setEvidenceId] = useState<string>();
   useEffect(() => {
     const ctrl = new AbortController();
     void api.evidenceDemo(ctrl.signal).then((value) => {
@@ -125,6 +148,30 @@ export function EvidenceDemo() {
     });
     return () => ctrl.abort();
   }, [retry]);
+  useEffect(() => {
+    if (view !== "bank" || !evidenceId) return;
+    const row = document.getElementById(evidenceId);
+    if (row) {
+      row.closest<HTMLDetailsElement>("details")?.setAttribute("open", "");
+      row.querySelector("details")?.setAttribute("open", "");
+      row.scrollIntoView({ block: "center" });
+      row.querySelector("summary")?.focus({ preventScroll: true });
+    }
+    setEvidenceId(undefined);
+  }, [view, evidenceId]);
+
+  async function runEvaluation() {
+    setEvaluating(true);
+    setEvaluationFailed(false);
+    try {
+      setEvaluation(await api.evaluateEvidence());
+      setView("detector");
+    } catch {
+      setEvaluationFailed(true);
+    } finally {
+      setEvaluating(false);
+    }
+  }
   return (
     <main className="ed-main" aria-labelledby="evidence-demo-title">
       <div className="ed-content">
@@ -135,8 +182,11 @@ export function EvidenceDemo() {
           <nav className="ed-nav" aria-label="Corridas de evidencia">
             <button type="button" className="ed-button" aria-pressed={view === "bank"} onClick={() => setView("bank")}>A/B grabado</button>
             <button type="button" className="ed-button" aria-pressed={view === "detector"} onClick={() => setView("detector")}>Replay sintético</button>
+            <button type="button" className="ed-button" disabled={evaluating} onClick={() => void runEvaluation()}>{evaluating ? "Evaluando…" : "Ejecutar evaluación asistida"}</button>
           </nav>
-          {view === "bank" ? <RecordedEvidence run={bundle.runs[0]} /> : <DetectorEvidence run={bundle.runs[1]} />}
+          {evaluationFailed && <p role="alert">No se pudo ejecutar la evaluación asistida.</p>}
+          {evaluation && <Evaluation result={evaluation} openEvidence={(id) => { setView("bank"); setEvidenceId(id); }} />}
+          {view === "bank" ? <RecordedEvidence run={bundle.runs[0]} /> : <DetectorEvidence run={evaluation?.detector ?? bundle.runs[1]} />}
         </>}
       </div>
     </main>

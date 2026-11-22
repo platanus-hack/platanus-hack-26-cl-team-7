@@ -6,6 +6,8 @@
 .ed-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 26px; }
 .ed-button { border: 1px solid var(--color-line); border-radius: 8px; padding: 5px 12px; color: var(--color-ash); }
 .ed-button:hover, .ed-button[aria-pressed="true"] { background: var(--color-elev); color: var(--color-text); }
+.ed-button:disabled { cursor: wait; color: var(--color-mid); }
+.ed-content > section + section { margin-top: 24px; }
 .ed-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .ed-card { min-width: 0; border: 1px solid var(--color-line); background: var(--color-side); border-radius: 12px; padding: 16px; }
 .ed-card h3 { font-size: 16px; font-weight: 550; margin-bottom: 12px; }

@@ -33,3 +33,8 @@ works without a proxy, a target service, or any provider credentials.
 
 After changing either input, regenerate the bundled evidence from `agent-detection/` with
 `uv run python -m scripts.evidence_demo`. Add `--check` to verify the bundle is current.
+
+**Ejecutar evaluación asistida** uses `OPENROUTER_API_KEY` and `FIRECRAWL_API_KEY`
+from the root `.env` or process environment. OpenRouter chooses the order of the fixed
+detector inputs. The local detector needs `python3` with PyYAML. Firecrawl retrieves MITRE
+CWE-22 mitigation guidance after confirming the saved backend execution and client disclosure.
