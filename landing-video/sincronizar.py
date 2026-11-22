@@ -16,16 +16,15 @@ assert txt.strip() == " ".join(lineas), "la voz no corresponde a narracion.txt: 
 t = lambda frase: round(ini[txt.index(frase)] + LEAD, 2)  # ValueError = el guion cambió: actualizar ANCLAS
 
 ANCLAS = {
+    "hb1": "La prueba le llegó", "hb2": "en veinte de veinte por", "hb3": "y en cero de veinte", "hsin": "Sin esa prueba",
     "imagina": "Imagina a un ladrón", "sitio": "tu sitio", "prueba": "Prueba, lee", "ajusta": "ajusta y vuelve", "maquina": "a velocidad",
-    "portazo": "Si le cierras", "golpe": "de un portazo", "entera": "el ladrón se entera", "busca": "y busca otra",
-    "cuatro": "Centinela hace", "uno": "Uno: detecta", "sensibles": "o pide cosas",
+    "portazo": "Si le cierras", "golpe": "de un portazo", "entera": "se entera de que", "busca": "y busca otra",
+    "cuatro": "Centinela es para", "hace": "y hace cuatro", "uno": "Uno: detecta", "sensibles": "o pide cosas",
     "dos": "Dos: lo engaña", "pasar": "Lo deja pasar", "falsos": "con datos falsos",
     "tres": "Tres: le niega", "si": "Si una respuesta", "noentrega": "no se la entrega", "nosabe": "y el ladrón no sabe",
     "cuatrop": "Cuatro: te lo", "panel": "En un panel", "recorrido": "su recorrido", "falla": "la falla que",
     "arreglo": "y un arreglo", "persona": "que una persona",
-    "medimos": "La prueba del ataque dejó", "c34": "sin bloquear", "limite": "El límite",
-    "c30": "Treinta de treinta", "copia": "cayeron a la copia", "deteccion": "La detección", "c10": "pero hoy detecta", "noia": "y aún no se probó",
-    "idea": "La idea sale", "estudio": "nuestro estudio", "neutralizo": "un agente neutralizó", "noreporto": "y no lo reportó",
+    "limites": "Los límites", "l2": "las reglas por defecto", "l3": "sin confirmar", "l4": "Y el ataque igual",
     "bloquear": "Bloquear le avisa", "controla": "Centinela controla",
 }
 T = {k: t(v) for k, v in ANCLAS.items()}
@@ -40,14 +39,14 @@ for l in lineas:
     pos += len(l) + 1
 SUBS = [[t0, t1, l] for l, t0, t1 in zip(lineas, ts, ts[1:] + [round(LEAD + fin[-1] + 0.5, 2)])]
 
-esc = [0, T["portazo"] - 0.15, T["cuatro"] - 0.15, T["medimos"] - 0.15, T["idea"] - 0.15, total]
-clips = {f"s{i+1}": (esc[i], esc[i + 1] - esc[i]) for i in range(5)}
+esc = [0, T["imagina"] - 0.15, T["portazo"] - 0.15, T["cuatro"] - 0.15, T["limites"] - 0.15, T["bloquear"] - 0.15, total]
+clips = {f"s{i}": (esc[i], esc[i + 1] - esc[i]) for i in range(6)}
 clips |= {
     "root": (0, total), "fondo": (0, total), "pie": (0, total), "subs": (0, total), "avance": (0, total),
     "voz": (LEAD, None), "musica": (0, min(total, MUSICA)),
     "fx-portazo": (T["golpe"] + 0.25, None),
     "fx-k1": (T["uno"], None), "fx-k2": (T["dos"], None), "fx-k3": (T["tres"], None), "fx-k4": (T["cuatrop"], None),
-    "fx-m1": (T["medimos"] + 0.1, None), "fx-m2": (T["c30"], None), "fx-m3": (T["deteccion"], None),
+    "fx-m1": (T["hb1"] + 1.2, None), "fx-m2": (T["hb2"] + 1.2, None), "fx-m3": (T["hb3"] + 0.9, None),
     "fx-cierre": (T["controla"], None),
 }
 html = (d / "index.html").read_text()

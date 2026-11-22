@@ -314,99 +314,85 @@
         width: 1520px;
         height: 700px;
         border: 4px solid var(--falso);
-        border-radius: 26px;
-        background: #111a2e;
+        border-radius: 22px;
+        overflow: hidden;
+        background: #000;
       }
-      #panel .barra {
+      #panel img {
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
-        height: 72px;
-        padding: 0 32px;
+        width: 1520px;
+        height: 900px;
+      }
+      .aro {
+        position: absolute;
+        border: 5px solid var(--falso);
+        border-radius: 14px;
+        opacity: 0;
+      }
+      #p4 .pill {
+        opacity: 0;
+      }
+
+      /* 0 · el hallazgo: tres barras */
+      .fila {
+        position: absolute;
+        left: 144px;
+        width: 1640px;
+        height: 76px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        border-bottom: 4px solid var(--falso);
+        gap: 28px;
+        font-weight: 800;
+        font-size: 36px;
+        line-height: 1.1;
       }
-      .col {
-        position: absolute;
-        top: 104px;
-        height: 560px;
-        border: 3px solid rgba(163, 174, 196, 0.45);
-        border-radius: 18px;
-        padding: 24px;
+      .fila .quien {
+        width: 660px;
       }
-      .col .mono {
-        font-size: 28px;
-        letter-spacing: 0.02em;
+      .fila .quien small {
         display: block;
-      }
-      .raya {
-        height: 14px;
-        border-radius: 7px;
-        background: rgba(163, 174, 196, 0.4);
-        margin-top: 18px;
-      }
-      .btn {
-        display: inline-block;
-        padding: 12px 20px;
-        border-radius: 12px;
-        border: 3px solid var(--tenue);
         font-family: var(--dato);
-        font-weight: 700;
+        font-weight: 400;
         font-size: 28px;
         color: var(--tenue);
       }
-      .btn.ok {
-        border-color: var(--verde);
-        background: var(--verde);
-        color: var(--noche);
-      }
-
-      /* 4 · lo que medimos */
-      .carta {
-        position: absolute;
-        top: 170px;
-        width: 546px;
-        height: 720px;
-        padding: 30px 32px;
+      .fila .riel {
+        position: relative;
+        width: 660px;
+        height: 56px;
         border: 4px solid rgba(163, 174, 196, 0.5);
-        border-radius: 26px;
-        background: #111a2e;
+        border-radius: 12px;
+        overflow: hidden;
       }
-      .carta .num {
-        display: block;
-        margin-top: 14px;
-        font-weight: 900;
-        font-size: 112px;
-        letter-spacing: -0.04em;
-        line-height: 1.05;
-        white-space: nowrap;
+      .fila .riel i {
+        position: absolute;
+        inset: 0;
+        background: var(--rojo);
         transform-origin: 0 50%;
       }
-      .carta p {
-        margin-top: 12px;
-        font-weight: 700;
-        font-size: 31px;
-        line-height: 1.22;
+      .fila .val {
+        width: 240px;
+        font-weight: 900;
+        font-size: 52px;
+        letter-spacing: -0.03em;
+        white-space: nowrap;
       }
-      .carta .lim {
+
+      /* 4 · los límites */
+      .limite {
         position: absolute;
-        left: 32px;
-        bottom: 28px;
-        width: 478px;
-        padding: 16px 20px;
-        border-left: 6px solid var(--rojo);
-        background: rgba(255, 107, 94, 0.1);
-        font-weight: 700;
-        font-size: 28px;
-        line-height: 1.22;
-      }
-      .carta .lim .mono {
-        display: block;
-        font-size: 28px;
-        color: var(--rojo);
+        left: 144px;
+        width: 1640px;
+        padding: 14px 30px;
+        border-left: 8px solid var(--rojo);
+        background: rgba(255, 107, 94, 0.08);
+        font-weight: 800;
+        font-size: 44px;
+        letter-spacing: -0.02em;
+        line-height: 1.12;
+        opacity: 0;
       }
     </style>
   </head>
@@ -461,13 +447,27 @@
       </defs>
     </svg>
 
-    <div id="root" data-composition-id="main" data-start="0" data-duration="78.8" data-width="1920" data-height="1080">
-      <div id="fondo" class="clip" data-start="0" data-duration="78.8" data-track-index="0" data-layout-ignore>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="75.6" data-width="1920" data-height="1080">
+      <div id="fondo" class="clip" data-start="0" data-duration="75.6" data-track-index="0" data-layout-ignore>
         <div class="halo"></div>
       </div>
 
+      <!-- 0 · EL HALLAZGO: las tres barras, con su límite al lado -->
+      <section id="s0" class="clip scene" data-start="0" data-duration="18.37" data-track-index="1">
+        <div class="wrap">
+          <span class="tag mono f" style="top: 70px">El hallazgo</span>
+          <div class="h" style="top: 118px; width: 1640px; font-size: 60px">Si a un agente de IA que te ataca le niegas la prueba<br />de que su ataque funcionó, <span class="f">se queda sin rumbo.</span></div>
+          <div id="z-cap" class="rot t o" style="left: 144px; top: 284px; text-align: left">Corridas en que la prueba del ataque le llegó al atacante</div>
+          <div id="z1" class="fila o" style="top: 330px"><div class="quien">Sin defensa</div><div class="riel"><i></i></div><div class="val r o">20 de 20</div></div>
+          <div id="z2" class="fila o" style="top: 420px"><div class="quien">Cloudflare<small>protección por defecto, plan gratuito</small></div><div class="riel"><i></i></div><div class="val r o">20 de 20</div></div>
+          <div id="z3" class="fila o" style="top: 510px"><div class="quien f">Con nuestra pieza<small>Último Paso</small></div><div class="riel" style="border-color: var(--falso)"></div><div class="val f o">0 de 20</div></div>
+          <div id="z-sin" class="h o" style="top: 608px; width: 1640px; font-size: 40px; font-weight: 800; line-height: 1.2">Sin esa prueba: <span class="f">ningún agente declaró éxito</span><br />y gastaron <span class="f">entre 3 y 11 veces más</span> peticiones.</div>
+          <div id="z-nota" class="nota o" style="left: 144px; top: 736px; width: 1700px">Benchmark propio, 22/11: los mismos ataques, 2 modelos de IA, 10 corridas cada uno por camino.<br />Límites: una sola app de prueba; reglas por defecto; no se confirmó en el panel de Cloudflare<br />que su protección de respuestas estuviera activa; el ataque se ejecutó en los tres caminos.</div>
+        </div>
+      </section>
+
       <!-- 1 · EL PROBLEMA: el ladrón prueba, lee, ajusta y vuelve a probar -->
-      <section id="s1" class="clip scene" data-start="0" data-duration="13.46" data-track-index="1">
+      <section id="s1" class="clip scene" data-start="18.37" data-duration="8.94" data-track-index="1">
         <div class="wrap">
           <span class="tag mono r">El problema</span>
           <div class="h" style="top: 150px; width: 900px; font-size: 76px">Los atacantes ya usan<br /><span class="r">agentes de IA</span></div>
@@ -491,7 +491,7 @@
       </section>
 
       <!-- 2 · POR QUÉ BLOQUEAR NO ALCANZA -->
-      <section id="s2" class="clip scene" data-start="13.46" data-duration="4.76" data-track-index="1">
+      <section id="s2" class="clip scene" data-start="27.31" data-duration="4.01" data-track-index="1">
         <div class="wrap">
           <span class="tag mono r">Por qué bloquear no alcanza</span>
           <div class="h" style="top: 150px; width: 940px; font-size: 84px">Bloquear le <span class="r">avisa</span>.</div>
@@ -509,7 +509,7 @@
       </section>
 
       <!-- 3 · LO QUE HACE CENTINELA, en cuatro pasos -->
-      <section id="s3" class="clip scene" data-start="18.22" data-duration="26.53" data-track-index="1">
+      <section id="s3" class="clip scene" data-start="31.32" data-duration="28.5" data-track-index="1">
         <div class="wrap">
           <div id="pasos">
             <div id="k1"><b>1</b>Detecta</div>
@@ -521,7 +521,7 @@
           <div id="p0" class="beat">
             <svg class="abs" style="left: 860px; top: 250px; width: 200px; height: 200px"><use href="#ojo" /></svg>
             <div class="centro" style="top: 480px; font-size: 170px">Centinela</div>
-            <div class="centro f" style="top: 690px; font-size: 60px; font-weight: 700">cuatro pasos</div>
+            <div class="centro f" style="top: 690px; font-size: 46px; font-weight: 700; letter-spacing: -0.01em">para equipos chicos · con servidores propios · sin equipo de seguridad</div>
           </div>
 
           <!-- 1 Detecta: puertas que no existen y cosas sensibles -->
@@ -577,97 +577,39 @@
             <div id="p3-burbuja" class="burbuja o" style="left: 1400px; top: 530px; border-radius: 26px 26px 6px 26px">«¿Funcionó?»</div>
           </div>
 
-          <!-- 4 Te lo muestra: esquema del panel (dibujo, no captura) -->
+          <!-- 4 Te lo muestra: captura real del panel (rama centinela-web, landing/img/arreglo-propuesto.png, recortada) -->
           <div id="p4" class="beat">
             <div id="panel">
-              <div class="barra"><span class="mono f">Centinela · panel</span><span class="mono t">Esquema, no captura</span></div>
-              <div id="p4-a" class="col o" style="left: 32px; width: 400px">
-                <span class="mono r">Agente atrapado</span>
-                <svg class="abs r" style="left: 130px; top: 110px; width: 140px; height: 187px"><use href="#robot" /></svg>
-                <div style="position: absolute; left: 24px; top: 330px; width: 352px">
-                  <div class="raya"></div>
-                  <div class="raya" style="width: 70%"></div>
-                  <div class="raya" style="width: 85%"></div>
-                </div>
-              </div>
-              <div id="p4-b" class="col o" style="left: 456px; width: 540px">
-                <span class="mono">Su recorrido</span>
-                <svg class="abs" style="left: 24px; top: 100px; width: 490px; height: 420px" viewBox="0 0 490 420">
-                  <path id="p4-ruta" d="M40 60 L200 130 L90 230 L300 290 L420 370" fill="none" stroke="#a3aec4" stroke-width="5" stroke-linejoin="round" />
-                  <g fill="#111a2e" stroke="#f6f1e7" stroke-width="6">
-                    <circle cx="40" cy="60" r="16" />
-                    <circle cx="200" cy="130" r="16" />
-                    <circle cx="90" cy="230" r="16" />
-                    <circle cx="300" cy="290" r="16" />
-                  </g>
-                  <circle cx="420" cy="370" r="24" fill="#111a2e" stroke="#5fe0cf" stroke-width="6" stroke-dasharray="10 8" />
-                </svg>
-              </div>
-              <div id="p4-c" class="col o" style="left: 1020px; width: 468px; height: 230px; border-color: var(--rojo)">
-                <span class="mono r">La falla que usó</span>
-                <div class="raya" style="margin-top: 34px"></div>
-                <div class="raya" style="width: 60%"></div>
-              </div>
-              <div id="p4-d" class="col o" style="left: 1020px; top: 358px; width: 468px; height: 306px">
-                <span class="mono v">Arreglo propuesto</span>
-                <div class="raya" style="margin-top: 30px"></div>
-                <div class="raya" style="width: 75%"></div>
-                <div style="margin-top: 44px; display: flex; gap: 16px; align-items: center">
-                  <span id="p4-ok" class="btn ok">APROBAR</span><span class="btn">RECHAZAR</span>
-                  <svg id="p4-persona" class="o" style="width: 62px; height: 68px; color: var(--tinta)"><use href="#persona" /></svg>
-                </div>
-              </div>
+              <img id="p4-img" src="assets/panel/panel.png" alt="" />
+              <div id="p4-r1" class="aro" style="left: 0; top: 44px; width: 198px; height: 68px"></div>
+              <span id="p4-t1" class="pill pf" style="left: 12px; top: 122px">Agente atrapado</span>
+              <div id="p4-r2" class="aro" style="left: 226px; top: 96px; width: 848px; height: 316px"></div>
+              <span id="p4-t2" class="pill pf" style="left: 240px; top: 110px">Su recorrido</span>
+              <div id="p4-r3" class="aro" style="left: 226px; top: 266px; width: 848px; height: 192px"></div>
+              <span id="p4-t3" class="pill pf" style="left: 560px; top: 280px">La falla que usó</span>
+              <div id="p4-r4" class="aro" style="left: 1100px; top: 164px; width: 414px; height: 378px"></div>
+              <span id="p4-t4" class="pill pf" style="left: 1112px; top: 106px">Arreglo propuesto</span>
             </div>
+            <div class="rot t" style="left: 200px; top: 886px; width: 1520px">Captura del panel real, en local, con un sondeo de prueba</div>
           </div>
         </div>
       </section>
 
-      <!-- 4 · LO QUE MEDIMOS, con sus límites -->
-      <section id="s4" class="clip scene" data-start="44.75" data-duration="19.43" data-track-index="1">
+      <!-- 4 · LOS LÍMITES -->
+      <section id="s4" class="clip scene" data-start="59.82" data-duration="8.67" data-track-index="1">
         <div class="wrap">
-          <span class="tag mono f" style="top: 90px">Lo que medimos, con sus límites</span>
-          <div id="m1" class="carta o" style="left: 110px">
-            <span class="mono f">3 · Negar la prueba</span>
-            <span class="num">5 de 5</span>
-            <p>intentos: la prueba del ataque dejó de llegarle al atacante</p>
-            <p id="m1-b" class="o v">0 de 34 pedidos legítimos bloqueados</p>
-            <div id="m1-l" class="lim o"><span class="mono">Límite</span>el ataque igual se ejecuta en el servidor</div>
-          </div>
-          <div id="m2" class="carta o" style="left: 687px">
-            <span class="mono f">2 · Engañar</span>
-            <span class="num">30 de 30</span>
-            <p>agentes de IA que intentaron robar <span id="m2-b" class="f">cayeron a la copia falsa</span></p>
-            <div class="lim" style="border-color: var(--tenue); background: rgba(163, 174, 196, 0.1)"><span class="mono" style="color: var(--tenue)">Dónde</span>en un prototipo de pagos nuestro</div>
-          </div>
-          <div id="m3" class="carta o" style="left: 1264px">
-            <span class="mono f">1 · Detectar</span>
-            <span class="num v" style="font-size: 84px; margin-top: 24px; white-space: normal">0 falsas alarmas</span>
-            <p id="m3-b" class="o" style="margin-top: 26px">pero hoy detecta<br /><span class="a" style="font-size: 56px; font-weight: 900">1 de cada 10</span><br />sesiones de sondeo</p>
-            <div id="m3-l" class="lim o"><span class="mono">Límite</span>aún no se probó con agentes de IA (en curso)</div>
-          </div>
+          <span class="tag mono r" style="top: 90px">Los límites, dichos de frente</span>
+          <div id="l1" class="limite" style="top: 170px">Medimos una sola app de prueba</div>
+          <div id="l2" class="limite" style="top: 290px">Con las reglas por defecto de Cloudflare (plan gratuito)</div>
+          <div id="l3" class="limite" style="top: 410px">Sin confirmar en su panel que esa protección estuviera activa</div>
+          <div id="l4" class="limite" style="top: 530px">El ataque igual se ejecuta en el servidor</div>
+          <div id="l5" class="limite" style="top: 680px; font-size: 36px; font-weight: 700; border-color: var(--tenue); background: rgba(163, 174, 196, 0.08)">La detección no tuvo falsas alarmas, pero hoy detecta 1 de cada 10 sesiones de sondeo<br />y aún no se probó con agentes de IA.</div>
         </div>
       </section>
 
-      <!-- 5 · DE DÓNDE SALE LA IDEA, y el cierre -->
-      <section id="s5" class="clip scene" data-start="64.18" data-duration="14.62" data-track-index="1">
+      <!-- 5 · EL CIERRE -->
+      <section id="s5" class="clip scene" data-start="68.49" data-duration="7.11" data-track-index="1">
         <div class="wrap">
-          <div id="i1" class="beat">
-            <span class="tag mono f">De dónde sale la idea</span>
-            <div class="h" style="top: 150px; width: 900px; font-size: 120px">Espej<span class="f">ismo</span></div>
-            <div id="i1-a" class="h o t" style="top: 300px; width: 1000px; font-size: 44px; font-weight: 700">nuestro estudio: 95 corridas, 8 modelos</div>
-            <div id="i1-b" class="o">
-              <div class="h a" style="top: 430px; width: 520px; font-size: 170px">9<span class="t" style="font-size: 90px"> de </span>18</div>
-              <div class="h" style="top: 630px; width: 1010px; font-size: 42px; font-weight: 700">veces un agente neutralizó a su vigilante…</div>
-            </div>
-            <div id="i1-c" class="h o r" style="top: 700px; width: 900px; font-size: 64px">…y no lo reportó.</div>
-            <div id="i1-n" class="nota o" style="left: 144px; top: 800px; width: 1000px">En ninguna de las 8 veces en que creyó llevarse las credenciales.<br />Caso provocado con una instrucción de atacante.</div>
-            <svg id="i1-robot" class="abs r" style="left: 1180px; top: 430px; width: 200px; height: 267px"><use href="#robot" /></svg>
-            <svg id="i1-cam" class="abs" style="left: 1470px; top: 380px; width: 260px; height: 182px; color: var(--tinta)"><use href="#camara" /></svg>
-            <svg id="i1-x" class="abs o" style="left: 1470px; top: 360px; width: 260px; height: 220px" viewBox="0 0 260 220">
-              <path d="M40 30 L220 190 M220 30 L40 190" fill="none" stroke="#ff6b5e" stroke-width="14" stroke-linecap="round" />
-            </svg>
-            <div class="rot t" style="left: 1450px; top: 590px; width: 300px">El vigilante</div>
-          </div>
           <div id="i2" class="beat">
             <svg class="abs" style="left: 870px; top: 110px; width: 180px; height: 180px"><use href="#ojo" /></svg>
             <div id="i2-a" class="centro t" style="top: 340px; font-size: 76px">Bloquear le avisa.</div>
@@ -678,24 +620,24 @@
       </section>
 
       <!-- subtítulos, pie y barra de avance -->
-      <div id="subs" class="clip" data-start="0" data-duration="78.8" data-track-index="5" data-layout-ignore></div>
-      <div id="pie" class="clip mono" data-start="0" data-duration="78.8" data-track-index="2" data-layout-ignore>
+      <div id="subs" class="clip" data-start="0" data-duration="75.6" data-track-index="5" data-layout-ignore></div>
+      <div id="pie" class="clip mono" data-start="0" data-duration="75.6" data-track-index="2" data-layout-ignore>
         <span>Centinela</span><span>team-7 · Platanus Hack 26 · AI Security</span>
       </div>
-      <div id="avance" class="clip" data-start="0" data-duration="78.8" data-track-index="4" data-layout-ignore></div>
+      <div id="avance" class="clip" data-start="0" data-duration="75.6" data-track-index="4" data-layout-ignore></div>
 
       <!-- audio. Los data-start los escribe sincronizar.py. -->
       <audio id="voz" src="assets/voz.mp3" data-start="0.4" data-track-index="10" data-volume="1"></audio>
-      <audio id="musica" src="assets/musica.mp3" data-start="0" data-duration="78.0" data-track-index="12" data-volume="0.5"></audio>
-      <audio id="fx-portazo" src="assets/sfx/click.mp3" data-start="14.84" data-track-index="20" data-volume="0.5"></audio>
-      <audio id="fx-k1" src="assets/sfx/pop.mp3" data-start="20.0" data-track-index="21" data-volume="0.25"></audio>
-      <audio id="fx-k2" src="assets/sfx/pop.mp3" data-start="24.14" data-track-index="22" data-volume="0.25"></audio>
-      <audio id="fx-k3" src="assets/sfx/pop.mp3" data-start="29.73" data-track-index="23" data-volume="0.25"></audio>
-      <audio id="fx-k4" src="assets/sfx/pop.mp3" data-start="37.22" data-track-index="24" data-volume="0.25"></audio>
-      <audio id="fx-m1" src="assets/sfx/ping.mp3" data-start="45.0" data-track-index="25" data-volume="0.18"></audio>
-      <audio id="fx-m2" src="assets/sfx/ping.mp3" data-start="53.64" data-track-index="26" data-volume="0.18"></audio>
-      <audio id="fx-m3" src="assets/sfx/ping.mp3" data-start="58.36" data-track-index="27" data-volume="0.18"></audio>
-      <audio id="fx-cierre" src="assets/sfx/chime.mp3" data-start="73.3" data-track-index="28" data-volume="0.22"></audio>
+      <audio id="musica" src="assets/musica.mp3" data-start="0" data-duration="75.6" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="fx-portazo" src="assets/sfx/click.mp3" data-start="28.65" data-track-index="20" data-volume="0.5"></audio>
+      <audio id="fx-k1" src="assets/sfx/pop.mp3" data-start="35.2" data-track-index="21" data-volume="0.25"></audio>
+      <audio id="fx-k2" src="assets/sfx/pop.mp3" data-start="39.61" data-track-index="22" data-volume="0.25"></audio>
+      <audio id="fx-k3" src="assets/sfx/pop.mp3" data-start="44.78" data-track-index="23" data-volume="0.25"></audio>
+      <audio id="fx-k4" src="assets/sfx/pop.mp3" data-start="52.24" data-track-index="24" data-volume="0.25"></audio>
+      <audio id="fx-m1" src="assets/sfx/ping.mp3" data-start="7.36" data-track-index="25" data-volume="0.18"></audio>
+      <audio id="fx-m2" src="assets/sfx/ping.mp3" data-start="10.27" data-track-index="26" data-volume="0.18"></audio>
+      <audio id="fx-m3" src="assets/sfx/ping.mp3" data-start="12.81" data-track-index="27" data-volume="0.18"></audio>
+      <audio id="fx-cierre" src="assets/sfx/chime.mp3" data-start="69.96" data-track-index="28" data-volume="0.22"></audio>
     </div>
 
     <script>
@@ -703,8 +645,8 @@
       const tl = gsap.timeline({ paused: true });
 
       // T (tiempo de video de cada frase ancla) y SUBS (subtítulos) los escribe sincronizar.py; no editar a mano.
-      const T = {"imagina": 3.67, "sitio": 6.75, "prueba": 7.89, "ajusta": 10.26, "maquina": 12.01, "portazo": 13.61, "golpe": 14.59, "entera": 15.59, "busca": 16.86, "cuatro": 18.37, "uno": 20.0, "sensibles": 22.52, "dos": 24.14, "pasar": 26.12, "falsos": 28.3, "tres": 29.73, "si": 31.53, "noentrega": 34.41, "nosabe": 35.27, "cuatrop": 37.22, "panel": 39.21, "recorrido": 40.78, "falla": 41.62, "arreglo": 42.5, "persona": 43.41, "medimos": 44.9, "c34": 48.33, "limite": 50.79, "c30": 53.64, "copia": 56.84, "deteccion": 58.36, "c10": 60.08, "noia": 62.4, "idea": 64.33, "estudio": 65.82, "neutralizo": 68.48, "noreporto": 71.22, "bloquear": 72.37, "controla": 73.3};
-      const SUBS = [[0.4, 3.67, "Los atacantes ya usan agentes de inteligencia artificial."], [3.67, 6.75, "Imagina a un ladrón que prueba puertas y ventanas de una casa:"], [6.75, 7.89, "tu sitio."], [7.89, 10.26, "Prueba, lee lo que le responde la casa,"], [10.26, 13.61, "ajusta y vuelve a probar, a velocidad de máquina."], [13.61, 15.59, "Si le cierras una puerta de un portazo,"], [15.59, 16.86, "el ladrón se entera de que lo vieron"], [16.86, 18.37, "y busca otra entrada."], [18.37, 20.0, "Centinela hace cuatro cosas."], [20.0, 22.52, "Uno: detecta a quien prueba puertas que no existen"], [22.52, 24.14, "o pide cosas sensibles."], [24.14, 26.12, "Dos: lo engaña."], [26.12, 29.73, "Lo deja pasar a una casa de utilería idéntica, con datos falsos."], [29.73, 31.53, "Tres: le niega la prueba."], [31.53, 34.41, "Si una respuesta de la casa real lleva la prueba de que su ataque funcionó,"], [34.41, 37.22, "no se la entrega, y el ladrón no sabe si funcionó."], [37.22, 39.21, "Cuatro: te lo muestra."], [39.21, 41.62, "En un panel ves al agente atrapado, su recorrido,"], [41.62, 44.9, "la falla que usó y un arreglo propuesto, que una persona aprueba."], [44.9, 48.33, "La prueba del ataque dejó de llegarle al atacante en cinco de cinco intentos,"], [48.33, 50.79, "sin bloquear ninguno de treinta y cuatro pedidos legítimos."], [50.79, 53.64, "El límite: el ataque igual se ejecuta en el servidor."], [53.64, 55.91, "Treinta de treinta agentes de IA que intentaron robar"], [55.91, 58.36, "en un prototipo de pagos cayeron a la copia falsa."], [58.36, 60.08, "La detección no tuvo falsas alarmas,"], [60.08, 62.4, "pero hoy detecta una de cada diez sesiones de sondeo"], [62.4, 64.33, "y aún no se probó con agentes de IA."], [64.33, 65.82, "La idea sale de Espejismo,"], [65.82, 68.48, "nuestro estudio con noventa y cinco corridas y ocho modelos:"], [68.48, 71.22, "un agente neutralizó a su vigilante nueve de dieciocho veces,"], [71.22, 72.37, "y no lo reportó."], [72.37, 73.3, "Bloquear le avisa."], [73.3, 75.81, "Centinela controla lo que el agente cree que pasó."]];
+      const T = {"hb1": 6.16, "hb2": 9.07, "hb3": 11.91, "hsin": 13.78, "imagina": 18.52, "sitio": 21.43, "prueba": 22.31, "ajusta": 24.44, "maquina": 25.93, "portazo": 27.46, "golpe": 28.4, "entera": 29.09, "busca": 29.99, "cuatro": 31.47, "hace": 33.8, "uno": 35.2, "sensibles": 38.09, "dos": 39.61, "pasar": 41.22, "falsos": 43.39, "tres": 44.78, "si": 47.04, "noentrega": 49.74, "nosabe": 50.52, "cuatrop": 52.24, "panel": 54.29, "recorrido": 55.83, "falla": 56.75, "arreglo": 57.58, "persona": 58.6, "limites": 59.97, "l2": 62.11, "l3": 63.78, "l4": 66.5, "bloquear": 68.64, "controla": 69.96};
+      const SUBS = [[0.4, 1.92, "Si a un agente de IA que te ataca"], [1.92, 3.82, "le niegas la prueba de que su ataque funcionó,"], [3.82, 6.16, "se queda sin rumbo. Lo medimos."], [6.16, 9.07, "La prueba le llegó en veinte de veinte corridas sin defensa,"], [9.07, 11.91, "en veinte de veinte por la protección por defecto de Cloudflare,"], [11.91, 13.78, "y en cero de veinte con nuestra pieza."], [13.78, 15.82, "Sin esa prueba, ningún agente declaró éxito,"], [15.82, 18.52, "y gastaron entre tres y once veces más peticiones."], [18.52, 21.43, "Imagina a un ladrón que prueba puertas y ventanas de una casa:"], [21.43, 22.31, "tu sitio."], [22.31, 24.44, "Prueba, lee lo que le responde la casa,"], [24.44, 27.46, "ajusta y vuelve a probar, a velocidad de máquina."], [27.46, 29.09, "Si le cierras una puerta de un portazo,"], [29.09, 29.99, "se entera de que lo vieron"], [29.99, 31.47, "y busca otra entrada."], [31.47, 33.8, "Centinela es para equipos chicos con servidores propios,"], [33.8, 35.2, "y hace cuatro cosas."], [35.2, 38.09, "Uno: detecta a quien prueba puertas que no existen"], [38.09, 39.61, "o pide cosas sensibles."], [39.61, 41.22, "Dos: lo engaña."], [41.22, 44.78, "Lo deja pasar a una casa de utilería idéntica, con datos falsos."], [44.78, 47.04, "Tres: le niega la prueba."], [47.04, 49.74, "Si una respuesta real lleva la prueba de que su ataque funcionó,"], [49.74, 52.24, "no se la entrega, y el ladrón no sabe si funcionó."], [52.24, 54.29, "Cuatro: te lo muestra."], [54.29, 56.75, "En un panel ves al agente atrapado, su recorrido,"], [56.75, 59.97, "la falla que usó y un arreglo propuesto, que una persona aprueba."], [59.97, 62.11, "Los límites: una sola app de prueba,"], [62.11, 63.78, "las reglas por defecto de Cloudflare,"], [63.78, 66.5, "sin confirmar en su panel que esa protección estuviera activa."], [66.5, 68.64, "Y el ataque igual se ejecuta en el servidor."], [68.64, 69.96, "Bloquear le avisa."], [69.96, 72.6, "Centinela controla lo que el agente cree que pasó."]];
       const FIN = +document.querySelector("#root").dataset.duration;
 
       tl.fromTo("#fondo .halo", { scale: 1 }, { scale: 1.12, duration: 6, ease: "sine.inOut", repeat: Math.max(0, Math.floor(FIN / 6) - 1), yoyo: true }, 0);
@@ -740,10 +682,22 @@
       const toca = (sel, t) => tl.to(sel, { y: -16, duration: 0.12, ease: "power2.out", repeat: 1, yoyo: true }, t);
       const enciende = (sel, t) => tl.to(sel, { opacity: 1, borderColor: "#ff6b5e", color: "#ff6b5e", duration: 0.25 }, t);
 
+      // ── 0 · el hallazgo: tres barras
+      ver("#z-cap", T.hb1 - 3.2);
+      ["#z1", "#z2", "#z3"].forEach((s, i) => sube(s, T.hb1 - 3 + i * 0.5, 30));
+      [["#z1", T.hb1], ["#z2", T.hb2]].forEach(([s, t]) => {
+        tl.fromTo(`${s} .riel i`, { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: "power2.out" }, t + 0.3);
+        pop(`${s} .val`, t + 1.2);
+      });
+      pop("#z3 .val", T.hb3 + 0.9);
+      tl.fromTo("#z3 .riel", { scale: 1 }, { scale: 1.03, duration: 0.2, repeat: 1, yoyo: true, ease: "power2.out" }, T.hb3 + 0.9);
+      sube("#z-sin", T.hsin, 30);
+      ver("#z-nota", T.hb1 + 0.5);
+
       // ── 1 · el problema: prueba, lee, ajusta y vuelve a probar
-      tl.fromTo(".ciclo > *", { opacity: 0, y: 20 }, { opacity: (i, el) => (el.tagName === "SPAN" ? 0.35 : 1), y: 0, duration: 0.4, stagger: 0.25, ease: "expo.out" }, 1.2);
-      ver("#a-mundo", T.imagina - 0.1, 0.5);
-      tl.fromTo("#a-robot", { x: -260 }, { x: 0, duration: 1.6, ease: "power2.out" }, T.imagina);
+      tl.fromTo(".ciclo > *", { opacity: 0, y: 20 }, { opacity: (i, el) => (el.tagName === "SPAN" ? 0.35 : 1), y: 0, duration: 0.4, stagger: 0.2, ease: "expo.out" }, S.s1 + 0.4);
+      ver("#a-mundo", T.imagina + 0.1, 0.5);
+      tl.fromTo("#a-robot", { x: -260 }, { x: 0, duration: 1.6, ease: "power2.out" }, T.imagina + 0.1);
       tl.fromTo("#a-casa-rot", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, T.sitio);
       tl.fromTo("#a-casa", { scale: 1 }, { scale: 1.04, duration: 0.25, repeat: 1, yoyo: true, ease: "power2.out" }, T.sitio);
       // el ladrón está en x=880; ventana izquierda +378, puerta +486, ventana derecha +594
@@ -786,7 +740,7 @@
         if (n > 1) tl.to(`#k${n - 1}`, { opacity: 0.5, duration: 0.25 }, t);
       };
       momento("#p0", T.cuatro, T.uno);
-      tl.fromTo("#pasos div", { y: -30 }, { y: 0, duration: 0.4, stagger: 0.08, ease: "expo.out" }, T.cuatro + 0.1);
+      tl.fromTo("#pasos div", { y: -30 }, { y: 0, duration: 0.4, stagger: 0.08, ease: "expo.out" }, T.hace);
 
       // 1 Detecta (el ladrón está en x=720; puertas falsas en +174 y +364; junto a la caja en +596)
       momento("#p1", T.uno, T.dos);
@@ -827,36 +781,25 @@
       // 4 Te lo muestra
       momento("#p4", T.cuatrop, null);
       paso(4, T.cuatrop);
-      sube("#p4-a", T.panel + 0.9, 30);
-      sube("#p4-b", T.recorrido - 0.1, 30);
-      sube("#p4-c", T.falla - 0.1, 30);
-      sube("#p4-d", T.arreglo - 0.1, 30);
-      pop("#p4-persona", T.persona);
-      tl.fromTo("#p4-ok", { scale: 1 }, { scale: 1.12, duration: 0.2, repeat: 1, yoyo: true, ease: "power2.out" }, T.persona + 0.6);
-
-      // ── 4 · lo que medimos, con sus límites
-      const carta = (sel, t) => {
-        sube(sel, t - 0.2, 60, 0.55);
-        tl.fromTo(`${sel} .num`, { scale: 1 }, { scale: 1.06, duration: 0.22, ease: "power2.out", repeat: 1, yoyo: true }, t + 0.35);
+      const marca = (n, t, hasta) => {
+        ver(`#p4-r${n}`, t, 0.25);
+        pop(`#p4-t${n}`, t + 0.1);
+        if (hasta) irse(`#p4-r${n}, #p4-t${n}`, hasta - 0.2);
       };
-      carta("#m1", T.medimos + 0.1);
-      ver("#m1-b", T.c34);
-      sube("#m1-l", T.limite, 20);
-      carta("#m2", T.c30);
-      tl.fromTo("#m2-b", { opacity: 0.3 }, { opacity: 1, duration: 0.3 }, T.copia);
-      carta("#m3", T.deteccion);
-      ver("#m3-b", T.c10);
-      sube("#m3-l", T.c10 + 0.9, 20);
+      marca(1, T.panel + 0.9, T.recorrido);
+      marca(2, T.recorrido, T.falla);
+      tl.to("#p4-img", { y: -200, duration: 0.6, ease: "power2.inOut" }, T.falla - 0.3);
+      marca(3, T.falla + 0.2, null);
+      marca(4, T.arreglo + 0.1, null);
 
-      // ── 5 · de dónde sale la idea, y el cierre
-      momento("#i1", S.s5, T.bloquear);
-      sube("#i1-a", T.estudio, 30);
-      sube("#i1-b", T.neutralizo, 30);
-      tl.fromTo("#i1-x", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, T.neutralizo + 0.8);
-      tl.to("#i1-cam", { opacity: 0.35, duration: 0.3 }, T.neutralizo + 0.8);
-      sube("#i1-c", T.noreporto, 30);
-      ver("#i1-n", T.neutralizo + 1.2);
-      momento("#i2", T.bloquear, null);
+      // ── 4 · los límites
+      // los cinco quedan a la vista desde el inicio (tenues) y cada uno se enciende cuando la voz lo dice
+      tl.fromTo(".limite", { opacity: 0, x: -40 }, { opacity: 0.35, x: 0, duration: 0.45, stagger: 0.08, ease: "expo.out" }, S.s4 + 0.2);
+      tl.to("#l5", { opacity: 1, duration: 0.3 }, S.s4 + 0.8);
+      [["#l1", T.limites + 0.6], ["#l2", T.l2], ["#l3", T.l3], ["#l4", T.l4]].forEach(([s, t]) => tl.to(s, { opacity: 1, duration: 0.3 }, t));
+
+      // ── 5 · el cierre
+      tl.set("#i2", { opacity: 1 }, S.s5);
       sube("#i2-a", T.bloquear, 30);
       sube("#i2-b", T.controla - 0.1, 40, 0.6);
       ver("#i2-c", T.controla + 1.6);
