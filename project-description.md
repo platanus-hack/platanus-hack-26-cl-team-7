@@ -1,12 +1,14 @@
 # Reaper
 
-### Si a un agente de IA que te ataca le niegas la prueba de que su ataque funcionó, se queda sin rumbo. Lo medimos, y Reaper es la versión abierta de esa idea.
+### Desvía a los agentes de IA a una copia señuelo y descubre qué corregir primero
 
 **Míralo funcionando, sin instalar nada:** [el panel en línea](https://neowaf.paoloose.site) (botón «Modo demo») · [la web](https://reaper.haroldmedrano33.workers.dev) · [las láminas](https://reaper.haroldmedrano33.workers.dev/pitch)
 
-> **El hallazgo:** los mismos ataques, con dos modelos de IA atacando. La prueba del ataque le llegó al atacante en 20 de 20 corridas sin defensa, en 20 de 20 por la protección por defecto de Cloudflare, y en **0 de 20** con nuestra pieza. Sin esa prueba, ningún agente declaró haber tenido éxito, y gastaron entre 3 y 11 veces más peticiones.
+Reaper es un proxy de código abierto que corre delante de tus servidores. Cuando detecta una sesión sospechosa, la desvía a una copia señuelo. El panel muestra qué rutas prueba el agente, qué datos busca y qué posibles fallas intenta aprovechar. Esa evidencia ayuda al equipo a validar qué riesgos existen en el sistema real y qué correcciones conviene probar primero.
 
-Bloquear a un agente le avisa que lo vieron, y aprende. Reaper controla lo que el agente ve y cree que pasó: lo detecta, le responde con una copia falsa, le niega la confirmación y te muestra qué buscaba.
+> **Lo que medimos:** en una tienda de demostración, Reaper desvió las 30 corridas de ataque de tres modelos y no marcó ninguna de las 30 corridas legítimas. [Método, resultados y límites](evidencia-agentes/RESULTADOS.md).
+
+Cuando una respuesta revela indicios de que el ataque funcionó, Reaper también puede retenerla. Eso no impide que el ataque se ejecute en el servidor ni reemplaza corregir la falla. Nuestra apuesta es que cada intento deje evidencia útil para reforzar la próxima defensa.
 
 ## El problema
 Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelven a probar, a velocidad de máquina. En julio de 2026, modelos de OpenAI que estaban en una evaluación interna salieron de su entorno y entraron a sistemas de Hugging Face ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). Quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.
@@ -24,7 +26,7 @@ Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelv
 | Detectar | Reglas sobre el tráfico: quién sondea rutas que no existen, quién recorre demasiadas, quién pide archivos sensibles | `agent-detection/` |
 | Engañar | A la sesión sospechosa le responde una copia falsa del sitio | `agent-detection/mirror` |
 | Negar la confirmación | Si la respuesta trae la prueba de que el ataque funcionó, no se la entrega, y aplica una regla temporal | `apps/sentinel/lab` |
-| Mostrar y arreglar | Un panel con el recorrido del ataque, la falla que se usó y el arreglo propuesto con su fuente. Con una clave de modelo, un agente escribe el parche (hasta tres reemplazos exactos), lo prueba en una copia del servicio y repite el ataque; una persona decide aplicarlo | `apps/sentinel`, `apps/web` |
+| Mostrar y corregir | El panel reconstruye el recorrido de la sesión y presenta hallazgos y posibles arreglos. El equipo valida las fallas, prueba las correcciones en un entorno aislado y decide si las aplica. Reaper no parchea producción automáticamente | `apps/sentinel`, `apps/web` |
 
 ## Lo que medimos
 - **Negar la confirmación (Último Paso):** la prueba del ataque dejó de llegarle al atacante en 5 de 5 intentos contra un banco de prueba y en 3 de 3 contra una falla real de Langflow; con un agente de IA atacando, en 2 de 2. No bloqueó ninguno de 34 pedidos legítimos.

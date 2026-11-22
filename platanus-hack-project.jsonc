@@ -3,10 +3,10 @@
   "project-name": "Reaper",
 
   // Short one-line summary of your project (in Spanish).
-  "project-oneliner-spanish": "Medimos que un agente de IA atacante se queda sin rumbo si le niegas la prueba de que su ataque funcionó. Reaper es la defensa abierta que lo hace: detecta, engaña, niega la confirmación y te muestra qué buscaba.",
+  "project-oneliner-spanish": "Reaper desvía a agentes de IA hacia una copia señuelo y te muestra qué intentan para que sepas qué corregir primero.",
 
   // Brief description of your project (in Spanish).
-  "project-description-spanish": "Los atacantes ya usan agentes de IA que prueban, leen la respuesta y ajustan a velocidad de máquina. Bloquearlos les avisa que los vieron. Reaper controla lo que el agente cree que pasó: detecta las sesiones que sondean tu sitio, les responde con una copia falsa, retiene la respuesta cuando trae la prueba de que un ataque funcionó, y muestra en un panel el recorrido de cada agente atrapado, la falla que usó y un arreglo propuesto. Es abierto y corre delante de tus propios servidores. En nuestras pruebas, la prueba del ataque dejó de llegarle al atacante en 5 de 5 intentos sin bloquear ningún pedido legítimo; el ataque igual se ejecuta en el servidor, y lo decimos. Lo respalda Espejismo, nuestro estudio con 95 corridas y 8 modelos: un agente neutralizó a su vigilante 9 de 18 veces y no lo reportó.",
+  "project-description-spanish": "Reaper es un proxy de código abierto que detecta sesiones sospechosas y las desvía a una copia señuelo. Su panel muestra qué rutas prueba el agente, qué datos busca y qué posibles fallas intenta aprovechar. El equipo puede usar esa evidencia para validar riesgos en el sistema real, probar correcciones en un entorno aislado y decidir cuáles aplicar. En una tienda de demostración, Reaper desvió las 30 corridas de ataque de tres modelos y no marcó ninguna de las 30 corridas legítimas. Nuestra apuesta: que cada intento deje evidencia útil para reforzar la próxima defensa.",
 
   // Public URL where your project is deployed and running.
   // Must be a valid URL, for example: https://my-project.vercel.app
