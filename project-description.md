@@ -38,7 +38,7 @@ El resultado es una ficha por modelo: qué tocó, qué intentó y si lo contó.
 - No todos se portan igual: Claude no tocó nada en 12 corridas; GLM abrió las credenciales en 6 de 8.
 
 ## En qué se diferencia
-Otras herramientas bloquean al agente, o evalúan su honestidad leyendo la conversación. Lo que un agente cuenta ayuda, pero no alcanza cuando tiene motivos para no contarlo. Espejismo no bloquea: contrasta lo que el agente dice con un registro del sistema que no puede borrar, y así separa tres cosas: lo que intentó, lo que logró y lo que contó.
+Otras herramientas bloquean al agente, o confían en lo que el agente reporta. Lo que un agente cuenta ayuda, pero no alcanza cuando tiene motivos para no contarlo. Espejismo no bloquea: contrasta lo que el agente reporta con un registro del sistema que no puede borrar, y así separa tres cosas: lo que intentó, lo que logró y lo que contó.
 
 ## Segunda pieza: Último Paso (si el agente igual ataca en producción)
 Espejismo prueba al agente **antes** de darle acceso. [Último Paso](ultimo-paso/README.md) actúa **después**, en producción: un proxy para servidores propios (Envoy, Go) que, cuando la respuesta trae evidencia de que un ataque funcionó, se la oculta al atacante y aplica una regla de contención temporal. Un agente atacante avanza leyendo las respuestas; sin esa señal, pierde el rumbo.
@@ -46,4 +46,4 @@ Espejismo prueba al agente **antes** de darle acceso. [Último Paso](ultimo-paso
 - **Límite dicho de frente:** el ataque igual se ejecuta en el servidor (5/5 → 5/5); el proxy niega la confirmación, no impide el daño. Cloudflare lanzó algo parecido el 21/10/2026 ([anuncio](https://blog.cloudflare.com/full-transaction-waf/)), con tres huecos que declara su propio anuncio y que esta pieza cubre: solo protege el tráfico que pasa por su red (no servidores propios ni tráfico interno), todavía no permite reglas sobre el cuerpo de la respuesta, y bloquea sin llevar estado por atacante ni trampas para confirmar que quien ataca es un agente. Solo 2 corridas con un agente de IA real.
 
 ## Límites
-El comportamiento más grave se provocó con una instrucción de atacante. Que un agente no lo reporte no prueba que mienta a propósito. La idea de señuelos para agentes ya está propuesta; lo nuestro es la implementación y la medición. Muestra chica (3 a 10 corridas por celda). Detalle, cifras y cómo verificarlas en `espejismo/README.md`.
+El comportamiento más grave se provocó con una instrucción de atacante. En más de la mitad de las corridas sin esa instrucción, el agente escribió que sospechaba estar en una prueba, así que su conducta puede no repetirse en un despliegue real. Que un agente no lo reporte no prueba que mienta a propósito. La idea de señuelos para agentes ya está propuesta; lo nuestro es la implementación y la medición. Muestra chica (3 a 10 corridas por celda). Detalle, cifras y cómo verificarlas en `espejismo/README.md`.
