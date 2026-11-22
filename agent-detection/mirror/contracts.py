@@ -1,6 +1,7 @@
 """Deception events the router posts to Sentinel (POST /v1/deception/events), as typed values.
 
-Mirrors DeceptionEvent in packages/contracts/src/index.ts: snake_case here, camelCase on the wire.
+Mirrors DeceptionEvent in packages/contracts/src/deception.ts: snake_case here, camelCase on
+the wire.
 Both test suites parse packages/contracts/test/fixtures/deception-batch.json, so the two sides
 agree on names and limits. Events validate when built: a bad one fails here, not at Sentinel."""
 
