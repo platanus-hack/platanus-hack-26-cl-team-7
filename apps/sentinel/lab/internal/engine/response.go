@@ -58,6 +58,23 @@ func DefaultScanner() *ResponseScanner {
 			sig("win-dir", `Directory of [A-Z]:\\`),
 			// PHP/Java stack traces that leak source or paths.
 			sig("php-warning", `(Fatal error|Warning):.*in\s+/.*\.php on line \d+`),
+			// Classes below need no prior knowledge of the secret: they match the
+			// SHAPE of data that only leaves an app when something went wrong. Like
+			// every signature, they only block alongside request-side suspicion.
+			// Session token (JWT) handed out in a response.
+			sig("jwt", `\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}`),
+			// Password hashes (bcrypt, argon2): a user table leaked.
+			sig("password-hash", `\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}|\$argon2(id|i|d)\$v=\d+\$`),
+			// Database / broker URL with inline credentials.
+			sig("db-url", `(postgres(ql)?|mysql|mongodb(\+srv)?|redis|amqps?)://[^\s:/@"']+:[^\s@"']+@`),
+			// A dumped .env or config: UPPER_CASE secret assignments.
+			sig("dotenv-secret", `(?m)^[A-Z][A-Z0-9_]*(SECRET|PASSWORD|PASSWD|TOKEN|API_KEY|PRIVATE_KEY)[A-Z0-9_]*\s*=\s*\S{6,}`),
+			// Vendor API key shapes (OpenAI/Anthropic-style, GitHub, Slack, Google).
+			sig("vendor-key", `\b(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})`),
+			// SQL engine errors: the injection reached the database.
+			sig("sql-error", `You have an error in your SQL syntax|sqlite3\.OperationalError|SQLITE_ERROR|ORA-\d{5}|PG::SyntaxError|unterminated quoted string|syntax error at or near`),
+			// Python / Java stack traces that leak source paths.
+			sig("stack-trace", `Traceback \(most recent call last\):|\bat [A-Za-z0-9_.$]+\([A-Za-z0-9_]+\.java:\d+\)`),
 		},
 	}
 }
