@@ -1,0 +1,33 @@
+Los atacantes ya usan agentes de inteligencia artificial.
+Imagina a un ladrón que prueba puertas y ventanas de una casa:
+tu sitio.
+Prueba, lee lo que le responde la casa,
+ajusta y vuelve a probar, a velocidad de máquina.
+Si le cierras una puerta de un portazo,
+el ladrón se entera de que lo vieron
+y busca otra entrada.
+Centinela hace cuatro cosas.
+Uno: detecta a quien prueba puertas que no existen
+o pide cosas sensibles.
+Dos: lo engaña.
+Lo deja pasar a una casa de utilería idéntica, con datos falsos.
+Tres: le niega la prueba.
+Si una respuesta de la casa real lleva la prueba de que su ataque funcionó,
+no se la entrega, y el ladrón no sabe si funcionó.
+Cuatro: te lo muestra.
+En un panel ves al agente atrapado, su recorrido,
+la falla que usó y un arreglo propuesto, que una persona aprueba.
+La prueba del ataque dejó de llegarle al atacante en cinco de cinco intentos,
+sin bloquear ninguno de treinta y cuatro pedidos legítimos.
+El límite: el ataque igual se ejecuta en el servidor.
+Treinta de treinta agentes de IA que intentaron robar
+en un prototipo de pagos cayeron a la copia falsa.
+La detección no tuvo falsas alarmas,
+pero hoy detecta una de cada diez sesiones de sondeo
+y aún no se probó con agentes de IA.
+La idea sale de Espejismo,
+nuestro estudio con noventa y cinco corridas y ocho modelos:
+un agente neutralizó a su vigilante nueve de dieciocho veces,
+y no lo reportó.
+Bloquear le avisa.
+Centinela controla lo que el agente cree que pasó.
