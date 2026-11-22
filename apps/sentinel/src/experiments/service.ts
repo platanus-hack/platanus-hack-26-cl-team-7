@@ -74,11 +74,7 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
     let passed = true;
     try {
       for (const project of projects) stage(project, "inputs", "running");
-      const plan = await providers.inputs(selected);
-      if (signal.aborted) return;
-      append(plan);
-      for (const project of projects) stage(project, "inputs", plan.provider === "openrouter" ? "passed" : "degraded");
-      await worker!.run(id, plan.notes, plan.first, (event) => {
+      await worker!.run(id, projects, (event) => {
         append(event);
         // Detection and containment are judged after the worker ends; the strip shows them running while the worker measures.
         if (event.kind === "stage" && event.stage === "traffic" && event.status === "running") {
@@ -87,17 +83,29 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
         }
         if (event.kind === "fixture") fixtures.get(event.project)!.push(event);
         if ((event.kind === "stage" && event.status === "failed") || (event.kind === "fixture" && !event.passed)) passed = false;
-      }, signal, selected);
+      }, signal);
       if (signal.aborted) return;
-      if (projects.some((project) => !fixtures.get(project)?.length || fixtures.get(project)!.length !== providers.cases(project))) throw Error("Incomplete project results");
+      for (const project of projects) {
+        append({ kind: "stage", project, stage: "inputs", status: fixtures.get(project)!.length ? "passed" : "failed" });
+        if (!fixtures.get(project)!.length) passed = false;
+      }
       await Promise.all(projects.map(async (project) => {
         const cases = fixtures.get(project)!;
+        // A target whose container never came up (e.g. a known emulation crash) already has failed
+        // stages from the worker; there is nothing measured to analyze, research or feed back.
+        if (cases.length === 0) return;
         stage(project, "detection", cases.every((f) => f.actual.detected === f.expected.detected) ? "passed" : "failed");
         stage(project, "containment", cases.every((f) => f.actual.executed === f.expected.executed && f.actual.contained === f.expected.contained) ? "passed" : "failed");
+        // The agent reads the measured exploit first; the fix research starts from what it identified.
+        stage(project, "analysis", "running");
+        const analysis = await providers.analyze(project, cases);
+        if (signal.aborted) return;
+        append(analysis);
+        stage(project, "analysis", analysis.status === "completed" ? "passed" : "degraded");
         stage(project, "research", "running");
         stage(project, "feedback", "running");
         const research = async () => {
-          const result = await providers.research(project, cases);
+          const result = await providers.research(project, cases, analysis);
           append(result);
           stage(project, "research", result.status === "retrieved" ? "passed" : result.status === "no_finding" ? "skipped" : "degraded");
           await patchStep(project, cases, result);
@@ -124,7 +132,7 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
       if (signal.aborted) return;
       console.error(`[experiments] run=${id} status=failed error=${(err instanceof Error ? err.message : String(err)).replace(/\s+/g, " ").slice(0, 300)}`);
       for (const project of projects) for (const name of ["detection", "containment"] as const) abandon(project, name);
-      store.finish(id, "failed", "Falló la ejecución local. Se conservaron las observaciones registradas.");
+      store.finish(id, "failed", err instanceof Error && err.message ? err.message : "Falló la ejecución local. Se conservaron las observaciones registradas.");
     }
   }
 

@@ -70,7 +70,7 @@ export function SitePage({ site, run, demoStep }: { site: LabAgent; run: Experim
             <h1>{site.name}</h1>
             {site.cve && (
               <p className="st-cve">
-                Caso simulado inspirado en{" "}
+                PoC real contra {site.name} ·{" "}
                 {site.cve.source
                   ? <a href={site.cve.source} target="_blank" rel="noreferrer"><code>{site.cve.id}</code> <ArrowSquareOut size={12} aria-hidden /></a>
                   : <code>{site.cve.id}</code>}
@@ -120,6 +120,9 @@ export function SitePage({ site, run, demoStep }: { site: LabAgent; run: Experim
             <FindingCard f={card.finding} track={site.detail.track} moments={site.moments}
               active={site.findings.some((x) => x.finding.findingId === active)} lab={card} />
           </div>
+        )}
+        {site.analysis?.summary && (
+          <p className="st-note">Lectura del agente sobre la prueba medida: <Inline text={site.analysis.summary} /></p>
         )}
         <div className="st-fix">
           <h3>Arreglo propuesto</h3>

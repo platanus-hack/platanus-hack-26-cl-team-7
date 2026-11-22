@@ -9,13 +9,15 @@ import { ExperimentEvent, type ExperimentEvent as Entry, type ExperimentProject,
 
 const exec = promisify(execFile);
 const mac = process.platform === "darwin";
-export const envoyImage = "envoyproxy/envoy:v1.36.2";
 const count = z.object({ yes: z.int().nonnegative(), total: z.int().nonnegative() });
 /** The one `PATCH {...}` line the patch verifier prints. */
 const VerifyOutput = z.object({ applied: z.boolean(), error: z.string().nullable(), attacks: count, legit: count });
 export type VerifyOutput = z.infer<typeof VerifyOutput>;
 export type Verify = (project: ExperimentProject, edits: PatchEdit[], signal: AbortSignal) => Promise<VerifyOutput>;
-const checks = `command -v go >/dev/null && command -v python3 >/dev/null && docker info >/dev/null 2>&1 && docker image inspect ${envoyImage} >/dev/null 2>&1`;
+// The real-CVE pipeline needs Go (to build the engine), Python 3, and Docker (to run the Vulhub
+// containers and, for the RCE target, `docker exec` the state oracle). It runs the engine itself in
+// reverse-proxy mode, so no Envoy image is required.
+const checks = "command -v go >/dev/null && command -v python3 >/dev/null && docker info >/dev/null 2>&1";
 
 /** Provider keys never reach lab or experiment subprocesses (AGENTS.md section 4). */
 function labEnv() {
@@ -78,17 +80,20 @@ export function createWorker(root: string, vm: string) {
       return null;
     } catch {
       const environment = mac ? `Inicia Lima con limactl start ${vm}. ` : "Inicia Docker. ";
-      return `${environment}Verifica Python 3, Go y la imagen ${envoyImage} dentro del entorno de ejecución.`;
+      return `${environment}Verifica Python 3, Go y Docker dentro del entorno de ejecución.`;
     }
   }
 
-  async function run(id: string, notes: string[], first: string, emit: (event: Entry) => void, signal: AbortSignal, project?: ExperimentProject) {
+  /** Runs the real-CVE pipeline for the given projects against their Vulhub containers through Reaper. */
+  async function run(_id: string, projects: ExperimentProject[], emit: (event: Entry) => void, signal: AbortSignal) {
     const directory = join(root, "scoreboard", "runs", "experiments");
-    const { command, args } = wrap("python3", ["-m", "scoreboard.pipeline_eval", "--run-id", id,
-      "--notes", notes.join(","), "--first", first, "--events", join(directory, "journals"),
-      "--payloads", join(directory, "private-payloads"), ...(project ? ["--project", project] : [])]);
-    const child = spawn(command, args, { cwd: root, env: labEnv(), stdio: ["ignore", "pipe", "ignore"],
-      signal: AbortSignal.any([signal, AbortSignal.timeout(125_000)]) });
+    const { command, args } = wrap("python3", ["-m", "scoreboard.vulhub_eval",
+      "--targets", projects.join(","), "--events", join(directory, "journals")]);
+    const child = spawn(command, args, { cwd: root, env: labEnv(), stdio: ["ignore", "pipe", "pipe"],
+      signal: AbortSignal.any([signal, AbortSignal.timeout(300_000)]) });
+    let stderr = "";
+    child.stderr!.setEncoding("utf8");
+    child.stderr!.on("data", (chunk: string) => { stderr = (stderr + chunk).slice(-4_000); });
     const exit = new Promise<number | null>((resolve, reject) => {
       child.once("error", reject);
       child.once("close", resolve);
@@ -99,13 +104,15 @@ export function createWorker(root: string, vm: string) {
         for await (const line of lines) {
           if (!line.startsWith("PIPELINE ")) continue;
           const message = JSON.parse(line.slice(9));
-          if (message.kind === "project") continue;
           const entry = ExperimentEvent.parse(message);
-          if (entry.kind === "stage" || entry.kind === "control" || entry.kind === "fixture") emit(entry);
+          if (entry.kind === "inputs" || entry.kind === "stage" || entry.kind === "control" || entry.kind === "fixture") emit(entry);
         }
       };
       const [code] = await Promise.all([exit, consume()]);
-      if (code !== 0) throw Error("Fixture worker interrupted or failed");
+      if (code !== 0) {
+        const last = stderr.trim().split("\n").filter(Boolean).at(-1);
+        throw Error(last || "Fixture worker interrupted or failed");
+      }
     } finally {
       lines.close();
       if (child.exitCode === null && child.signalCode === null) child.kill();

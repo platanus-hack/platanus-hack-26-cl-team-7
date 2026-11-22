@@ -154,7 +154,7 @@ def _langflow(blind: bool) -> Target:
 # --- Next.js middleware auth bypass CVE-2025-29927 -------------------------
 
 NEXTJS_BYPASS = "middleware:middleware:middleware:middleware:middleware"
-NEXTJS_PROOF = "Admin Dashboard"
+NEXTJS_PROOF = "System Settings"
 
 
 def _nextjs() -> Target:

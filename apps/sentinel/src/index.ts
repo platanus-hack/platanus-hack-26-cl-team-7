@@ -11,7 +11,6 @@ import { createApp } from "./app.ts";
 import { Bus } from "./bus.ts";
 import { DeceptionStore } from "./deception.ts";
 import { createEvidenceEvaluator } from "./evidence-demo/evaluate.ts";
-import { createMastraPatchModel, createPatcher } from "./experiments/patch.ts";
 import { createExperimentProviders } from "./experiments/providers.ts";
 import { createExperimentService } from "./experiments/service.ts";
 import { ExperimentStore } from "./experiments/store.ts";
@@ -30,7 +29,7 @@ const dbPath = resolve(process.env.SENTINEL_DB ?? resolve(here, "../data/sentine
 const webRoot = resolve(process.env.SENTINEL_WEB ?? resolve(here, "../../web/dist"));
 const list = (v: string | undefined) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 const allowedOrigins = list(process.env.SENTINEL_ALLOWED_ORIGINS);
-const allowedHosts = list(process.env.SENTINEL_ALLOWED_HOSTS);
+const allowedHosts = list(process.env.SENTINEL_ALLOWED_HOSTS || "neowaf.paoloose.site");
 const ingestToken = process.env.SENTINEL_INGEST_TOKEN || undefined;
 // The agent-detection stack (scripts/stack_local.sh) writes its log and verdicts under agent-detection/run.
 const repoRoot = resolve(here, "../../..");
@@ -72,18 +71,15 @@ const evaluateEvidence = localOnly ? createEvidenceEvaluator(repoRoot, providers
 const experimentStore = new ExperimentStore(db);
 const experimentLab = resolve(here, "../lab");
 const experimentWorker = localOnly ? createWorker(experimentLab, setting("ULTIMO_PASO_LIMA_VM") || "espejismo") : undefined;
-// The patch step needs ANTHROPIC_API_KEY for the agent and runs the verifier on the host, so it exists only in loopback mode.
-const patchModel = createMastraPatchModel({ apiKey: anthropicKey });
-const patcher = experimentWorker && createPatcher({ root: experimentLab, model: patchModel, verify: experimentWorker.verify, now: Date.now });
-const experimentService = createExperimentService(experimentStore, experimentWorker, createExperimentProviders(experimentLab, providers), patcher);
+// The patch step (experiments/patch.ts) stays off: its verifier replays the fictional Python services, and the
+// pipeline now measures real Vulhub targets in Docker. It is wired in again when a Vulhub verifier exists.
+const experimentService = createExperimentService(experimentStore, experimentWorker, createExperimentProviders(experimentLab, providers));
 const app = createApp({ store, bus, ai, deception, webRoot, presentationRoot: resolve(repoRoot, "landing"), allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence,
   experiments: [experimentStore, experimentService] });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
-  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}  patch=${patcher && patchModel ? "on" : "off"}`);
+  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
 });
-const recorded = experimentStore.list().find((run) => run.mode === "recorded");
-if (patcher && patchModel && recorded) void experimentService.backfill(recorded.id);
 
 function shutdown() {
   experimentService.stop();

@@ -11,44 +11,38 @@ import { experimentNames, type ExperimentDetail, type ExperimentEvent, type Expe
 import type { CatKey, Moment, MomentKind, Step, Vuln } from "../mirror/moments";
 
 export const fixtureNames: Record<string, string> = {
-  "receipt-body": "Referencia privada en el cuerpo", "receipt-body-variant": "Variante con otra nota",
-  "receipt-header": "Referencia privada en una cabecera", "duplicate-header": "Cabecera duplicada",
-  "receipt-record": "Registro interno", "bank-stale-approval": "Aprobación de una versión anterior",
-  "bank-missing-approval": "Reembolso sin aprobación",
+  "nextjs-auth-bypass": "Bypass de middleware con una cabecera",
+  "vite-file-read": "Lectura de /etc/passwd",
+  "react2shell-rce": "Ejecución remota por RSC",
+  "langflow-rce": "Ejecución remota en Langflow",
 };
 export const fixtureName = (id: string) => fixtureNames[id] ?? id;
 
-/** Advisory of the CVE each site's case is modelled on (the same references Sentinel's research reads). */
+/** Advisory of each real CVE the lab exploits, for runs recorded before fixtures carried it. */
 export const CVE_SOURCES: Record<string, string> = {
-  "CVE-2026-118662": "https://github.com/advisories/GHSA-8g5g-mxqh-grgj",
-  "CVE-2025-55182": "https://react.dev/blog/2025/12/03/critical-security-vulnerability-in-react-server-components",
   "CVE-2025-29927": "https://github.com/advisories/GHSA-f82v-jwr5-mffw",
-  "CVE-2026-129289": "https://access.redhat.com/security/vulnerabilities/RHSB-2026-020",
+  "CVE-2025-30208": "https://github.com/advisories/GHSA-x574-m823-4x7w",
+  "CVE-2025-55182": "https://react.dev/blog/2025/12/03/critical-security-vulnerability-in-react-server-components",
+  "CVE-2026-33017": "https://github.com/advisories/GHSA-4gr9-m9jp-cq37",
 };
 
-/** Request target of each case, as scoreboard/pipeline_eval.py builds it, for runs recorded before receipts carried it. */
-const FIXTURE_TARGET: Record<string, string> = {
-  "receipt-body": "receipt", "receipt-body-variant": "receipt", "receipt-header": "receipt", "receipt-record": "receipt",
-  "duplicate-header": "repeated", "bank-stale-approval": "refunds/stale-approval", "bank-missing-approval": "refunds/missing-approval",
-};
+/** Request target of a case, as the real exploit sent it. */
 export function fixturePath(f: Pick<FixtureResult, "id" | "project"> & { B: { path?: string } }): string {
-  return f.B.path ?? `/${f.project}/${FIXTURE_TARGET[f.id] ?? "service"}`;
+  return f.B.path ?? "/";
 }
 
 const TRIED: Record<string, [CatKey, string]> = {
-  "file-disclosure": ["secrets", "Pidió un recibo con datos privados"],
-  "header-disclosure": ["secrets", "Buscó un dato privado en las cabeceras"],
-  "record-disclosure": ["secrets", "Pidió un registro interno"],
-  "refund-approval": ["account", "Pidió un reembolso"],
+  "auth-bypass": ["admin", "Envió la cabecera que salta la autenticación del middleware"],
+  "file-read": ["traversal", "Pidió leer un archivo del sistema del servidor"],
+  rce: ["code", "Ejecutó un comando en el servidor"],
 };
 const tried = (weakness: string): [CatKey, string] => TRIED[weakness] ?? ["guess", "Probó una ruta del servicio"];
 
 const V = (name: string, gap: string, severity: Vuln["severity"]): Vuln => ({ name, gap, severity });
 const VULNS: Record<string, Vuln> = {
-  "file-disclosure": V("Dato privado en el cuerpo de la respuesta", "El servicio entrega en el cuerpo de la respuesta una referencia privada que no debería salir.", "Crítica"),
-  "header-disclosure": V("Dato privado en una cabecera", "El servicio devuelve una referencia privada en las cabeceras de la respuesta.", "Crítica"),
-  "record-disclosure": V("Registro interno expuesto", "El servicio entrega un registro interno a quien no debería verlo.", "Crítica"),
-  "refund-approval": V("Reembolso sin aprobación vigente", "El banco responde un reembolso cuya aprobación es de otra versión o no existe.", "Crítica"),
+  "auth-bypass": V("Bypass de autenticación del middleware", "El middleware deja pasar una petición con la cabecera x-middleware-subrequest y entrega una página protegida sin credenciales.", "Crítica"),
+  "file-read": V("Lectura arbitraria de archivos", "El servidor de desarrollo entrega el contenido de un archivo del sistema (/etc/passwd) saltando su control de acceso.", "Crítica"),
+  rce: V("Ejecución remota de código", "El servidor deserializa de forma insegura la entrada del atacante y ejecuta un comando; el resultado vuelve en la respuesta.", "Crítica"),
 };
 const vulnFor = (weakness: string) => VULNS[weakness] ?? V("Dato privado expuesto", "La respuesta del servicio trae un dato que el cliente no debería ver.", "Alta");
 
@@ -115,7 +109,7 @@ export interface LabResearch {
 
 type StageStatus = Extract<ExperimentEvent, { kind: "stage" }>["status"];
 /** The stages the panel shows for a project, in pipeline order, with the words of each. */
-const STRIP = [["detection", "Detección"], ["containment", "Contención"], ["research", "Aviso"], ["patch", "Parche"]] as const satisfies readonly (readonly [ExperimentStage, string])[];
+const STRIP = [["detection", "Detección"], ["containment", "Contención"], ["analysis", "Análisis"], ["research", "Aviso"], ["patch", "Parche"]] as const satisfies readonly (readonly [ExperimentStage, string])[];
 export type LabStepStage = (typeof STRIP)[number][0];
 export interface LabStep {
   stage: LabStepStage;
@@ -124,6 +118,14 @@ export interface LabStep {
   status: "pending" | StageStatus;
   /** Milliseconds from the stage's running event to its terminal event, when the run recorded it. */
   elapsedMs: number | null;
+}
+
+/** What the analyst agent concluded after reading the measured PoC. */
+export interface LabAnalysis {
+  status: Extract<ExperimentEvent, { kind: "analysis" }>["status"];
+  cve: string | null;
+  confirmed: boolean;
+  summary: string;
 }
 
 export interface LabAgent {
@@ -144,6 +146,7 @@ export interface LabAgent {
   patch: PatchResult | null;
   /** detection, containment, research and patch, derived only from the project's stage events. */
   steps: LabStep[];
+  analysis: LabAnalysis | null;
   graph: GraphStory;
 }
 
@@ -200,6 +203,7 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
   const stages = new Map<ExperimentStage, { status: StageStatus; elapsedMs: number | null }>();
   let research: LabResearch | null = null;
   let patch: PatchResult | null = null;
+  let analysis: LabAnalysis | null = null;
   for (const { seq, at, event } of detail.entries) {
     if (!("project" in event) || event.project !== project) continue;
     if (event.kind === "stage") stages.set(event.stage, { status: event.status, elapsedMs: event.elapsedMs ?? null });
@@ -208,6 +212,7 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
     if (event.kind === "control") controls.push(event);
     if (event.kind === "research") research = { status: event.status, fixes: event.fixes, source: event.source };
     if (event.kind === "patch") patch = event;
+    if (event.kind === "analysis") analysis = { status: event.status, cve: event.cve, confirmed: event.confirmed, summary: event.summary };
   }
   if (fixtures.length === 0) return null;
   const anyRunning = [...stages.values()].some(({ status }) => status === "running");
@@ -294,8 +299,8 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
     openedAt: fixtures[0]!.ts, lastSeen: fixtures.at(-1)!.ts + 1, actions: actions.length, findings: findings.length,
   };
   return {
-    project, runId: run.id, name, live, moments, findings, outcome, traffic, research, patch, steps,
-    cve: { id: cveId, source: research?.source ?? CVE_SOURCES[cveId] ?? null },
+    project, runId: run.id, name, live, moments, findings, outcome, traffic, research, analysis, patch, steps,
+    cve: { id: cveId, source: research?.source ?? cases[0]?.source ?? CVE_SOURCES[cveId] ?? null },
     legit: { A: count(byArm.A), B: count(byArm.B) },
     detail: { track, actions, findings: findings.map((x) => x.finding) },
     graph: {

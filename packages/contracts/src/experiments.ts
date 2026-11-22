@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-export const ExperimentProject = z.enum(["bruma", "litoral", "surco", "bank"]);
+export const ExperimentProject = z.enum(["nextjs", "vite", "react2shell", "langflow"]);
 export type ExperimentProject = z.infer<typeof ExperimentProject>;
-export const experimentNames = { bruma: "Bruma Remuneraciones", litoral: "Litoral Freight", surco: "Surco Rooms", bank: "Banco Estero" } as const;
+export const experimentNames = { nextjs: "Next.js", vite: "Vite", react2shell: "React2Shell", langflow: "Langflow" } as const;
 const arm = z.enum(["A", "B"]);
 const natural = z.int().nonnegative();
 const header = z.tuple([z.string(), z.string()]);
@@ -21,7 +21,7 @@ const receipt = z.object({ trace: z.string(), requestId: z.string().optional(), 
   hits: natural, evidence: z.boolean(), detected: z.boolean().nullable(), decision: z.string().nullable(), rule: z.string().nullable(),
   operationId: z.string().nullable().optional(),
   approval: z.object({ requestedVersion: natural, approvedVersion: natural.nullable(), eligible: z.boolean() }).optional() });
-const stage = z.enum(["inputs", "traffic", "fixtures", "detection", "containment", "research", "patch", "feedback"]);
+const stage = z.enum(["inputs", "traffic", "fixtures", "detection", "containment", "analysis", "research", "patch", "feedback"]);
 export type ExperimentStage = z.infer<typeof stage>;
 const status = z.enum(["running", "passed", "failed", "degraded", "skipped"]);
 const count = z.object({ yes: natural, total: natural });
@@ -35,12 +35,19 @@ const scored = z.object({ detected: z.boolean(), contained: z.boolean(), execute
 export const ExperimentEvent = z.discriminatedUnion("kind", [
   /** `elapsedMs` (time since the same stage's `running` event) is set on terminal stage events of newer runs. */
   z.object({ kind: z.literal("stage"), ...project, stage, status, detail: z.string().optional(), elapsedMs: natural.optional() }),
-  z.object({ kind: z.literal("inputs"), provider: z.enum(["openrouter", "fixed"]), first: z.string(), notes: z.array(z.string()).length(3) }),
+  /** A live run names the measured targets; earlier recordings named the fixed fixture order. */
+  z.object({ kind: z.literal("inputs"), provider: z.enum(["live", "openrouter", "fixed"]),
+    targets: z.array(ExperimentProject).min(1).optional(), first: z.string().optional(),
+    notes: z.array(z.string()).length(3).optional() }),
   z.object({ kind: z.literal("control"), ...project, arm, receipt, passed: z.boolean() }),
-  z.object({ kind: z.literal("fixture"), ...project, id: z.string(), weakness: z.string(), cve: z.string().optional(), proof: z.string().max(128).optional(),
+  z.object({ kind: z.literal("fixture"), ...project, id: z.string(), weakness: z.string(), cve: z.string().optional(),
+    source: z.string().url().nullish(), proof: z.string().max(128).optional(),
     A: receipt, B: receipt, retry: receipt, rule: z.string().nullable(), actual: scored, expected: scored, passed: z.boolean() }),
   z.object({ kind: z.literal("baseline"), ...project, direct: count, protected: count, detected: count,
     installed: count, executed: count, legitimateA: count, legitimateB: count }),
+  z.object({ kind: z.literal("analysis"), ...project, model: z.string(),
+    status: z.enum(["completed", "failed", "unconfigured"]), cve: z.string().nullable(),
+    confirmed: z.boolean(), summary: z.string().max(600) }),
   z.object({ kind: z.literal("research"), ...project, source: z.string().nullable(), cve: z.string().nullable(),
     status: z.enum(["retrieved", "unconfigured", "unavailable", "no_finding"]), fixes: z.array(z.string()), evidence: z.array(z.string()) }),
   /**

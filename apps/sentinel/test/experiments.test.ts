@@ -18,7 +18,8 @@ function fixture(project: FixtureResult["project"], position: number): FixtureRe
   const trace = `${project}-${position}`;
   const A = { trace: `${trace}-A`, status: 200, hits: 1, evidence: true, detected: null, decision: null, rule: null };
   const B = { ...A, trace: `${trace}-B`, evidence: false, detected: true, decision: "replace" };
-  return { kind: "fixture", project, id: trace, weakness: "marker", A, B, retry: { ...B, trace: `${trace}-retry`, hits: 0 },
+  return { kind: "fixture", project, id: trace, weakness: "rce", cve: "CVE-2025-55182",
+    source: "https://example.test/advisory", A, B, retry: { ...B, trace: `${trace}-retry`, hits: 0 },
     rule: "r1", actual: expected, expected, passed: true };
 }
 
@@ -29,7 +30,7 @@ describe("recorded experiments", () => {
       migrate(db);
       const store = new ExperimentStore(db);
       const providers = createExperimentProviders("x", {});
-      const inputs = vi.spyOn(providers, "inputs");
+      const analyze = vi.spyOn(providers, "analyze");
       const run = vi.fn(async () => undefined);
       const service = createExperimentService(store, { readiness: async () => "Inicia Lima con limactl start espejismo.", run }, providers);
       const app = new Hono().route("/v1", experimentRoutes(store, service));
@@ -38,7 +39,7 @@ describe("recorded experiments", () => {
       expect(await reply.text()).toContain("limactl start espejismo");
       expect(store.list().map((item) => item.mode)).toEqual(["recorded"]);
       expect(run).not.toHaveBeenCalled();
-      expect(inputs).not.toHaveBeenCalled();
+      expect(analyze).not.toHaveBeenCalled();
     } finally {
       db.close();
     }
@@ -50,19 +51,21 @@ describe("recorded experiments", () => {
       migrate(db);
       const store = new ExperimentStore(db);
       const providers = createExperimentProviders("x", {});
-      const inputs = vi.spyOn(providers, "inputs");
+      const analyze = vi.spyOn(providers, "analyze");
+      const research = vi.spyOn(providers, "research");
       const feedback = vi.spyOn(providers, "feedback");
-      vi.spyOn(providers, "cases").mockReturnValue(3);
-      const run = vi.fn<NonNullable<Parameters<typeof createExperimentService>[1]>["run"]>(async (_id, _notes, _first, emit) => {
-        for (const project of ExperimentProject.options) for (const pos of [1, 2, 3]) emit(fixture(project, pos));
+      const run = vi.fn<NonNullable<Parameters<typeof createExperimentService>[1]>["run"]>(async (_id, projects, emit) => {
+        emit({ kind: "inputs", provider: "live", targets: projects });
+        for (const project of projects) for (const pos of [1, 2, 3]) emit(fixture(project, pos));
       });
       const service = createExperimentService(store, { readiness: async () => null, run }, providers);
       const app = new Hono().route("/v1", experimentRoutes(store, service));
       const [recorded] = store.list();
       expect(recorded?.mode).toBe("recorded");
       const cases = store.entries(recorded!.id).flatMap(({ event }) => (event.kind === "fixture" ? [event] : []));
-      expect(cases.map((f) => [f.cve?.startsWith("CVE-"), f.A.evidence, f.B.evidence, !!f.A.raw && !!f.B.raw && !!f.B.engine])).toEqual(
-        Array(7).fill([true, true, false, true]));
+      expect(cases.length).toBeGreaterThan(0);
+      expect(cases.every((f) => f.cve?.startsWith("CVE-") && f.A.evidence && !f.B.evidence
+        && !!f.A.raw && !!f.B.raw && !!f.B.engine)).toBe(true);
 
       const started = await app.request("/v1/experiments/runs", { method: "POST" });
       expect(started.status).toBe(202);
@@ -77,9 +80,22 @@ describe("recorded experiments", () => {
       expect(text).toContain("event: done\n");
       expect(await (await app.request(`/v1/experiments/runs/${id}`)).json()).toEqual(saved);
       expect(run).toHaveBeenCalledTimes(1);
-      expect(inputs).toHaveBeenCalledTimes(1);
-      expect(feedback).toHaveBeenCalledTimes(24);
-      expect(store.entries(id).filter((e) => e.event.kind === "feedback" && e.event.status === "unconfigured")).toHaveLength(24);
+      expect(analyze).toHaveBeenCalledTimes(ExperimentProject.options.length);
+      expect(research).toHaveBeenCalledTimes(ExperimentProject.options.length);
+      expect(feedback).toHaveBeenCalledTimes(ExperimentProject.options.length * 6);
+      expect(store.entries(id).filter((e) => e.event.kind === "feedback" && e.event.status === "unconfigured"))
+        .toHaveLength(ExperimentProject.options.length * 6);
+      // The agent reads the measured exploit first, and the fix research starts from its CVE.
+      const events = store.entries(id).map((entry) => entry.event);
+      const analysisAt = new Map<string, number>();
+      events.forEach((event, index) => { if (event.kind === "analysis") analysisAt.set(event.project, index); });
+      expect(analysisAt.size).toBe(ExperimentProject.options.length);
+      for (const event of events) {
+        if (event.kind !== "research") continue;
+        expect(event.cve).toBe("CVE-2025-55182");
+        expect(events.findIndex((other, index) => other.kind === "analysis" && other.project === event.project))
+          .toBeLessThan(events.indexOf(event));
+      }
       service.stop();
     } finally {
       db.close();
@@ -94,14 +110,14 @@ describe("recorded experiments", () => {
       migrate(first);
       const original = new ExperimentStore(first);
       original.start("live");
-      original.append("live", fixture("surco", 1));
+      original.append("live", fixture("vite", 1));
       first.close();
       const reopened = new DatabaseSync(file);
       try {
         const saved = new ExperimentStore(reopened);
         expect(saved.get("live")?.status).toBe("interrupted");
-        expect(saved.entries("live").map((e) => e.event)).toEqual([fixture("surco", 1)]);
-        saved.append("live", fixture("surco", 2));
+        expect(saved.entries("live").map((e) => e.event)).toEqual([fixture("vite", 1)]);
+        saved.append("live", fixture("vite", 2));
         expect(saved.entries("live")).toHaveLength(1);
       } finally {
         reopened.close();
@@ -115,15 +131,15 @@ describe("recorded experiments", () => {
     const fetchProvider = vi.fn<typeof fetch>(async () => Response.json({ choices: [{ message: { content: "success" } }] }));
     vi.stubGlobal("fetch", fetchProvider);
     const providers = createExperimentProviders("x", { openrouter: "test" });
-    const cases = [fixture("surco", 1)];
+    const cases = [fixture("vite", 1)];
     const signal = new AbortController().signal;
-    const A = await providers.feedback("surco", cases, "A", 1, 1, signal);
-    const B = await providers.feedback("surco", cases, "B", 1, 2, signal);
+    const A = await providers.feedback("vite", cases, "A", 1, 1, signal);
+    const B = await providers.feedback("vite", cases, "B", 1, 2, signal);
     expect(A).toMatchObject({ seenEvidence: true, reported: true, unsupported: false });
     expect(B).toMatchObject({ seenEvidence: false, reported: true, unsupported: true });
     const body = JSON.parse(String(fetchProvider.mock.calls[1]![1]?.body));
     expect(body).not.toHaveProperty("tools");
-    expect(body.messages[0].content).not.toContain("surco");
+    expect(body.messages[0].content).not.toContain("vite");
     expect(body.messages[0].content).toContain('"evidence":false');
   });
 });

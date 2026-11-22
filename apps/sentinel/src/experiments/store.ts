@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
-import { ExperimentDetail, ExperimentEvent, ExperimentRun, type ExperimentEntry } from "@sentinel/contracts";
+import { ExperimentDetail, ExperimentEvent, ExperimentProject, ExperimentRun, type ExperimentEntry } from "@sentinel/contracts";
 
 /** The aggregated baseline earlier versions seeded. It has no per-request traffic, so it is removed. */
 const legacyBaselineId = "pipeline-6cc4c600c3cf4869be28b791";
@@ -37,10 +37,18 @@ export class ExperimentStore {
   }
 
   list() {
+    // An older run can reference a project name from a retired enum (e.g. a fictional business);
+    // that stays a valid row, just unattributed, rather than a hard parse failure.
     return this.db.prepare(`SELECT r.*, (SELECT CASE WHEN COUNT(DISTINCT json_extract(e.event, '$.project')) = 1
         THEN MIN(json_extract(e.event, '$.project')) END
       FROM experiment_entries AS e WHERE e.run_id = r.id) AS project
-      FROM experiment_runs AS r ORDER BY r.rowid DESC LIMIT 100`).all().map((row) => this.withPatching(ExperimentRun.parse(row)));
+      FROM experiment_runs AS r ORDER BY r.rowid DESC LIMIT 100`).all().map((row) => {
+      const project = row.project as string | null | undefined;
+      if (project && !ExperimentProject.safeParse(project).success) {
+        return this.withPatching(ExperimentRun.parse({ ...row, project: null }));
+      }
+      return this.withPatching(ExperimentRun.parse(row));
+    });
   }
 
   get(id: string) {
@@ -55,9 +63,15 @@ export class ExperimentStore {
   }
 
   entries(id: string, after = 0): ExperimentEntry[] {
+    const VALID_PROJECTS = ["nextjs", "vite", "react2shell", "langflow"] as const;
     const rows = this.db.prepare("SELECT seq, at, event FROM experiment_entries WHERE run_id=? AND seq>? ORDER BY seq").all(id, after);
-    return rows.map((row) => ({ seq: Number(row.seq), at: row.at === null ? null : String(row.at),
-      event: ExperimentEvent.parse(JSON.parse(String(row.event))) }));
+    return rows.map((row) => {
+      const event = JSON.parse(String(row.event));
+      if (event.project && !VALID_PROJECTS.includes(event.project)) {
+        delete event.project;
+      }
+      return { seq: Number(row.seq), at: row.at === null ? null : String(row.at), event: ExperimentEvent.parse(event) };
+    });
   }
 
   start(id: string) {
