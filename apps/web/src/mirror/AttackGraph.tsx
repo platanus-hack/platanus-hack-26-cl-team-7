@@ -160,7 +160,7 @@ export function AttackGraph({ track, moment, shot, decoys }: { track: Track; mom
   const nodes = useMemo<CardNode[]>(
     () => [
       { id: "agent", type: "card", position: { x: 0, y: 60 }, data: { icon: "agent", title: agentName(track.userAgent), sub: disguise || "Agente atrapado" } },
-      { id: "sentinel", type: "card", position: { x: 250, y: 60 }, data: { icon: "sentinel", title: "Sentinel", sub: "lo desvió" } },
+      { id: "sentinel", type: "card", position: { x: 250, y: 60 }, data: { icon: "sentinel", title: "Reaper", sub: "lo desvió" } },
       { id: "decoy", type: "card", position: { x: 500, y: 0 }, data: { icon: "decoy", title: "Copia falsa", sub: `${numEs(decoys)} respuestas falsas`, shot } },
       { id: "real", type: "card", position: { x: 500, y: 125 }, data: { icon: "real", title: "Tienda real", sub: "0 visitas desde la captura" } },
     ],

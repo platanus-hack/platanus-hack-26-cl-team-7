@@ -14,7 +14,7 @@ function describe(fixture: FixtureResult, arm: Lane["id"]): Lane {
     : wire.detected ? `Señal detectada · HTTP ${wire.status}` : `Sin señal de detección · HTTP ${wire.status}`;
   return {
     id: arm,
-    title: arm === "A" ? "Directo al servicio" : "A través de Centinela",
+    title: arm === "A" ? "Directo al servicio" : "A través de Reaper",
     observation,
     result: wire.evidence ? "La evidencia llegó" : "La evidencia no llegó",
     visibleEvidence: wire.evidence,
@@ -29,7 +29,7 @@ export function ProjectFlow({ fixture, recorded }: {
   const lanes = fixture ? (["A", "B"] as const).map((arm) => describe(fixture, arm))
     : (["A", "B"] as const).map((arm): Lane => ({
       id: arm,
-      title: arm === "A" ? "Directo al servicio" : "A través de Centinela",
+      title: arm === "A" ? "Directo al servicio" : "A través de Reaper",
       observation: "Resumen grabado",
       result: `${recorded![arm].yes}/${recorded![arm].total} con evidencia visible`,
       visibleEvidence: recorded![arm].yes > 0,

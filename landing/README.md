@@ -1,11 +1,11 @@
-# landing/ — sitio de Centinela (estático, sin build)
+# landing/ — sitio de Reaper (estático, sin build)
 
-Publicado en https://centinela.haroldmedrano33.workers.dev (worker `centinela`, cuenta Harold18m). Desplegar desde esta carpeta:
+Publicado en https://reaper.haroldmedrano33.workers.dev (worker `reaper`, cuenta Harold18m; los workers `centinela` y `gringola` redirigen aquí). Desplegar desde esta carpeta:
 `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID -u CF_API_TOKEN -u CF_ACCOUNT_ID npx wrangler@4 deploy`.
 `index.html` (web), `pitch.html` (láminas: flechas, N notas, F pantalla completa) y `pitch.pdf`. Las capturas de `img/` son del panel real en local con un sondeo de prueba hecho con curl; `assets/` es el kit de la skill taste-skill.
 
-Al ejecutar Centinela localmente, el servidor sirve esta presentación en
-`http://127.0.0.1:8787/presentacion/`. Allí **Abrir el panel** lleva al dashboard vivo.
+Al ejecutar el panel localmente, el servidor sirve esta presentación en
+`http://127.0.0.1:8787/presentacion/`. Allí **Abrir el panel** lleva al dashboard vivo (reemplaza el texto exacto `href="#contact">Probar el panel`: no cambiarlo).
 Las cifras de la página corresponden al benchmark histórico; las corridas de los cuatro servicios se consultan en Experimentos.
 
 ## Publicar el panel real en /panel (investigado, no hecho)
