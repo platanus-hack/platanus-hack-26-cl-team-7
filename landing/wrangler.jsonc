@@ -1,0 +1,8 @@
+// Sitio estático de Centinela (cuenta Harold18m). Desplegar desde landing/:
+// env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID -u CF_API_TOKEN -u CF_ACCOUNT_ID npx wrangler@4 deploy
+{
+  "name": "centinela",
+  "account_id": "fa21477007610346907b3d43843094c5",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "." }
+}

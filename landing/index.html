@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="es" data-type="software" data-radius="sharp" data-buttons="solid" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Centinela: seguridad contra agentes de IA para equipos con servidores propios</title>
+<meta name="description" content="Centinela detecta sondeos, le responde al atacante con una copia falsa, le niega la prueba de que su ataque funcionó y te muestra qué buscaba.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Centinela: atrapa a los agentes de IA que atacan tu sitio">
+<meta property="og:description" content="Le responde al atacante con una copia falsa y le niega la prueba de que su ataque funcionó.">
+<meta property="og:image" content="https://centinela.haroldmedrano33.workers.dev/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0b1220">
+<!-- <link rel="canonical" href="https://[dominio propio]/"> -->
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+<link rel="preload" href="fonts/reddit-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+@font-face { font-family: "Reddit Sans"; src: url(fonts/reddit-sans.woff2) format("woff2"); font-weight: 200 900; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url(fonts/jetbrains-mono.woff2) format("woff2"); font-weight: 100 800; font-display: swap; }
+:root {
+  --p-bg: #0b1220; --p-surface: #111a2e; --p-ink: #e6edf5; --p-muted: #94a3b8;
+  --p-accent: #5eead4; --p-accent-ink: #0b1220; --p-action: #5eead4; --p-action-ink: #0b1220;
+  --p-inv-bg: #e6edf5; --p-inv-surface: #d4dbe4; --p-inv-ink: #0b1220; --p-inv-muted: #545c69;
+  --p-inv-accent: #0b1220; --p-inv-accent-ink: #e6edf5; --p-inv-action: #0b1220; --p-inv-action-ink: #e6edf5;
+  --font-display: "Reddit Sans", system-ui, sans-serif;
+  --font-text: "Reddit Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 500;
+  --display-tracking: -0.03em;
+  --display-tracking-xl: -0.04em;
+}
+/* el fondo iluminado detrás de las capturas, en la paleta del logo */
+:root { --ground-bg: #16223b; --ground-surface: #1c2a47; --ground-ink: #e6edf5; --ground-muted: #a3b1c4; --ground-accent: #5eead4; --ok: #5eead4; --bad: #fb7185; }
+/* modo claro: la misma marca sobre fondo claro; el menta pasa a verde azulado para cumplir contraste */
+@media (prefers-color-scheme: light) {
+  :root {
+    --p-bg: #f5f7fa; --p-surface: #e8edf3; --p-ink: #0b1220; --p-muted: #4a5568;
+    --p-accent: #0f766e; --p-accent-ink: #ffffff; --p-action: #0f766e; --p-action-ink: #ffffff;
+    --p-inv-bg: #0b1220; --p-inv-surface: #111a2e; --p-inv-ink: #e6edf5; --p-inv-muted: #94a3b8;
+    --p-inv-accent: #5eead4; --p-inv-accent-ink: #0b1220; --p-inv-action: #5eead4; --p-inv-action-ink: #0b1220;
+    --ground-bg: #d9e2ec; --ground-surface: #e8eef5; --ground-ink: #0b1220; --ground-muted: #4a5568; --ground-accent: #0f766e;
+    --ok: #0f766e; --bad: #be123c;
+  }
+}
+</style>
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<style>
+  .nav__logo img { width: 28px; height: 28px; }
+  h1, h2 { hyphens: manual; }
+  #pasos .panel picture { display: contents; }
+  #pasos .panel .frame__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+  .duel__panel::before, .duel__panel::after { display: none; }
+  /* héroe: la captura real del panel como ventana, cortada por el marco */
+  .hero__art .shot { display: block; border-radius: var(--r-md); overflow: hidden; border: 1px solid color-mix(in oklab, var(--ground-ink) 14%, transparent); box-shadow: 0 24px 60px rgb(0 0 0 / .35); }
+  .hero__art .shot img { display: block; width: 1100px; max-width: none; height: auto; }
+  .hero__art .note { left: var(--s-6); bottom: var(--s-6); width: 300px; padding: var(--s-5); border-radius: var(--r-md); background: var(--p-bg); color: var(--p-ink); border: 1px solid var(--line); }
+  .note h3 { font-size: 16px; margin: 0 0 var(--s-3); font-weight: 500; }
+  .note p { margin: var(--s-2) 0 0; font-size: 14px; display: flex; gap: var(--s-2); align-items: baseline; }
+  .note p i { font-style: normal; color: var(--ok); font-family: var(--font-mono); }
+  .note code, .duel code { font-family: var(--font-mono); font-size: .92em; }
+  @media (max-width: 1023px) { .hero__art .shot img { width: 900px; } }
+  @media (max-width: 639px) { .hero__art .shot img { width: 640px; } }
+  /* el momento: dos trazas reales, pedido por pedido */
+  .duel .card { display: flex; flex-direction: column; }
+  .duel__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); }
+  .duel__head h3 { font-size: var(--t-card); margin: 0; }
+  .duel__panel { --p-h: auto; height: auto; aspect-ratio: auto; padding: var(--s-4); margin-top: var(--s-4); }
+  .duel__ticks { display: flex; flex-wrap: wrap; gap: 5px; position: relative; }
+  .duel__ticks span { width: calc((100% - 13 * 5px) / 14); aspect-ratio: 1; border-radius: 3px; background: color-mix(in oklab, var(--ink) 8%, transparent); transition: background .2s; }
+  .duel__ticks span.on { background: color-mix(in oklab, var(--ink) 34%, transparent); }
+  .duel__ticks span.leak { background: var(--bad); }
+  .duel__ticks span.deny { background: var(--ok); }
+  .duel dl { display: grid; grid-template-columns: 1fr auto; gap: var(--s-2) var(--s-4); margin: var(--s-5) 0 0; font-size: 16px; }
+  .duel dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .duel__verdict { margin-top: auto; padding-top: var(--s-5); font-size: 18px; }
+  .duel__legend { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); margin: var(--s-5) 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+  .duel__legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  /* las cifras: grande, con su límite al lado */
+  .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-7) 24px; }
+  .fact { border-top: 1px solid var(--line); padding-top: var(--s-5); }
+  .fact .t-stat { margin: 0 0 var(--s-2); color: var(--accent); }
+  .fact p { margin: 0; }
+  .fact .limit { margin-top: var(--s-3); font-size: 14px; color: var(--muted); }
+  .fact .limit b { color: var(--ink); font-weight: 500; }
+  /* comparación */
+  .compare { width: 100%; border-collapse: collapse; font-size: 16px; }
+  .compare th, .compare td { text-align: left; vertical-align: top; padding: var(--s-5) var(--s-4) var(--s-5) 0; border-bottom: 1px solid var(--line); }
+  .compare thead th { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .compare tbody th { font-weight: 500; width: 22%; }
+  /* pruébalo */
+  .closing__cta, .closing__cta > * { min-width: 0; max-width: 100%; }
+  code { overflow-wrap: anywhere; }
+  .cmd { position: relative; margin: var(--s-6) 0 0; min-width: 0; }
+  .cmd pre { margin: 0; padding: var(--s-5) var(--s-6); background: var(--p-surface); border: 1px solid var(--line); border-radius: var(--r-md); font: 15px/1.7 var(--font-mono); overflow-x: auto; color: var(--ink); }
+  @media (max-width: 1279px) and (min-width: 1024px) {
+    .compare .mad, #comparacion .measure { display: none; }
+    .compare th, .compare td { padding-block: var(--s-3); }
+    .facts { gap: var(--s-5) 24px; }
+  }
+  @media (max-width: 639px) {
+    .duel__ticks { gap: 4px; }
+    #pasos .panel { --p-h: 150px; height: 150px; aspect-ratio: auto; }
+    .compare th, .compare td { padding: var(--s-2) var(--s-3) var(--s-2) 0; }
+    #comparacion .measure { margin-bottom: var(--s-4) !important; }
+    .fact .t-stat { margin-bottom: 0; }
+    .fact .limit { margin-top: var(--s-2); font-size: 13px; }
+    .fact { padding-top: var(--s-4); }
+    .facts { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
+    .compare { font-size: 13px; }
+    #comparacion .btn-row, .compare .mad, #comparacion .measure { display: none; }
+    #comparacion > h3 { font-size: 18px; }
+    .facts { gap: var(--s-4); }
+    .compare tbody th { width: 30%; }
+    .cmd pre { padding: var(--s-4); font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+  }
+</style>
+</head>
+<body>
+<!-- type: software (seguridad para sitios web contra agentes de IA)
+     deal: hero collage, nav nav-cards, close close-type, footer footer-columns, rhythm space, buttons solid, mark: el logo del cliente
+     palette: los colores del cliente (logo de Centinela: navy #0b1220, menta #5eead4) vía start.mjs brand; type reddit (auto-alojada)
+     momento: «El mismo agente, dos respuestas» (#demo), traza real de ultimo-paso/scoreboard/results/mock-bank.json -->
+<header class="nav">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Saltar al contenido</a>
+    <a class="nav__logo" href="#top"><img src="logo.svg" alt="" width="28" height="28">Centinela</a>
+    <nav class="nav__links" aria-label="Secciones">
+      <div class="nav__item"><a class="nav__link" href="#demo">Demostración</a></div>
+      <div class="nav__item"><a class="nav__link" href="#pasos">Pasos</a></div>
+      <div class="nav__item"><a class="nav__link" href="#cifras">Cifras</a></div>
+          </nav>
+    <div class="nav__actions">
+      <a class="btn btn--primary" href="#contact">Probar el panel</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menú">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+<main id="top">
+  <section class="hero hero--collage" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text grid hero__grid">
+      <div class="hero__text span-5">
+        <h1 id="hero-h">Atrapa a los agentes de IA que atacan tu sitio</h1>
+        <p class="hero__lead">Centinela le responde al atacante con una copia falsa, le niega la prueba de que su ataque funcionó y te muestra qué buscaba.</p>
+        <div class="btn-row"><a class="btn btn--primary" href="#demo">Ver cómo atrapa a un agente<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a></div>
+        <p class="hero__proof">Con dos modelos de IA atacando, la prueba no les llegó en ninguna de 20 corridas.</p>
+      </div>
+      <div class="hero__art span-6 start-7" role="img" aria-label="Panel de Centinela: el atacante pasó por Centinela, fue desviado a la copia falsa y la tienda real no recibió visitas suyas">
+        <div class="ly-piece ly-piece--main shot" aria-hidden="true">
+          <picture>
+            <source type="image/avif" srcset="img/agente-recorrido-1600.avif">
+            <img src="img/agente-recorrido-1600.webp" srcset="img/agente-recorrido-800.webp 800w, img/agente-recorrido-1600.webp 1600w" sizes="1100px" width="1600" height="1000" alt="" fetchpriority="high">
+          </picture>
+        </div>
+        <div class="ly-piece note" aria-hidden="true" data-ly-steps="700">
+          <h3>Sesión marcada</h3>
+          <p data-step><i>01</i><span>Pidió <code>/.env</code></span></p>
+          <p data-step><i>02</i><span>Desviada a la copia falsa</span></p>
+          <p data-step><i>03</i><span>Tienda real: 0 visitas suyas</span></p>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="section" id="demo" aria-labelledby="demo-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="demo-h">El mismo agente de IA, dos respuestas. <span class="muted">Prueba, lee la respuesta y ajusta.</span></h2>
+      </div>
+      <div class="grid duel" data-duel>
+        <article class="card span-6" data-side="sin">
+          <div class="duel__head"><h3>Sin Centinela</h3><span class="t-label muted">corrida 2 de 2</span></div>
+          <div class="panel duel__panel"><div class="duel__ticks" role="img" aria-label="32 pedidos; en el 4, el 27 y el 32 le llegó la prueba"></div></div>
+          <dl><dt>Pedidos</dt><dd>32</dd><dt>¿Recibió la prueba?</dt><dd>Sí</dd></dl>
+          <p class="duel__verdict">En el pedido 4 recibió el archivo. Al final declaró que su ataque funcionó.</p>
+        </article>
+        <article class="card span-6" data-side="con">
+          <div class="duel__head"><h3>Con Centinela</h3><span class="t-label muted">corrida 1 de 2</span></div>
+          <div class="panel duel__panel"><div class="duel__ticks" role="img" aria-label="41 pedidos; Centinela retuvo la respuesta o aplicó su regla en 36 y nunca le llegó la prueba"></div></div>
+          <dl><dt>Pedidos</dt><dd>41</dd><dt>¿Recibió la prueba?</dt><dd>No</dd></dl>
+          <p class="duel__verdict">Recibió errores creíbles, siguió probando y nunca obtuvo la prueba. Cada pedido quedó registrado.</p>
+        </article>
+      </div>
+      <ul class="duel__legend">
+        <li><i style="background:var(--bad)"></i>le llegó la prueba</li>
+        <li><i style="background:var(--ok)"></i>Centinela retuvo la respuesta o aplicó su regla</li>
+        <li><i style="background:color-mix(in oklab, var(--ink) 34%, transparent)"></i>otro pedido</li>
+      </ul>
+      <div class="btn-row" style="margin-top:var(--s-6)"><button class="btn btn--secondary" type="button" data-play>Reproducir la traza</button></div>
+      <p class="t-small muted" style="margin-top:var(--s-4)">Agente DeepSeek contra el banco de prueba, traza en <code>ultimo-paso/scoreboard/results/mock-bank.json</code>. En las dos corridas el servidor ejecutó el ataque.</p>
+    </div>
+  </section>
+
+  <section class="section g2" id="pasos" aria-labelledby="pasos-h">
+    <div class="wrap">
+      <div class="group">
+        <div class="section-head">
+          <h2 id="pasos-h">Cuatro pasos delante de tu servidor. <span class="muted">Capturas del panel real, con un sondeo de prueba nuestro.</span></h2>
+        </div>
+        <div class="grid">
+          <article class="card card--row card--open span-6">
+            <h3>Detectar sondeos</h3>
+            <p>Quien pide rutas que no existen o archivos sensibles queda marcado. Aquí bastó pedir <code>/.env</code>.</p>
+            <div class="panel"><picture><source type="image/avif" srcset="img/agentes-atrapados-1600.avif"><img class="frame__img" src="img/agentes-atrapados-1600.webp" srcset="img/agentes-atrapados-800.webp 800w, img/agentes-atrapados-1600.webp 1600w" sizes="(max-width: 639px) 342px, 628px" width="1600" height="1000" alt="Panel con la lista de agentes atrapados y dos fallas críticas" loading="lazy"></picture></div>
+          </article>
+          <article class="card card--row card--open span-6">
+            <h3>Engañar con una copia falsa</h3>
+            <p>Desde ahí le responde una copia del sitio con datos inventados. Pidió <code>/etc/passwd</code> y recibió uno falso.</p>
+            <div class="panel"><picture><source type="image/avif" srcset="img/copia-falsa-1600.avif"><img class="frame__img" src="img/copia-falsa-1600.webp" srcset="img/copia-falsa-800.webp 800w, img/copia-falsa-1600.webp 1600w" sizes="(max-width: 639px) 342px, 628px" width="1600" height="1000" alt="Lo que respondió la copia falsa al pedir /etc/passwd" loading="lazy"></picture></div>
+          </article>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="card card--row card--open span-6">
+          <h3>Negar la confirmación</h3>
+          <p>Si la respuesta trae la prueba del ataque, no sale. Sin Centinela llegó 5 de 5 veces; con Centinela, 0 de 5.</p>
+          <div class="panel"><picture><source type="image/avif" srcset="img/demo-evidencia-1600.avif"><img class="frame__img" src="img/demo-evidencia-1600.webp" srcset="img/demo-evidencia-800.webp 800w, img/demo-evidencia-1600.webp 1600w" sizes="(max-width: 639px) 342px, 628px" width="1600" height="1000" alt="Demo de evidencia: evidencia recibida 5 de 5 directo y 0 de 5 con proxy" loading="lazy"></picture></div>
+        </article>
+        <article class="card card--row card--open span-6">
+          <h3>Mostrar y proponer el arreglo</h3>
+          <p>Ves su recorrido, la falla que usó y un arreglo escrito por el copiloto. Tu equipo lo revisa y lo aplica.</p>
+          <div class="panel"><picture><source type="image/avif" srcset="img/arreglo-propuesto-1600.avif"><img class="frame__img" src="img/arreglo-propuesto-1600.webp" srcset="img/arreglo-propuesto-800.webp 800w, img/arreglo-propuesto-1600.webp 1600w" sizes="(max-width: 639px) 342px, 628px" width="1600" height="1000" alt="Recorrido del atacante y el copiloto con cinco pasos para arreglar la falla" loading="lazy"></picture></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section g2" id="cifras" aria-labelledby="cifras-h">
+    <div class="wrap">
+      <div class="group">
+      <div class="section-head">
+        <h2 id="cifras-h">Lo que medimos. <span class="muted">Cada cifra con su límite.</span></h2>
+      </div>
+      <div class="facts">
+        <div class="fact">
+          <p class="t-stat">0 de 5</p>
+          <p>veces le llegó la prueba al atacante en el banco de prueba (antes, 5 de 5). Contra una falla real de Langflow, 0 de 3. Ninguno de 34 pedidos legítimos bloqueado.</p>
+          <p class="limit"><b>Límite:</b> no evita el daño; el servidor ejecutó el ataque igual. Fuente: <code>ultimo-paso/README.md</code></p>
+        </div>
+        <div class="fact">
+          <p class="t-stat">30 de 30</p>
+          <p>agentes de IA que intentaron robar con una llave trampa cayeron a la copia falsa, sin mover un peso real.</p>
+          <p class="limit"><b>Límite:</b> un prototipo de pagos aparte del panel. Fuente: <code>project-description.md</code></p>
+        </div>
+        <div class="fact">
+          <p class="t-stat">0 de 172</p>
+          <p>sesiones humanas marcadas como sondeo por la detección.</p>
+          <p class="limit"><b>Límite:</b> detecta 1 de cada 10 sesiones de sondeo, las humanas son simuladas y no se probó con agentes de IA. Fuente: <code>agent-detection/eval/RESULTS.md</code></p>
+        </div>
+        <div class="fact">
+          <p class="t-stat">0 de 8</p>
+          <p>veces lo reportó un agente que neutralizó a su vigilante y creyó llevarse las credenciales (95 corridas, 8 modelos).</p>
+          <p class="limit"><b>Límite:</b> se provocó con una instrucción de atacante. Fuente: <code>related_experiments/espejismo/results/RESUMEN.md</code></p>
+        </div>
+      </div>
+      </div>
+      <div class="group" id="comparacion">
+        <h3 style="margin:0;font-size:var(--t-card)">Frente a la protección que Cloudflare lanzó el 21/10/2026.</h3>
+        <p class="measure" style="margin:var(--s-3) 0 var(--s-6)">El 21/10/2026 Cloudflare lanzó una protección que retiene la respuesta de un ataque exitoso (<a class="link" href="https://blog.cloudflare.com/full-transaction-waf/">anuncio</a>). Medimos los mismos ataques por los dos caminos.</p>
+        <table class="compare">
+        <thead><tr><th scope="col"><span class="sr-only">Aspecto</span></th><th scope="col">Cloudflare</th><th scope="col">Centinela</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Dónde corre</th><td>Solo en el tráfico que pasa por su red</td><td>Delante de tus propios servidores, código abierto</td></tr>
+          <tr><th scope="row">Con el atacante</th><td>Retiene la respuesta</td><td>Le responde una copia falsa y le niega la prueba</td></tr>
+          <tr><th scope="row">Qué te entrega</th><td>La protección, todavía sin reglas sobre el cuerpo de la respuesta</td><td>El recorrido, la falla y un arreglo propuesto</td></tr>
+          <tr><th scope="row">La prueba le llegó al atacante</th><td>20 de 20 corridas</td><td>0 de 20 corridas</td></tr>
+          <tr class="mad"><th scope="row">Madurez</th><td>Producto a escala</td><td>Prototipo de hackatón</td></tr>
+        </tbody>
+      </table>
+        <p class="t-small muted" style="margin-top:var(--s-3)">Benchmark propio del 22/11/2026: dos modelos de IA atacando, 10 corridas cada uno; 0 de 25 pedidos legítimos bloqueados y el ataque se ejecutó en el servidor en ambos caminos. <b>Límite:</b> una sola app de prueba, reglas por defecto del plan gratuito de Cloudflare, y no pudimos confirmar desde su panel que la protección de respuestas estuviera activa.</p>
+        <div class="btn-row" style="margin-top:var(--s-6)"><a class="btn btn--primary" href="#contact">Probar el panel</a></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer closing" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--type">
+      <div class="section-head">
+        <h2 id="close-h">Prueba el panel en tu computador</h2>
+        <p>Modo de repetición, sin credenciales. Necesitas Node 24 y pnpm.</p>
+      </div>
+      <div class="cmd">
+        <pre id="cmd"><code>git clone https://github.com/harold18m/platanus-hack-26
+cd platanus-hack-26 &amp;&amp; pnpm install &amp;&amp; pnpm start</code></pre>
+      </div>
+      <div class="btn-row" style="margin-top:var(--s-5)"><button class="btn btn--secondary" type="button" data-copy="#cmd">Copiar el comando</button></div>
+      <p style="margin-top:var(--s-5)"><a class="link" href="https://espejismo-demo.haroldmedrano33.workers.dev/explorar">Ver la investigación detrás: el explorador de Espejismo</a></p>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-6 stack-4">
+          <a class="nav__logo" href="#top"><img src="logo.svg" alt="" width="28" height="28">Centinela</a>
+          <p class="footer__lede">No evita el ataque: evita que el atacante reciba la prueba de que funcionó, y te muestra qué pasó.</p>
+        </div>
+        <div class="span-3 start-7 footer__col"><h3>Producto</h3><ul><li><a href="#demo">Demostración</a></li><li><a href="#pasos">Pasos</a></li></ul></div>
+        <div class="span-3 start-10 footer__col"><h3>Evidencia</h3><ul><li><a href="#cifras">Cifras</a></li><li><a href="pitch">Láminas del pitch</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 team-7 · Platanus Hack 26, Santiago</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
+<script type="module">
+  // Trazas reales del agente DeepSeek (ultimo-paso/scoreboard/results/mock-bank.json, arms.llm):
+  // sin = unprotected[1], con = protected[0]. L = le llegó la prueba, D = el proxy respondió 500, . = otro pedido.
+  const TRAZAS = {
+    sin: "...L......................L....L",
+    con: "...DDDDDDDDDDDDDDDDDDDDDDDD..DDDDDDDDDDDD"
+  };
+  const root = document.querySelector('[data-duel]');
+  const max = Math.max(TRAZAS.sin.length, TRAZAS.con.length);
+  const fill = (side, upto) => {
+    const box = root.querySelector(`[data-side="${side}"] .duel__ticks`);
+    const t = TRAZAS[side];
+    if (!box.children.length) box.innerHTML = '<span></span>'.repeat(t.length);
+    [...box.children].forEach((s, i) => { s.className = i < upto ? ({ L: 'leak', D: 'deny' }[t[i]] || 'on') : ''; });
+  };
+  fill('sin', max); fill('con', max);
+  let timer;
+  document.querySelector('[data-play]').addEventListener('click', () => {
+    clearInterval(timer);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { fill('sin', max); fill('con', max); return; }
+    let i = 0; fill('sin', 0); fill('con', 0);
+    timer = setInterval(() => { i++; fill('sin', i); fill('con', i); if (i >= max) clearInterval(timer); }, 90);
+  });
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(document.querySelector(b.dataset.copy).innerText);
+    b.textContent = 'Copiado'; setTimeout(() => b.textContent = 'Copiar el comando', 1600);
+  }));
+</script>
+</body>
+</html>
