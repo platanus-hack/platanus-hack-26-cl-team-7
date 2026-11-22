@@ -19,13 +19,13 @@ ANCLAS = {
     "hb1": "La prueba le llegó", "hb2": "en veinte de veinte por", "hb3": "y en cero de veinte", "hsin": "Sin esa prueba",
     "imagina": "Imagina a un ladrón", "sitio": "tu sitio", "prueba": "Prueba, lee", "ajusta": "ajusta y vuelve", "maquina": "a velocidad",
     "portazo": "Si le cierras", "golpe": "de un portazo", "entera": "se entera de que", "busca": "y busca otra",
-    "cuatro": "Centinela es para", "hace": "y hace cuatro", "uno": "Uno: detecta", "sensibles": "o pide cosas",
+    "cuatro": "Gríngola es para", "hace": "y hace cuatro", "uno": "Uno: detecta", "sensibles": "o pide cosas",
     "dos": "Dos: lo engaña", "pasar": "Lo deja pasar", "falsos": "con datos falsos",
     "tres": "Tres: le niega", "si": "Si una respuesta", "noentrega": "no se la entrega", "nosabe": "y el ladrón no sabe",
     "cuatrop": "Cuatro: te lo", "panel": "En un panel", "recorrido": "su recorrido", "falla": "la falla que",
     "arreglo": "y un arreglo", "persona": "que una persona",
     "limites": "Los límites", "l2": "las reglas por defecto", "l3": "sin confirmar", "l4": "Y el ataque igual",
-    "bloquear": "Bloquear le avisa", "controla": "Centinela controla",
+    "bloquear": "Bloquear le avisa", "gringolas": "Nosotros le ponemos", "solo": "solo ve lo que",
 }
 T = {k: t(v) for k, v in ANCLAS.items()}
 assert list(T.values()) == sorted(T.values()), "anclas fuera de orden"
@@ -47,7 +47,7 @@ clips |= {
     "fx-portazo": (T["golpe"] + 0.25, None),
     "fx-k1": (T["uno"], None), "fx-k2": (T["dos"], None), "fx-k3": (T["tres"], None), "fx-k4": (T["cuatrop"], None),
     "fx-m1": (T["hb1"] + 1.2, None), "fx-m2": (T["hb2"] + 1.2, None), "fx-m3": (T["hb3"] + 0.9, None),
-    "fx-cierre": (T["controla"], None),
+    "fx-cierre": (T["gringolas"], None),
 }
 html = (d / "index.html").read_text()
 for cid, (s, dur) in clips.items():

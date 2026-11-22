@@ -3,31 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <title>Centinela explicado</title>
+    <title>Gríngola explicado</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
     <style>
       /* Sistema visual v3 (dirección de Harold, 22/11): casi monocromo, un solo acento, líneas finas, mucho aire.
          Sans para las frases, monoespaciada para todo lo de «máquina». La traza del agente es la protagonista.
-         MARCA: estos tokens, las dos fuentes y el logo salen de la landing (rama centinela-web, modo claro).
-         Cuando exista landing/marca/, se cambian aquí y en assets/fonts/, y nada más. */
-      @font-face { font-family: "Reddit Sans"; src: url(assets/fonts/reddit-sans.woff2) format("woff2"); font-weight: 200 900; }
-      @font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/jetbrains-mono.woff2) format("woff2"); font-weight: 100 800; }
+         MARCA Gríngola: fondo #0a0a0a y lima #c8f55a del logo (project-logo.png de main); Geist y Geist Mono
+         de la landing (rama centinela-web, landing/fonts/). */
+      @font-face { font-family: "Geist"; src: url(assets/fonts/geist.woff2) format("woff2"); font-weight: 100 900; }
+      @font-face { font-family: "Geist Mono"; src: url(assets/fonts/geist-mono.woff2) format("woff2"); font-weight: 100 900; }
       :root {
-        --bg: #f5f7fa;
-        --surface: #ffffff;
-        --ink: #0b1220;
-        --muted: #4a5568;
-        --line: #d3dae4;
-        --accent: #0f766e;
-        --accent-claro: #5eead4; /* el mismo acento, para marcar sobre la captura oscura del panel */
-        --sans: "Reddit Sans", system-ui, sans-serif;
-        --mono: "JetBrains Mono", ui-monospace, monospace;
+        --bg: #0a0a0a;
+        --surface: #141414;
+        --ink: #fafafa;
+        --muted: #a3a3a3;
+        --line: #2e2e2e;
+        --accent: #c8f55a;
+        --accent-claro: #c8f55a;
+        --sans: "Geist", system-ui, sans-serif;
+        --mono: "Geist Mono", ui-monospace, monospace;
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
       #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: var(--sans); font-weight: 500; color: var(--ink); }
       #fondo { position: absolute; inset: 0; background: var(--bg); }
-      #marca { position: absolute; left: 96px; top: 52px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+      #marca { position: absolute; left: 96px; top: 52px; display: flex; align-items: center; gap: 14px; font-size: 36px; font-weight: 500; letter-spacing: -0.04em; }
       .scene, .wrap, .beat { position: absolute; inset: 0; }
       .beat, .o { opacity: 0; }
       .abs { position: absolute; display: block; overflow: visible; }
@@ -39,16 +39,16 @@
       .ac { color: var(--accent); }
       .mu { color: var(--muted); }
       .pildora { position: absolute; padding: 10px 24px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); font-family: var(--mono); font-weight: 500; font-size: 28px; white-space: nowrap; }
-      .pildora.k { background: var(--ink); border-color: var(--ink); color: #fff; }
-      .pildora.c { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .pildora.k { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+      .pildora.c { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 
       /* la traza: tarjeta de líneas finas con filas petición → respuesta */
-      .traza { position: absolute; border: 1.5px solid var(--line); border-radius: 24px; background: var(--surface); overflow: hidden; box-shadow: 0 24px 60px rgba(11, 18, 32, 0.06); }
+      .traza { position: absolute; border: 1.5px solid var(--line); border-radius: 24px; background: var(--surface); overflow: hidden; }
       .traza .cab { height: 68px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid var(--line); font-family: var(--mono); font-size: 28px; color: var(--muted); }
-      .tr { height: 64px; padding: 0 28px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #e8ecf2; font-family: var(--mono); font-weight: 500; font-size: 30px; white-space: nowrap; }
+      .tr { height: 64px; padding: 0 28px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #222222; font-family: var(--mono); font-weight: 500; font-size: 30px; white-space: nowrap; }
       .tr .dir { color: var(--muted); }
       .tr .st { margin-left: auto; padding: 2px 16px; border: 1.5px solid var(--line); border-radius: 999px; font-size: 28px; }
-      .tr .st.k { background: var(--ink); border-color: var(--ink); color: #fff; }
+      .tr .st.k { background: var(--ink); border-color: var(--ink); color: var(--bg); }
       .tr.com { color: var(--muted); font-weight: 400; }
 
       /* pie, subtítulos y avance, siempre */
@@ -56,7 +56,7 @@
       #avance { position: absolute; left: 0; top: 1076px; width: 1920px; height: 4px; background: var(--ink); transform-origin: 0 50%; }
       #subs { position: absolute; left: 60px; top: 930px; width: 1800px; height: 80px; }
       .subt { position: absolute; left: 0; top: 0; width: 1800px; height: 80px; display: flex; justify-content: center; align-items: center; opacity: 0; }
-      .subt > span { padding: 12px 34px 14px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 34px; font-weight: 500; line-height: 1.15; white-space: nowrap; }
+      .subt > span { padding: 12px 34px 14px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 34px; font-weight: 500; line-height: 1.15; white-space: nowrap; }
 
       /* 0 · el hallazgo: tres barras finas */
       .fila { position: absolute; left: 144px; width: 1640px; height: 64px; display: flex; align-items: center; gap: 32px; font-size: 36px; letter-spacing: -0.02em; }
@@ -75,14 +75,14 @@
       #pasos { position: absolute; left: 144px; top: 150px; width: 1632px; display: flex; gap: 16px; }
       #pasos div { flex: 1; height: 64px; display: flex; align-items: center; justify-content: center; gap: 14px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 30px; letter-spacing: -0.01em; white-space: nowrap; color: var(--muted); }
       #pasos b { font-family: var(--mono); font-weight: 500; }
-      .caja { position: absolute; border: 2px solid var(--ink); border-radius: 22px; background: var(--surface); padding: 26px 30px; font-size: 40px; letter-spacing: -0.02em; }
+      .caja { position: absolute; border: 1.5px solid var(--ink); border-radius: 22px; background: var(--surface); padding: 26px 30px; font-size: 40px; letter-spacing: -0.02em; }
       .caja small { display: block; margin-top: 8px; font-family: var(--mono); font-size: 28px; letter-spacing: 0; color: var(--muted); }
       .caja.falsa { border: 2px dashed var(--accent); color: var(--accent); background: transparent; }
       .caja.falsa small { color: var(--accent); }
-      #panel { position: absolute; left: 200px; top: 236px; width: 1520px; height: 640px; border: 1.5px solid var(--line); border-radius: 22px; overflow: hidden; background: #000; box-shadow: 0 30px 80px rgba(11, 18, 32, 0.18); }
+      #panel { position: absolute; left: 200px; top: 236px; width: 1520px; height: 640px; border: 1.5px solid var(--line); border-radius: 22px; overflow: hidden; background: #000; }
       #panel img { position: absolute; left: 0; top: 0; width: 1520px; height: 900px; }
       .aro { position: absolute; border: 3px solid var(--accent-claro); border-radius: 14px; opacity: 0; }
-      #panel .pildora { opacity: 0; background: var(--accent-claro); border-color: var(--accent-claro); color: var(--ink); }
+      #panel .pildora { opacity: 0; background: var(--accent-claro); border-color: var(--accent-claro); color: var(--bg); }
 
       /* 4 · los límites */
       .limite { position: absolute; left: 144px; width: 1632px; height: 104px; display: flex; align-items: center; gap: 36px; border-top: 1.5px solid var(--line); font-size: 50px; letter-spacing: -0.03em; opacity: 0; }
@@ -90,13 +90,13 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="75.6" data-width="1920" data-height="1080">
-      <div id="fondo" class="clip" data-start="0" data-duration="75.6" data-track-index="0" data-layout-ignore>
-        <div id="marca"><svg  viewBox="0 0 420 420" fill="none" style="width: 46px; height: 46px"><circle cx="210" cy="210" r="196" stroke="var(--accent)" stroke-width="10" stroke-dasharray="26 18" stroke-linecap="round"/><path d="M60 210c40-66 92-99 150-99s110 33 150 99c-40 66-92 99-150 99S100 276 60 210z" stroke="var(--ink)" stroke-width="14" stroke-linejoin="round"/><circle cx="210" cy="210" r="52" fill="var(--accent)"/><circle cx="210" cy="210" r="20" fill="var(--bg)"/></svg><span>Centinela</span></div>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="76.8" data-width="1920" data-height="1080">
+      <div id="fondo" class="clip" data-start="0" data-duration="76.8" data-track-index="0" data-layout-ignore>
+        <div id="marca"><svg viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="width: 58px; height: 44px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg><span>gríngola</span></div>
       </div>
 
       <!-- 0 · EL HALLAZGO: las tres barras, con su límite al lado -->
-      <section id="s0" class="clip scene" data-start="0" data-duration="18.37" data-track-index="1">
+      <section id="s0" class="clip scene" data-start="0" data-duration="19.73" data-track-index="1">
         <div class="wrap">
           <span class="tag">el hallazgo</span>
           <div class="h" style="top: 222px; width: 1640px; font-size: 68px">Si a un agente de IA que te ataca le niegas la prueba<br />de que su ataque funcionó, <span class="ac">se queda sin rumbo.</span></div>
@@ -110,7 +110,7 @@
       </section>
 
       <!-- 1 · EL PROBLEMA: la traza del agente (prueba, lee, ajusta, vuelve a probar) -->
-      <section id="s1" class="clip scene" data-start="18.37" data-duration="8.94" data-track-index="1">
+      <section id="s1" class="clip scene" data-start="19.73" data-duration="8.28" data-track-index="1">
         <div class="wrap">
           <span class="tag">el problema</span>
           <div class="h" style="top: 222px; width: 820px; font-size: 84px">Los atacantes ya usan agentes de IA</div>
@@ -139,7 +139,7 @@
       </section>
 
       <!-- 2 · POR QUÉ BLOQUEAR NO ALCANZA -->
-      <section id="s2" class="clip scene" data-start="27.31" data-duration="4.01" data-track-index="1">
+      <section id="s2" class="clip scene" data-start="28.01" data-duration="3.88" data-track-index="1">
         <div class="wrap">
           <span class="tag">por qué bloquear no alcanza</span>
           <div class="h" style="top: 222px; width: 820px; font-size: 84px">Bloquear le avisa.</div>
@@ -156,7 +156,7 @@
       </section>
 
       <!-- 3 · PARA QUIÉN Y LOS CUATRO PASOS -->
-      <section id="s3" class="clip scene" data-start="31.32" data-duration="28.5" data-track-index="1">
+      <section id="s3" class="clip scene" data-start="31.89" data-duration="28.17" data-track-index="1">
         <div class="wrap">
           <div id="pasos">
             <div id="k1"><b>1</b>Detecta</div>
@@ -166,8 +166,9 @@
           </div>
 
           <div id="p0" class="beat">
-            <div class="centro" style="top: 380px; font-size: 200px">Centinela</div>
-            <div class="centro mu" style="top: 640px; font-size: 44px; letter-spacing: -0.02em">para equipos chicos · con servidores propios · sin equipo de seguridad</div>
+            <div class="centro" style="top: 330px; font-size: 220px; letter-spacing: -0.05em">gríngola</div>
+            <div class="centro mono mu" style="top: 590px; font-size: 30px; letter-spacing: 0">la anteojera del caballo de carrera: solo ve lo que le dejas ver</div>
+            <div class="centro" style="top: 690px; font-size: 44px; letter-spacing: -0.02em">para equipos chicos · con servidores propios · sin equipo de seguridad</div>
           </div>
 
           <!-- 1 Detecta: rutas que no existen y cosas sensibles -->
@@ -179,7 +180,7 @@
               <div id="p1-c" class="tr o" style="border-bottom: none"><span class="dir">→</span><span class="req">GET /.env</span><span class="st o">403</span></div>
             </div>
             <div id="p1-marca" class="abs o" style="left: 144px; top: 368px; width: 6px; height: 194px; background: var(--accent)"></div>
-            <span id="p1-det" class="pildora c o" style="left: 144px; top: 596px">Centinela: esta sesión está sondeando</span>
+            <span id="p1-det" class="pildora c o" style="left: 144px; top: 596px">Gríngola: esta sesión está sondeando</span>
             <div id="p1-x" class="h o" style="left: 1100px; top: 366px; width: 700px; font-size: 48px">Puertas que no existen<div class="nota" style="position: static; margin-top: 6px">404 · 404</div></div>
             <div id="p1-y" class="h o" style="left: 1100px; top: 500px; width: 700px; font-size: 48px">Cosas sensibles<div class="nota" style="position: static; margin-top: 6px">.env</div></div>
           </div>
@@ -187,13 +188,13 @@
           <!-- 2 Engaña: lo desvía a una copia falsa -->
           <div id="p2" class="beat">
             <svg class="abs" style="left: 0; top: 0; width: 1920px; height: 1080px" viewBox="0 0 1920 1080" fill="none">
-              <path d="M420 570 H740" stroke="#0b1220" stroke-width="2.5" />
-              <path d="M860 570 C1050 570 1050 400 1240 400" stroke="#d3dae4" stroke-width="2.5" />
-              <path id="p2-ruta" d="M860 570 C1050 570 1050 740 1240 740" stroke="#0f766e" stroke-width="2.5" stroke-dasharray="10 8" />
+              <path d="M420 570 H720" stroke="#fafafa" stroke-width="2" />
+              <path d="M860 570 C1050 570 1050 400 1240 400" stroke="#4a4a4a" stroke-width="2" />
+              <path id="p2-ruta" d="M860 570 C1050 570 1050 740 1240 740" stroke="#c8f55a" stroke-width="2" stroke-dasharray="10 8" />
             </svg>
             <span class="pildora" style="left: 250px; top: 544px">agente</span>
-            <svg class="abs" viewBox="0 0 420 420" fill="none" style="left: 740px; top: 510px; width: 120px; height: 120px"><circle cx="210" cy="210" r="196" stroke="var(--accent)" stroke-width="10" stroke-dasharray="26 18" stroke-linecap="round"/><path d="M60 210c40-66 92-99 150-99s110 33 150 99c-40 66-92 99-150 99S100 276 60 210z" stroke="var(--ink)" stroke-width="14" stroke-linejoin="round"/><circle cx="210" cy="210" r="52" fill="var(--accent)"/><circle cx="210" cy="210" r="20" fill="var(--bg)"/></svg>
-            <div class="nota" style="left: 700px; top: 644px; width: 200px; text-align: center">Centinela</div>
+            <svg class="abs" viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="left: 722px; top: 510px; width: 157px; height: 120px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg>
+            <div class="nota" style="left: 700px; top: 644px; width: 200px; text-align: center">Gríngola</div>
             <div class="caja" style="left: 1240px; top: 320px; width: 480px; height: 160px">Tu sitio<small>la casa real</small></div>
             <div id="p2-falsa" class="caja falsa o" style="left: 1240px; top: 660px; width: 480px; height: 160px">Copia falsa<small id="p2-dato" class="o">200 OK · datos falsos</small></div>
             <div id="p2-igual" class="abs o mu" style="left: 1440px; top: 526px; width: 80px; text-align: center; font-size: 80px; line-height: 1">=</div>
@@ -204,11 +205,11 @@
           <div id="p3" class="beat">
             <div class="caja" style="left: 144px; top: 420px; width: 380px; height: 160px">Tu sitio<small>la casa real</small></div>
             <div class="abs" style="left: 1059px; top: 400px; width: 0; height: 440px; border-left: 2.5px dashed var(--accent)"></div>
-            <svg class="abs" viewBox="0 0 420 420" fill="none" style="left: 1000px; top: 270px; width: 120px; height: 120px"><circle cx="210" cy="210" r="196" stroke="var(--accent)" stroke-width="10" stroke-dasharray="26 18" stroke-linecap="round"/><path d="M60 210c40-66 92-99 150-99s110 33 150 99c-40 66-92 99-150 99S100 276 60 210z" stroke="var(--ink)" stroke-width="14" stroke-linejoin="round"/><circle cx="210" cy="210" r="52" fill="var(--accent)"/><circle cx="210" cy="210" r="20" fill="var(--bg)"/></svg>
-            <div class="nota ac" style="left: 1140px; top: 312px">Centinela</div>
+            <svg class="abs" viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="left: 990px; top: 270px; width: 157px; height: 120px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg>
+            <div class="nota ac" style="left: 1160px; top: 312px">Gríngola</div>
             <span class="pildora" style="left: 1560px; top: 470px">agente</span>
             <svg id="p3-ataque" class="abs o" style="left: 0; top: 0; width: 1920px; height: 1080px" viewBox="0 0 1920 1080" fill="none">
-              <path d="M1560 700 H540 M562 684 L538 700 L562 716" stroke="#0b1220" stroke-width="2.5" stroke-dasharray="3 9" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M1560 700 H540 M562 684 L538 700 L562 716" stroke="#fafafa" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <div id="p3-rot" class="nota o" style="left: 1150px; top: 716px; color: var(--ink)">POST /transferir · su ataque</div>
             <span id="p3-sobre" class="pildora o" style="left: 570px; top: 470px; border-color: var(--ink); border-width: 2px">200 · la prueba ✓</span>
@@ -235,7 +236,7 @@
       </section>
 
       <!-- 4 · LOS LÍMITES -->
-      <section id="s4" class="clip scene" data-start="59.82" data-duration="8.67" data-track-index="1">
+      <section id="s4" class="clip scene" data-start="60.06" data-duration="8.7" data-track-index="1">
         <div class="wrap">
           <span class="tag">los límites, dichos de frente</span>
           <div id="l1" class="limite" style="top: 240px"><b>01</b>Medimos una sola app de prueba</div>
@@ -247,36 +248,36 @@
       </section>
 
       <!-- 5 · EL CIERRE -->
-      <section id="s5" class="clip scene" data-start="68.49" data-duration="7.11" data-track-index="1">
+      <section id="s5" class="clip scene" data-start="68.76" data-duration="8.04" data-track-index="1">
         <div class="wrap">
           <div id="i2" class="beat">
-            <svg class="abs" viewBox="0 0 420 420" fill="none" style="left: 885px; top: 200px; width: 150px; height: 150px"><circle cx="210" cy="210" r="196" stroke="var(--accent)" stroke-width="10" stroke-dasharray="26 18" stroke-linecap="round"/><path d="M60 210c40-66 92-99 150-99s110 33 150 99c-40 66-92 99-150 99S100 276 60 210z" stroke="var(--ink)" stroke-width="14" stroke-linejoin="round"/><circle cx="210" cy="210" r="52" fill="var(--accent)"/><circle cx="210" cy="210" r="20" fill="var(--bg)"/></svg>
+            <svg class="abs" viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="left: 862px; top: 200px; width: 196px; height: 150px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg>
             <div id="i2-a" class="centro mu" style="top: 410px; font-size: 64px">Bloquear le avisa.</div>
-            <div id="i2-b" class="centro" style="top: 500px; font-size: 92px">Centinela controla lo que el agente<br /><span class="ac">cree que pasó.</span></div>
+            <div id="i2-b" class="centro" style="top: 500px; font-size: 92px">Le ponemos gríngolas al agente:<br /><span id="i2-d" class="ac">solo ve lo que le dejamos ver.</span></div>
             <div id="i2-c" class="centro mono mu" style="top: 790px; font-size: 30px; letter-spacing: 0">team-7 · Platanus Hack 26</div>
           </div>
         </div>
       </section>
 
       <!-- subtítulos, pie y barra de avance -->
-      <div id="subs" class="clip" data-start="0" data-duration="75.6" data-track-index="5" data-layout-ignore></div>
-      <div id="pie" class="clip" data-start="0" data-duration="75.6" data-track-index="2" data-layout-ignore>
+      <div id="subs" class="clip" data-start="0" data-duration="76.8" data-track-index="5" data-layout-ignore></div>
+      <div id="pie" class="clip" data-start="0" data-duration="76.8" data-track-index="2" data-layout-ignore>
         <span></span><span>team-7 · Platanus Hack 26 · AI Security</span>
       </div>
-      <div id="avance" class="clip" data-start="0" data-duration="75.6" data-track-index="4" data-layout-ignore></div>
+      <div id="avance" class="clip" data-start="0" data-duration="76.8" data-track-index="4" data-layout-ignore></div>
 
       <!-- audio. Los data-start los escribe sincronizar.py. -->
       <audio id="voz" src="assets/voz.mp3" data-start="0.4" data-track-index="10" data-volume="1"></audio>
-      <audio id="musica" src="assets/musica.mp3" data-start="0" data-duration="75.6" data-track-index="12" data-volume="0.5"></audio>
-      <audio id="fx-portazo" src="assets/sfx/click.mp3" data-start="28.65" data-track-index="20" data-volume="0.5"></audio>
-      <audio id="fx-k1" src="assets/sfx/pop.mp3" data-start="35.2" data-track-index="21" data-volume="0.25"></audio>
-      <audio id="fx-k2" src="assets/sfx/pop.mp3" data-start="39.61" data-track-index="22" data-volume="0.25"></audio>
-      <audio id="fx-k3" src="assets/sfx/pop.mp3" data-start="44.78" data-track-index="23" data-volume="0.25"></audio>
-      <audio id="fx-k4" src="assets/sfx/pop.mp3" data-start="52.24" data-track-index="24" data-volume="0.25"></audio>
-      <audio id="fx-m1" src="assets/sfx/ping.mp3" data-start="7.36" data-track-index="25" data-volume="0.18"></audio>
-      <audio id="fx-m2" src="assets/sfx/ping.mp3" data-start="10.27" data-track-index="26" data-volume="0.18"></audio>
-      <audio id="fx-m3" src="assets/sfx/ping.mp3" data-start="12.81" data-track-index="27" data-volume="0.18"></audio>
-      <audio id="fx-cierre" src="assets/sfx/chime.mp3" data-start="69.96" data-track-index="28" data-volume="0.22"></audio>
+      <audio id="musica" src="assets/musica.mp3" data-start="0" data-duration="76.8" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="fx-portazo" src="assets/sfx/click.mp3" data-start="29.23" data-track-index="20" data-volume="0.5"></audio>
+      <audio id="fx-k1" src="assets/sfx/pop.mp3" data-start="35.49" data-track-index="21" data-volume="0.25"></audio>
+      <audio id="fx-k2" src="assets/sfx/pop.mp3" data-start="39.64" data-track-index="22" data-volume="0.25"></audio>
+      <audio id="fx-k3" src="assets/sfx/pop.mp3" data-start="44.44" data-track-index="23" data-volume="0.25"></audio>
+      <audio id="fx-k4" src="assets/sfx/pop.mp3" data-start="52.09" data-track-index="24" data-volume="0.25"></audio>
+      <audio id="fx-m1" src="assets/sfx/ping.mp3" data-start="7.74" data-track-index="25" data-volume="0.18"></audio>
+      <audio id="fx-m2" src="assets/sfx/ping.mp3" data-start="11.03" data-track-index="26" data-volume="0.18"></audio>
+      <audio id="fx-m3" src="assets/sfx/ping.mp3" data-start="13.63" data-track-index="27" data-volume="0.18"></audio>
+      <audio id="fx-cierre" src="assets/sfx/chime.mp3" data-start="70.15" data-track-index="28" data-volume="0.22"></audio>
     </div>
 
     <script>
@@ -284,8 +285,8 @@
       const tl = gsap.timeline({ paused: true });
 
       // T (tiempo de video de cada frase ancla) y SUBS (subtítulos) los escribe sincronizar.py; no editar a mano.
-      const T = {"hb1": 6.16, "hb2": 9.07, "hb3": 11.91, "hsin": 13.78, "imagina": 18.52, "sitio": 21.43, "prueba": 22.31, "ajusta": 24.44, "maquina": 25.93, "portazo": 27.46, "golpe": 28.4, "entera": 29.09, "busca": 29.99, "cuatro": 31.47, "hace": 33.8, "uno": 35.2, "sensibles": 38.09, "dos": 39.61, "pasar": 41.22, "falsos": 43.39, "tres": 44.78, "si": 47.04, "noentrega": 49.74, "nosabe": 50.52, "cuatrop": 52.24, "panel": 54.29, "recorrido": 55.83, "falla": 56.75, "arreglo": 57.58, "persona": 58.6, "limites": 59.97, "l2": 62.11, "l3": 63.78, "l4": 66.5, "bloquear": 68.64, "controla": 69.96};
-      const SUBS = [[0.4, 1.92, "Si a un agente de IA que te ataca"], [1.92, 3.82, "le niegas la prueba de que su ataque funcionó,"], [3.82, 6.16, "se queda sin rumbo. Lo medimos."], [6.16, 9.07, "La prueba le llegó en veinte de veinte corridas sin defensa,"], [9.07, 11.91, "en veinte de veinte por la protección por defecto de Cloudflare,"], [11.91, 13.78, "y en cero de veinte con nuestra pieza."], [13.78, 15.82, "Sin esa prueba, ningún agente declaró éxito,"], [15.82, 18.52, "y gastaron entre tres y once veces más peticiones."], [18.52, 21.43, "Imagina a un ladrón que prueba puertas y ventanas de una casa:"], [21.43, 22.31, "tu sitio."], [22.31, 24.44, "Prueba, lee lo que le responde la casa,"], [24.44, 27.46, "ajusta y vuelve a probar, a velocidad de máquina."], [27.46, 29.09, "Si le cierras una puerta de un portazo,"], [29.09, 29.99, "se entera de que lo vieron"], [29.99, 31.47, "y busca otra entrada."], [31.47, 33.8, "Centinela es para equipos chicos con servidores propios,"], [33.8, 35.2, "y hace cuatro cosas."], [35.2, 38.09, "Uno: detecta a quien prueba puertas que no existen"], [38.09, 39.61, "o pide cosas sensibles."], [39.61, 41.22, "Dos: lo engaña."], [41.22, 44.78, "Lo deja pasar a una casa de utilería idéntica, con datos falsos."], [44.78, 47.04, "Tres: le niega la prueba."], [47.04, 49.74, "Si una respuesta real lleva la prueba de que su ataque funcionó,"], [49.74, 52.24, "no se la entrega, y el ladrón no sabe si funcionó."], [52.24, 54.29, "Cuatro: te lo muestra."], [54.29, 56.75, "En un panel ves al agente atrapado, su recorrido,"], [56.75, 59.97, "la falla que usó y un arreglo propuesto, que una persona aprueba."], [59.97, 62.11, "Los límites: una sola app de prueba,"], [62.11, 63.78, "las reglas por defecto de Cloudflare,"], [63.78, 66.5, "sin confirmar en su panel que esa protección estuviera activa."], [66.5, 68.64, "Y el ataque igual se ejecuta en el servidor."], [68.64, 69.96, "Bloquear le avisa."], [69.96, 72.6, "Centinela controla lo que el agente cree que pasó."]];
+      const T = {"hb1": 6.54, "hb2": 9.83, "hb3": 12.73, "hsin": 14.73, "imagina": 19.88, "sitio": 22.69, "prueba": 23.72, "ajusta": 25.74, "maquina": 26.94, "portazo": 28.16, "golpe": 28.98, "entera": 29.59, "busca": 30.43, "cuatro": 32.04, "hace": 34.09, "uno": 35.49, "sensibles": 38.03, "dos": 39.64, "pasar": 41.13, "falsos": 43.22, "tres": 44.44, "si": 46.31, "noentrega": 49.28, "nosabe": 50.2, "cuatrop": 52.09, "panel": 54.29, "recorrido": 55.85, "falla": 56.74, "arreglo": 57.58, "persona": 58.81, "limites": 60.21, "l2": 62.64, "l3": 64.17, "l4": 66.84, "bloquear": 68.91, "gringolas": 70.15, "solo": 72.0};
+      const SUBS = [[0.4, 2.04, "Si a un agente de IA que te ataca"], [2.04, 3.94, "le niegas la prueba de que su ataque funcionó,"], [3.94, 6.54, "se queda sin rumbo. Lo medimos."], [6.54, 9.83, "La prueba le llegó en veinte de veinte corridas sin defensa,"], [9.83, 12.73, "en veinte de veinte por la protección por defecto de Cloudflare,"], [12.73, 14.73, "y en cero de veinte con nuestra pieza."], [14.73, 16.94, "Sin esa prueba, ningún agente declaró éxito,"], [16.94, 19.88, "y gastaron entre tres y once veces más peticiones."], [19.88, 22.69, "Imagina a un ladrón que prueba puertas y ventanas de una casa:"], [22.69, 23.72, "tu sitio."], [23.72, 25.74, "Prueba, lee lo que le responde la casa,"], [25.74, 28.16, "ajusta y vuelve a probar, a velocidad de máquina."], [28.16, 29.59, "Si le cierras una puerta de un portazo,"], [29.59, 30.43, "se entera de que lo vieron"], [30.43, 32.04, "y busca otra entrada."], [32.04, 34.09, "Gríngola es para equipos chicos con servidores propios,"], [34.09, 35.49, "y hace cuatro cosas."], [35.49, 38.03, "Uno: detecta a quien prueba puertas que no existen"], [38.03, 39.64, "o pide cosas sensibles."], [39.64, 41.13, "Dos: lo engaña."], [41.13, 44.44, "Lo deja pasar a una casa de utilería idéntica, con datos falsos."], [44.44, 46.31, "Tres: le niega la prueba."], [46.31, 49.28, "Si una respuesta real lleva la prueba de que su ataque funcionó,"], [49.28, 52.09, "no se la entrega, y el ladrón no sabe si funcionó."], [52.09, 54.29, "Cuatro: te lo muestra."], [54.29, 56.74, "En un panel ves al agente atrapado, su recorrido,"], [56.74, 60.21, "la falla que usó y un arreglo propuesto, que una persona aprueba."], [60.21, 62.64, "Los límites: una sola app de prueba,"], [62.64, 64.17, "las reglas por defecto de Cloudflare,"], [64.17, 66.84, "sin confirmar en su panel que esa protección estuviera activa."], [66.84, 68.91, "Y el ataque igual se ejecuta en el servidor."], [68.91, 70.15, "Bloquear le avisa."], [70.15, 72.0, "Nosotros le ponemos gríngolas al agente:"], [72.0, 73.77, "solo ve lo que le dejamos ver."]];
       const FIN = +document.querySelector("#root").dataset.duration;
 
       tl.fromTo("#avance", { scaleX: 0 }, { scaleX: 1, duration: FIN, ease: "none" }, 0);
@@ -321,7 +322,7 @@
         tl.fromTo(sel, { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.25, ease: "power2.out" }, t);
         pop(`${sel} .st`, t + espera);
       };
-      const enciende = (sel, t) => tl.to(sel, { backgroundColor: "#0b1220", borderColor: "#0b1220", color: "#ffffff", duration: 0.25 }, t);
+      const enciende = (sel, t) => tl.to(sel, { backgroundColor: "#fafafa", borderColor: "#fafafa", color: "#0a0a0a", duration: 0.25 }, t);
 
       // ── 0 · el hallazgo: tres barras
       ver("#z-cap", T.hb1 - 3.2);
@@ -362,8 +363,8 @@
 
       // ── 3 · los cuatro pasos
       const paso = (n, t) => {
-        tl.to(`#k${n}`, { backgroundColor: "#0f766e", borderColor: "#0f766e", color: "#ffffff", duration: 0.25 }, t);
-        if (n > 1) tl.to(`#k${n - 1}`, { backgroundColor: "#ffffff", borderColor: "#d3dae4", color: "#0b1220", duration: 0.25 }, t);
+        tl.to(`#k${n}`, { backgroundColor: "#c8f55a", borderColor: "#c8f55a", color: "#0a0a0a", duration: 0.25 }, t);
+        if (n > 1) tl.to(`#k${n - 1}`, { backgroundColor: "#141414", borderColor: "#2e2e2e", color: "#fafafa", duration: 0.25 }, t);
       };
       momento("#p0", T.cuatro, T.uno);
       tl.fromTo("#pasos div", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "expo.out" }, T.hace);
@@ -397,7 +398,7 @@
       pop("#p3-sobre", T.si + 1.4);
       tl.to("#p3-sobre", { x: 170, duration: T.noentrega - T.si - 1.7, ease: "power1.inOut" }, T.si + 1.7);
       pop("#p3-no", T.noentrega + 0.1);
-      tl.to("#p3-sobre", { opacity: 0.4, borderColor: "#d3dae4", textDecoration: "line-through", duration: 0.4 }, T.noentrega + 0.3);
+      tl.to("#p3-sobre", { opacity: 0.4, borderColor: "#2e2e2e", textDecoration: "line-through", duration: 0.4 }, T.noentrega + 0.3);
       pop("#p3-burbuja", T.nosabe + 0.4);
 
       // 4 Te lo muestra
@@ -422,8 +423,9 @@
       // ── 5 · el cierre
       tl.set("#i2", { opacity: 1 }, S.s5);
       sube("#i2-a", T.bloquear);
-      sube("#i2-b", T.controla - 0.1, 30, 0.6);
-      ver("#i2-c", T.controla + 1.6);
+      sube("#i2-b", T.gringolas - 0.1, 30, 0.6);
+      tl.fromTo("#i2-d", { opacity: 0.25 }, { opacity: 1, duration: 0.4 }, T.solo);
+      ver("#i2-c", T.solo + 1.8);
 
       // música: acompaña bajo la voz y se apaga al final
       tl.fromTo("#musica", { volume: 0.5 }, { volume: 0, duration: 2.2, ease: "power1.in" }, FIN - 3.2);
