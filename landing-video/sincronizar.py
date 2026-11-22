@@ -19,13 +19,13 @@ ANCLAS = {
     "hb1": "La prueba le llegó", "hb2": "en veinte de veinte por", "hb3": "y en cero de veinte", "hsin": "Sin esa prueba",
     "imagina": "Imagina a un ladrón", "sitio": "tu sitio", "prueba": "Prueba, lee", "ajusta": "ajusta y vuelve", "maquina": "a velocidad",
     "portazo": "Si le cierras", "golpe": "de un portazo", "entera": "se entera de que", "busca": "y busca otra",
-    "cuatro": "Gríngola es para", "hace": "y hace cuatro", "uno": "Uno: detecta", "sensibles": "o pide cosas",
+    "cuatro": "Ríper es para", "hace": "y hace cuatro", "uno": "Uno: detecta", "sensibles": "o pide cosas",
     "dos": "Dos: lo engaña", "pasar": "Lo deja pasar", "falsos": "con datos falsos",
     "tres": "Tres: le niega", "si": "Si una respuesta", "noentrega": "no se la entrega", "nosabe": "y el ladrón no sabe",
     "cuatrop": "Cuatro: te lo", "panel": "En un panel", "recorrido": "su recorrido", "falla": "la falla que",
     "arreglo": "y un arreglo", "persona": "que una persona",
     "limites": "Los límites", "l2": "las reglas por defecto", "l3": "sin confirmar", "l4": "Y el ataque igual",
-    "bloquear": "Bloquear le avisa", "gringolas": "Nosotros le ponemos", "solo": "solo ve lo que",
+    "bloquear": "Bloquear le avisa", "controla": "Ríper controla", "solo": "ve y cree",
 }
 T = {k: t(v) for k, v in ANCLAS.items()}
 assert list(T.values()) == sorted(T.values()), "anclas fuera de orden"
@@ -37,7 +37,8 @@ pos, ts = 0, []
 for l in lineas:
     ts.append(round(ini[pos] + LEAD, 2))
     pos += len(l) + 1
-SUBS = [[t0, t1, l] for l, t0, t1 in zip(lineas, ts, ts[1:] + [round(LEAD + fin[-1] + 0.5, 2)])]
+# la voz lee «Ríper» (así se pronuncia); en pantalla va el nombre escrito: Reaper
+SUBS = [[t0, t1, l.replace("Ríper", "Reaper")] for l, t0, t1 in zip(lineas, ts, ts[1:] + [round(LEAD + fin[-1] + 0.5, 2)])]
 
 esc = [0, T["imagina"] - 0.15, T["portazo"] - 0.15, T["cuatro"] - 0.15, T["limites"] - 0.15, T["bloquear"] - 0.15, total]
 clips = {f"s{i}": (esc[i], esc[i + 1] - esc[i]) for i in range(6)}
@@ -47,7 +48,7 @@ clips |= {
     "fx-portazo": (T["golpe"] + 0.25, None),
     "fx-k1": (T["uno"], None), "fx-k2": (T["dos"], None), "fx-k3": (T["tres"], None), "fx-k4": (T["cuatrop"], None),
     "fx-m1": (T["hb1"] + 1.2, None), "fx-m2": (T["hb2"] + 1.2, None), "fx-m3": (T["hb3"] + 0.9, None),
-    "fx-cierre": (T["gringolas"], None),
+    "fx-cierre": (T["controla"], None),
 }
 html = (d / "index.html").read_text()
 for cid, (s, dur) in clips.items():

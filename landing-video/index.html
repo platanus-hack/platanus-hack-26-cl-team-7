@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
-    <title>Gríngola explicado</title>
+    <title>Reaper explicado</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
     <style>
       /* Sistema visual v3 (dirección de Harold, 22/11): casi monocromo, un solo acento, líneas finas, mucho aire.
          Sans para las frases, monoespaciada para todo lo de «máquina». La traza del agente es la protagonista.
-         MARCA Gríngola: fondo #0a0a0a y lima #c8f55a del logo (project-logo.png de main); Geist y Geist Mono
+         MARCA Reaper: fondo #0a0a0a y lima #c8f55a del logo (project-logo.png de main); Geist y Geist Mono
          de la landing (rama centinela-web, landing/fonts/). */
       @font-face { font-family: "Geist"; src: url(assets/fonts/geist.woff2) format("woff2"); font-weight: 100 900; }
       @font-face { font-family: "Geist Mono"; src: url(assets/fonts/geist-mono.woff2) format("woff2"); font-weight: 100 900; }
@@ -90,13 +90,13 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="76.8" data-width="1920" data-height="1080">
-      <div id="fondo" class="clip" data-start="0" data-duration="76.8" data-track-index="0" data-layout-ignore>
-        <div id="marca"><svg viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="width: 58px; height: 44px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg><span>gríngola</span></div>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="71.2" data-width="1920" data-height="1080">
+      <div id="fondo" class="clip" data-start="0" data-duration="71.2" data-track-index="0" data-layout-ignore>
+        <div id="marca"><svg viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="width: 58px; height: 44px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg><span>reaper</span></div>
       </div>
 
       <!-- 0 · EL HALLAZGO: las tres barras, con su límite al lado -->
-      <section id="s0" class="clip scene" data-start="0" data-duration="19.73" data-track-index="1">
+      <section id="s0" class="clip scene" data-start="0" data-duration="19.01" data-track-index="1">
         <div class="wrap">
           <span class="tag">el hallazgo</span>
           <div class="h" style="top: 222px; width: 1640px; font-size: 68px">Si a un agente de IA que te ataca le niegas la prueba<br />de que su ataque funcionó, <span class="ac">se queda sin rumbo.</span></div>
@@ -110,7 +110,7 @@
       </section>
 
       <!-- 1 · EL PROBLEMA: la traza del agente (prueba, lee, ajusta, vuelve a probar) -->
-      <section id="s1" class="clip scene" data-start="19.73" data-duration="8.28" data-track-index="1">
+      <section id="s1" class="clip scene" data-start="19.01" data-duration="8.45" data-track-index="1">
         <div class="wrap">
           <span class="tag">el problema</span>
           <div class="h" style="top: 222px; width: 820px; font-size: 84px">Los atacantes ya usan agentes de IA</div>
@@ -139,7 +139,7 @@
       </section>
 
       <!-- 2 · POR QUÉ BLOQUEAR NO ALCANZA -->
-      <section id="s2" class="clip scene" data-start="28.01" data-duration="3.88" data-track-index="1">
+      <section id="s2" class="clip scene" data-start="27.46" data-duration="3.66" data-track-index="1">
         <div class="wrap">
           <span class="tag">por qué bloquear no alcanza</span>
           <div class="h" style="top: 222px; width: 820px; font-size: 84px">Bloquear le avisa.</div>
@@ -156,7 +156,7 @@
       </section>
 
       <!-- 3 · PARA QUIÉN Y LOS CUATRO PASOS -->
-      <section id="s3" class="clip scene" data-start="31.89" data-duration="28.17" data-track-index="1">
+      <section id="s3" class="clip scene" data-start="31.12" data-duration="24.39" data-track-index="1">
         <div class="wrap">
           <div id="pasos">
             <div id="k1"><b>1</b>Detecta</div>
@@ -166,9 +166,8 @@
           </div>
 
           <div id="p0" class="beat">
-            <div class="centro" style="top: 330px; font-size: 220px; letter-spacing: -0.05em">gríngola</div>
-            <div class="centro mono mu" style="top: 590px; font-size: 30px; letter-spacing: 0">la anteojera del caballo de carrera: solo ve lo que le dejas ver</div>
-            <div class="centro" style="top: 690px; font-size: 44px; letter-spacing: -0.02em">para equipos chicos · con servidores propios · sin equipo de seguridad</div>
+            <div class="centro" style="top: 360px; font-size: 220px; letter-spacing: -0.05em">reaper</div>
+            <div class="centro mu" style="top: 650px; font-size: 44px; letter-spacing: -0.02em">para equipos chicos · con servidores propios · sin equipo de seguridad</div>
           </div>
 
           <!-- 1 Detecta: rutas que no existen y cosas sensibles -->
@@ -180,7 +179,7 @@
               <div id="p1-c" class="tr o" style="border-bottom: none"><span class="dir">→</span><span class="req">GET /.env</span><span class="st o">403</span></div>
             </div>
             <div id="p1-marca" class="abs o" style="left: 144px; top: 368px; width: 6px; height: 194px; background: var(--accent)"></div>
-            <span id="p1-det" class="pildora c o" style="left: 144px; top: 596px">Gríngola: esta sesión está sondeando</span>
+            <span id="p1-det" class="pildora c o" style="left: 144px; top: 596px">Reaper: esta sesión está sondeando</span>
             <div id="p1-x" class="h o" style="left: 1100px; top: 366px; width: 700px; font-size: 48px">Puertas que no existen<div class="nota" style="position: static; margin-top: 6px">404 · 404</div></div>
             <div id="p1-y" class="h o" style="left: 1100px; top: 500px; width: 700px; font-size: 48px">Cosas sensibles<div class="nota" style="position: static; margin-top: 6px">.env</div></div>
           </div>
@@ -194,7 +193,7 @@
             </svg>
             <span class="pildora" style="left: 250px; top: 544px">agente</span>
             <svg class="abs" viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="left: 722px; top: 510px; width: 157px; height: 120px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg>
-            <div class="nota" style="left: 700px; top: 644px; width: 200px; text-align: center">Gríngola</div>
+            <div class="nota" style="left: 700px; top: 644px; width: 200px; text-align: center">Reaper</div>
             <div class="caja" style="left: 1240px; top: 320px; width: 480px; height: 160px">Tu sitio<small>la casa real</small></div>
             <div id="p2-falsa" class="caja falsa o" style="left: 1240px; top: 660px; width: 480px; height: 160px">Copia falsa<small id="p2-dato" class="o">200 OK · datos falsos</small></div>
             <div id="p2-igual" class="abs o mu" style="left: 1440px; top: 526px; width: 80px; text-align: center; font-size: 80px; line-height: 1">=</div>
@@ -206,7 +205,7 @@
             <div class="caja" style="left: 144px; top: 420px; width: 380px; height: 160px">Tu sitio<small>la casa real</small></div>
             <div class="abs" style="left: 1059px; top: 400px; width: 0; height: 440px; border-left: 2.5px dashed var(--accent)"></div>
             <svg class="abs" viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="left: 990px; top: 270px; width: 157px; height: 120px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg>
-            <div class="nota ac" style="left: 1160px; top: 312px">Gríngola</div>
+            <div class="nota ac" style="left: 1160px; top: 312px">Reaper</div>
             <span class="pildora" style="left: 1560px; top: 470px">agente</span>
             <svg id="p3-ataque" class="abs o" style="left: 0; top: 0; width: 1920px; height: 1080px" viewBox="0 0 1920 1080" fill="none">
               <path d="M1560 700 H540 M562 684 L538 700 L562 716" stroke="#fafafa" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round" stroke-linejoin="round" />
@@ -236,7 +235,7 @@
       </section>
 
       <!-- 4 · LOS LÍMITES -->
-      <section id="s4" class="clip scene" data-start="60.06" data-duration="8.7" data-track-index="1">
+      <section id="s4" class="clip scene" data-start="55.51" data-duration="8.22" data-track-index="1">
         <div class="wrap">
           <span class="tag">los límites, dichos de frente</span>
           <div id="l1" class="limite" style="top: 240px"><b>01</b>Medimos una sola app de prueba</div>
@@ -248,36 +247,36 @@
       </section>
 
       <!-- 5 · EL CIERRE -->
-      <section id="s5" class="clip scene" data-start="68.76" data-duration="8.04" data-track-index="1">
+      <section id="s5" class="clip scene" data-start="63.73" data-duration="7.47" data-track-index="1">
         <div class="wrap">
           <div id="i2" class="beat">
             <svg class="abs" viewBox="0 0 340 260" fill="none" stroke-linecap="round" style="left: 862px; top: 200px; width: 196px; height: 150px"><circle cx="130" cy="130" r="92" stroke="var(--ink)" stroke-width="10"/><circle cx="130" cy="130" r="26" fill="var(--ink)"/><path d="M262 26c40 62 40 146 0 208" stroke="var(--accent)" stroke-width="22"/></svg>
             <div id="i2-a" class="centro mu" style="top: 410px; font-size: 64px">Bloquear le avisa.</div>
-            <div id="i2-b" class="centro" style="top: 500px; font-size: 92px">Le ponemos gríngolas al agente:<br /><span id="i2-d" class="ac">solo ve lo que le dejamos ver.</span></div>
+            <div id="i2-b" class="centro" style="top: 500px; font-size: 92px">Reaper controla lo que el agente<br /><span id="i2-d" class="ac">ve y cree que pasó.</span></div>
             <div id="i2-c" class="centro mono mu" style="top: 790px; font-size: 30px; letter-spacing: 0">team-7 · Platanus Hack 26</div>
           </div>
         </div>
       </section>
 
       <!-- subtítulos, pie y barra de avance -->
-      <div id="subs" class="clip" data-start="0" data-duration="76.8" data-track-index="5" data-layout-ignore></div>
-      <div id="pie" class="clip" data-start="0" data-duration="76.8" data-track-index="2" data-layout-ignore>
+      <div id="subs" class="clip" data-start="0" data-duration="71.2" data-track-index="5" data-layout-ignore></div>
+      <div id="pie" class="clip" data-start="0" data-duration="71.2" data-track-index="2" data-layout-ignore>
         <span></span><span>team-7 · Platanus Hack 26 · AI Security</span>
       </div>
-      <div id="avance" class="clip" data-start="0" data-duration="76.8" data-track-index="4" data-layout-ignore></div>
+      <div id="avance" class="clip" data-start="0" data-duration="71.2" data-track-index="4" data-layout-ignore></div>
 
       <!-- audio. Los data-start los escribe sincronizar.py. -->
       <audio id="voz" src="assets/voz.mp3" data-start="0.4" data-track-index="10" data-volume="1"></audio>
-      <audio id="musica" src="assets/musica.mp3" data-start="0" data-duration="76.8" data-track-index="12" data-volume="0.5"></audio>
-      <audio id="fx-portazo" src="assets/sfx/click.mp3" data-start="29.23" data-track-index="20" data-volume="0.5"></audio>
-      <audio id="fx-k1" src="assets/sfx/pop.mp3" data-start="35.49" data-track-index="21" data-volume="0.25"></audio>
-      <audio id="fx-k2" src="assets/sfx/pop.mp3" data-start="39.64" data-track-index="22" data-volume="0.25"></audio>
-      <audio id="fx-k3" src="assets/sfx/pop.mp3" data-start="44.44" data-track-index="23" data-volume="0.25"></audio>
-      <audio id="fx-k4" src="assets/sfx/pop.mp3" data-start="52.09" data-track-index="24" data-volume="0.25"></audio>
-      <audio id="fx-m1" src="assets/sfx/ping.mp3" data-start="7.74" data-track-index="25" data-volume="0.18"></audio>
-      <audio id="fx-m2" src="assets/sfx/ping.mp3" data-start="11.03" data-track-index="26" data-volume="0.18"></audio>
-      <audio id="fx-m3" src="assets/sfx/ping.mp3" data-start="13.63" data-track-index="27" data-volume="0.18"></audio>
-      <audio id="fx-cierre" src="assets/sfx/chime.mp3" data-start="70.15" data-track-index="28" data-volume="0.22"></audio>
+      <audio id="musica" src="assets/musica.mp3" data-start="0" data-duration="71.2" data-track-index="12" data-volume="0.5"></audio>
+      <audio id="fx-portazo" src="assets/sfx/click.mp3" data-start="28.71" data-track-index="20" data-volume="0.5"></audio>
+      <audio id="fx-k1" src="assets/sfx/pop.mp3" data-start="34.68" data-track-index="21" data-volume="0.25"></audio>
+      <audio id="fx-k2" src="assets/sfx/pop.mp3" data-start="38.25" data-track-index="22" data-volume="0.25"></audio>
+      <audio id="fx-k3" src="assets/sfx/pop.mp3" data-start="42.74" data-track-index="23" data-volume="0.25"></audio>
+      <audio id="fx-k4" src="assets/sfx/pop.mp3" data-start="49.24" data-track-index="24" data-volume="0.25"></audio>
+      <audio id="fx-m1" src="assets/sfx/ping.mp3" data-start="7.71" data-track-index="25" data-volume="0.18"></audio>
+      <audio id="fx-m2" src="assets/sfx/ping.mp3" data-start="10.55" data-track-index="26" data-volume="0.18"></audio>
+      <audio id="fx-m3" src="assets/sfx/ping.mp3" data-start="13.12" data-track-index="27" data-volume="0.18"></audio>
+      <audio id="fx-cierre" src="assets/sfx/chime.mp3" data-start="65.24" data-track-index="28" data-volume="0.22"></audio>
     </div>
 
     <script>
@@ -285,8 +284,8 @@
       const tl = gsap.timeline({ paused: true });
 
       // T (tiempo de video de cada frase ancla) y SUBS (subtítulos) los escribe sincronizar.py; no editar a mano.
-      const T = {"hb1": 6.54, "hb2": 9.83, "hb3": 12.73, "hsin": 14.73, "imagina": 19.88, "sitio": 22.69, "prueba": 23.72, "ajusta": 25.74, "maquina": 26.94, "portazo": 28.16, "golpe": 28.98, "entera": 29.59, "busca": 30.43, "cuatro": 32.04, "hace": 34.09, "uno": 35.49, "sensibles": 38.03, "dos": 39.64, "pasar": 41.13, "falsos": 43.22, "tres": 44.44, "si": 46.31, "noentrega": 49.28, "nosabe": 50.2, "cuatrop": 52.09, "panel": 54.29, "recorrido": 55.85, "falla": 56.74, "arreglo": 57.58, "persona": 58.81, "limites": 60.21, "l2": 62.64, "l3": 64.17, "l4": 66.84, "bloquear": 68.91, "gringolas": 70.15, "solo": 72.0};
-      const SUBS = [[0.4, 2.04, "Si a un agente de IA que te ataca"], [2.04, 3.94, "le niegas la prueba de que su ataque funcionó,"], [3.94, 6.54, "se queda sin rumbo. Lo medimos."], [6.54, 9.83, "La prueba le llegó en veinte de veinte corridas sin defensa,"], [9.83, 12.73, "en veinte de veinte por la protección por defecto de Cloudflare,"], [12.73, 14.73, "y en cero de veinte con nuestra pieza."], [14.73, 16.94, "Sin esa prueba, ningún agente declaró éxito,"], [16.94, 19.88, "y gastaron entre tres y once veces más peticiones."], [19.88, 22.69, "Imagina a un ladrón que prueba puertas y ventanas de una casa:"], [22.69, 23.72, "tu sitio."], [23.72, 25.74, "Prueba, lee lo que le responde la casa,"], [25.74, 28.16, "ajusta y vuelve a probar, a velocidad de máquina."], [28.16, 29.59, "Si le cierras una puerta de un portazo,"], [29.59, 30.43, "se entera de que lo vieron"], [30.43, 32.04, "y busca otra entrada."], [32.04, 34.09, "Gríngola es para equipos chicos con servidores propios,"], [34.09, 35.49, "y hace cuatro cosas."], [35.49, 38.03, "Uno: detecta a quien prueba puertas que no existen"], [38.03, 39.64, "o pide cosas sensibles."], [39.64, 41.13, "Dos: lo engaña."], [41.13, 44.44, "Lo deja pasar a una casa de utilería idéntica, con datos falsos."], [44.44, 46.31, "Tres: le niega la prueba."], [46.31, 49.28, "Si una respuesta real lleva la prueba de que su ataque funcionó,"], [49.28, 52.09, "no se la entrega, y el ladrón no sabe si funcionó."], [52.09, 54.29, "Cuatro: te lo muestra."], [54.29, 56.74, "En un panel ves al agente atrapado, su recorrido,"], [56.74, 60.21, "la falla que usó y un arreglo propuesto, que una persona aprueba."], [60.21, 62.64, "Los límites: una sola app de prueba,"], [62.64, 64.17, "las reglas por defecto de Cloudflare,"], [64.17, 66.84, "sin confirmar en su panel que esa protección estuviera activa."], [66.84, 68.91, "Y el ataque igual se ejecuta en el servidor."], [68.91, 70.15, "Bloquear le avisa."], [70.15, 72.0, "Nosotros le ponemos gríngolas al agente:"], [72.0, 73.77, "solo ve lo que le dejamos ver."]];
+      const T = {"hb1": 6.51, "hb2": 9.35, "hb3": 12.22, "hsin": 14.24, "imagina": 19.16, "sitio": 21.88, "prueba": 22.77, "ajusta": 24.99, "maquina": 26.24, "portazo": 27.61, "golpe": 28.46, "entera": 29.13, "busca": 29.91, "cuatro": 31.27, "hace": 33.39, "uno": 34.68, "sensibles": 37.02, "dos": 38.25, "pasar": 39.61, "falsos": 41.67, "tres": 42.74, "si": 44.4, "noentrega": 46.84, "nosabe": 47.56, "cuatrop": 49.24, "panel": 50.75, "recorrido": 52.11, "falla": 52.82, "arreglo": 53.56, "persona": 54.45, "limites": 55.66, "l2": 57.5, "l3": 59.26, "l4": 61.99, "bloquear": 63.88, "controla": 65.24, "solo": 66.51};
+      const SUBS = [[0.4, 2.04, "Si a un agente de IA que te ataca"], [2.04, 4.13, "le niegas la prueba de que su ataque funcionó,"], [4.13, 6.51, "se queda sin rumbo. Lo medimos."], [6.51, 9.35, "La prueba le llegó en veinte de veinte corridas sin defensa,"], [9.35, 12.22, "en veinte de veinte por la protección por defecto de Cloudflare,"], [12.22, 14.24, "y en cero de veinte con nuestra pieza."], [14.24, 16.21, "Sin esa prueba, ningún agente declaró éxito,"], [16.21, 19.16, "y gastaron entre tres y once veces más peticiones."], [19.16, 21.88, "Imagina a un ladrón que prueba puertas y ventanas de una casa:"], [21.88, 22.77, "tu sitio."], [22.77, 24.99, "Prueba, lee lo que le responde la casa,"], [24.99, 27.61, "ajusta y vuelve a probar, a velocidad de máquina."], [27.61, 29.13, "Si le cierras una puerta de un portazo,"], [29.13, 29.91, "se entera de que lo vieron"], [29.91, 31.27, "y busca otra entrada."], [31.27, 33.39, "Reaper es para equipos chicos con servidores propios,"], [33.39, 34.68, "y hace cuatro cosas."], [34.68, 37.02, "Uno: detecta a quien prueba puertas que no existen"], [37.02, 38.25, "o pide cosas sensibles."], [38.25, 39.61, "Dos: lo engaña."], [39.61, 42.74, "Lo deja pasar a una casa de utilería idéntica, con datos falsos."], [42.74, 44.4, "Tres: le niega la prueba."], [44.4, 46.84, "Si una respuesta real lleva la prueba de que su ataque funcionó,"], [46.84, 49.24, "no se la entrega, y el ladrón no sabe si funcionó."], [49.24, 50.75, "Cuatro: te lo muestra."], [50.75, 52.82, "En un panel ves al agente atrapado, su recorrido,"], [52.82, 55.66, "la falla que usó y un arreglo propuesto, que una persona aprueba."], [55.66, 57.5, "Los límites: una sola app de prueba,"], [57.5, 59.26, "las reglas por defecto de Cloudflare,"], [59.26, 61.99, "sin confirmar en su panel que esa protección estuviera activa."], [61.99, 63.88, "Y el ataque igual se ejecuta en el servidor."], [63.88, 65.24, "Bloquear le avisa."], [65.24, 68.24, "Reaper controla lo que el agente ve y cree que pasó."]];
       const FIN = +document.querySelector("#root").dataset.duration;
 
       tl.fromTo("#avance", { scaleX: 0 }, { scaleX: 1, duration: FIN, ease: "none" }, 0);
@@ -423,7 +422,7 @@
       // ── 5 · el cierre
       tl.set("#i2", { opacity: 1 }, S.s5);
       sube("#i2-a", T.bloquear);
-      sube("#i2-b", T.gringolas - 0.1, 30, 0.6);
+      sube("#i2-b", T.controla - 0.1, 30, 0.6);
       tl.fromTo("#i2-d", { opacity: 0.25 }, { opacity: 1, duration: 0.4 }, T.solo);
       ver("#i2-c", T.solo + 1.8);
 

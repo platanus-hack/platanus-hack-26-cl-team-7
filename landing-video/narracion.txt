@@ -13,7 +13,7 @@ ajusta y vuelve a probar, a velocidad de máquina.
 Si le cierras una puerta de un portazo,
 se entera de que lo vieron
 y busca otra entrada.
-Gríngola es para equipos chicos con servidores propios,
+Ríper es para equipos chicos con servidores propios,
 y hace cuatro cosas.
 Uno: detecta a quien prueba puertas que no existen
 o pide cosas sensibles.
@@ -30,5 +30,4 @@ las reglas por defecto de Cloudflare,
 sin confirmar en su panel que esa protección estuviera activa.
 Y el ataque igual se ejecuta en el servidor.
 Bloquear le avisa.
-Nosotros le ponemos gríngolas al agente:
-solo ve lo que le dejamos ver.
+Ríper controla lo que el agente ve y cree que pasó.
