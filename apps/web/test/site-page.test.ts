@@ -48,7 +48,9 @@ describe("SitePage with the Vulhub recording", () => {
       expect(html).not.toContain("Análisis");
       expect(html).not.toContain("Lectura del agente");
       expect(html).toContain("Arreglo propuesto");
-      expect(html).toContain("Sin parche en esta prueba");
+      // Vulhub runs do not patch: the section is left out instead of saying so on every run.
+      expect(html).not.toContain("Parche del agente");
+      expect(html).not.toContain("Sin parche en esta prueba");
       expect(html).toContain("Retener la prueba no evita el daño");
     }
   });

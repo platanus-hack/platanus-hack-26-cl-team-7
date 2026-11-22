@@ -133,9 +133,12 @@ export function SitePage({ site, run, demoStep }: { site: LabAgent; run: Experim
         </div>
       </Section>
 
-      <Section id="patch" active={on("patch")} title="Parche del agente">
-        <PatchBlock site={site} />
-      </Section>
+      {/* Only runs where the patch step ran show its section: Vulhub runs do not patch yet. */}
+      {(site.patch || site.steps.some((x) => x.stage === "patch")) && (
+        <Section id="patch" active={on("patch")} title="Parche del agente">
+          <PatchBlock site={site} />
+        </Section>
+      )}
 
       <p className="st-limit">
         {site.patch?.status === "verified"
