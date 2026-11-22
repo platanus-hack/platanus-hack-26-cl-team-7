@@ -41,7 +41,8 @@ function setDetail(detail: ExperimentDetail) {
 function follow(detail: ExperimentDetail) {
   stream?.close();
   stream = null;
-  if (detail.run.status !== "running") return;
+  // The patch step can run after the run finished: the stream stays open until the server says done.
+  if (detail.run.status !== "running" && !detail.run.patching) return;
   const id = detail.run.id;
   const source = new EventSource(api.experimentStream(id, detail.entries.at(-1)?.seq ?? 0));
   stream = source;
@@ -90,7 +91,7 @@ async function poll() {
     const current = useSite.getState().detail;
     if (!target) return;
     if (current?.run.id !== target) await load(target);
-    else if (current.run.status === "running" && !stream) await load(target);
+    else if (!stream && (current.run.status === "running" || runs.find((run) => run.id === target)?.patching)) await load(target);
   } catch {
     useSite.setState({ error: "Sentinel no responde. Se reintenta solo." });
     return;

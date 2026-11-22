@@ -116,7 +116,7 @@ identifiers, log lines, commit messages, PR text and this file are English. [rev
   `SENTINEL_INGEST_TOKEN`, `SENTINEL_ALLOWED_HOSTS` and `SENTINEL_ALLOWED_ORIGINS`.
 
 **LLM calls** (`apps/sentinel/src/ai.ts`, `fixes.ts`, `reports/`, `experiments/providers.ts`,
-`evidence-demo/`) [review]
+`experiments/patch.ts`, `evidence-demo/`) [review]
 - Attacker-derived text reaches a model only in fields prefixed `untrusted_`, and the system prompt says
   to treat them as data. (Known violation: the verdict prompt, section 9.)
 - Tools are read-only. In `reports/` the scope (IP, time window) is set by code (`reports/scope.ts`),
@@ -126,8 +126,19 @@ identifiers, log lines, commit messages, PR text and this file are English. [rev
   value crosses to `apps/web`). In `reports/`, evidence IDs that do not resolve in the log stores are
   dropped (`reports/evidence.ts`).
 - Fix proposals and report hypotheses are never applied, executed or sent to a target without a human
-  decision (approve / refuse). The one automatic effect is the AI verdict, which settles an event's status
-  (`killed` / `active`); keep it that way, and do not add others without review.
+  decision (approve / refuse). There are two automatic effects; do not add others without review:
+  1. The AI verdict settles an event's status (`killed` / `active`).
+  2. The experiment patch step (`experiments/patch.ts`, `lab/scoreboard/patch_verify.py`) applies the
+     model's edits to a **throwaway copy** of `apps/sentinel/lab/targets/businesses` and replays the lab
+     fixtures against it on loopback. It is **not wired** in `index.ts` today: its verifier knows only the
+     fictional Python services, and the pipeline now measures Vulhub targets. Bounds, each a contract: at
+     most 3 exact replacements in `targets/businesses/*.py`; a static check refuses import changes, file,
+     process, network, frame and reflection names and deep module chains; the canary refs are pinned from
+     the original files; the patched child only serves HTTP, and the trusted parent sends the requests and
+     counts the result; the child gets an allowlisted env, a deadline and a killed process group, and on
+     macOS runs under `sandbox-exec` (no network except loopback, no writes outside the copy); its output
+     never reaches the event, the panel or the model. The repository targets and any real service are never
+     changed: moving a patch to a real service stays a human decision.
 - Provider keys never reach lab, target or experiment subprocesses. `experiments/worker.ts` strips them.
   (Known gaps: section 9.)
 - Tests use a fake model (`apps/sentinel/test/reports-helpers.ts`). No test calls a real provider.
@@ -230,7 +241,12 @@ Seen on 2026-11-22. Remove an entry in the PR that fixes it.
   `test_logreader.py`). Poll loops with a deadline are fine.
 - The verdict prompt in `apps/sentinel/src/ai.ts` sends `method`, `path`, `user_agent` and `payload`
   without the `untrusted_` prefix.
-- `apps/sentinel/src/evidence-demo/evaluate.ts` runs `python3` with the full `process.env`, and
-  `experiments/worker.ts` does not strip `ANTHROPIC_AUTH_TOKEN`.
+- `apps/sentinel/src/evidence-demo/evaluate.ts` runs `python3` with the full `process.env`.
+- The patch step's replay child runs model-written Python on the host as the current user. On Linux
+  (and the Lima VM) it has no OS sandbox: only the static check, the env allowlist and the deadline bound
+  it. On macOS it can still read the user's files, spawn binaries, reach loopback services, signal
+  same-user processes and escape the group kill with `setsid`. "Verified" means the answers to the fixed
+  fixture requests no longer carry the private ref: a patch can special-case those requests. A container
+  sandbox and requests the child cannot recognize are the fix.
 - The lab engine canary uses the AWS key format (`AKIA...`, `apps/sentinel/lab/cmd/engine/main.go`).
 - `ruff format --check` would reformat 15 files in `agent-detection`.
