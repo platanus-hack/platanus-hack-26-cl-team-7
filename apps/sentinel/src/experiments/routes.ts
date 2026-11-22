@@ -6,6 +6,21 @@ import { fail } from "../http.ts";
 import type { createExperimentService } from "./service.ts";
 import type { ExperimentStore } from "./store.ts";
 
+/** Resolves on the next change of run `id` or after `ms`, whichever comes first. `cancel` wakes it early and frees the listener and timer. */
+function nextChange(store: ExperimentStore, id: string, ms: number) {
+  let cancel = () => {};
+  const wake = new Promise<void>((resolve) => {
+    const timer = setTimeout(() => cancel(), ms);
+    cancel = () => {
+      clearTimeout(timer);
+      store.changes.off(id, cancel);
+      resolve();
+    };
+    store.changes.on(id, cancel);
+  });
+  return { wake, cancel };
+}
+
 export function experimentRoutes(store: ExperimentStore, service: ReturnType<typeof createExperimentService>) {
   const app = new Hono();
   app.get("/experiments/runs", (c) => c.json({ items: store.list() }));
@@ -35,20 +50,26 @@ export function experimentRoutes(store: ExperimentStore, service: ReturnType<typ
       let position = cursor;
       let lastPing = Date.now();
       while (!stream.aborted && !stream.closed) {
-        const run = store.get(id);
-        for (const entry of store.entries(id, position)) {
-          await stream.writeSSE({ id: String(entry.seq), event: "entry", data: JSON.stringify(entry) });
-          position = entry.seq;
+        // Listen before reading, so a change that lands while entries are being written wakes the next wait at once.
+        const next = nextChange(store, id, 350);
+        try {
+          const run = store.get(id);
+          for (const entry of store.entries(id, position)) {
+            await stream.writeSSE({ id: String(entry.seq), event: "entry", data: JSON.stringify(entry) });
+            position = entry.seq;
+          }
+          if (!run || (run.status !== "running" && !run.patching)) {
+            await stream.writeSSE({ event: "done", data: JSON.stringify(run) });
+            break;
+          }
+          if (Date.now() - lastPing >= 15_000) {
+            await stream.write(": heartbeat\n\n");
+            lastPing = Date.now();
+          }
+          await next.wake;
+        } finally {
+          next.cancel();
         }
-        if (!run || (run.status !== "running" && !run.patching)) {
-          await stream.writeSSE({ event: "done", data: JSON.stringify(run) });
-          break;
-        }
-        if (Date.now() - lastPing >= 15_000) {
-          await stream.write(": heartbeat\n\n");
-          lastPing = Date.now();
-        }
-        await stream.sleep(350);
       }
     });
   });

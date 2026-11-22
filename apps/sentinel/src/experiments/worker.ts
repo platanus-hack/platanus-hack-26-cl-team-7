@@ -24,25 +24,46 @@ function labEnv() {
   return env;
 }
 
+const VERIFY_TIMEOUT_MS = 45_000;
+
 /**
  * Replays a patch on a throwaway copy of the lab services (scoreboard.patch_verify). It runs on the host, not in the VM:
  * the verifier only talks to loopback and never touches Docker. Any crash, timeout or missing result throws.
+ * The verifier runs model-written code, so what it prints is untrusted: error messages never carry its output, the
+ * command line or a temp path.
  */
-function createVerifier(root: string): Verify {
+export function createVerifier(root: string, timeoutMs = VERIFY_TIMEOUT_MS): Verify {
   return async (project, edits, signal) => {
     const directory = await mkdtemp(join(tmpdir(), "reaper-patch-"));
     try {
       const file = join(directory, "edits.json");
       await writeFile(file, JSON.stringify(edits));
       const { stdout } = await exec("uv", ["run", "--no-project", "--python", "3.12", "python", "-m", "scoreboard.patch_verify",
-        "--project", project, "--edits", file], { cwd: root, env: labEnv(), maxBuffer: 1 << 20, signal: AbortSignal.any([signal, AbortSignal.timeout(45_000)]) });
+        "--project", project, "--edits", file], { cwd: root, env: labEnv(), maxBuffer: 1 << 20, signal: AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]) })
+        .catch((err: unknown) => { throw verifierError(err, signal, timeoutMs); });
       const line = stdout.split("\n").find((text) => text.startsWith("PATCH "));
-      if (!line) throw Error("The patch verifier printed no result");
-      return VerifyOutput.parse(JSON.parse(line.slice(6)));
+      if (!line) throw Error("verifier printed no result");
+      let message: unknown;
+      try { message = JSON.parse(line.slice(6)); } catch { throw Error("verifier printed an invalid result"); }
+      const parsed = VerifyOutput.safeParse(message);
+      if (!parsed.success) throw Error("verifier printed an invalid result");
+      return parsed.data;
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
   };
+}
+
+const Failure = z.object({ name: z.string(), code: z.union([z.string(), z.number()]) }).partial();
+
+/** The error execFile rejects with carries the command line and both output streams: only its kind survives. */
+function verifierError(err: unknown, caller: AbortSignal, timeoutMs: number) {
+  const { name, code } = Failure.catch({}).parse(err);
+  if (caller.aborted) return Error("verifier stopped");
+  if (name === "AbortError") return Error(`verifier timed out after ${timeoutMs / 1000} s`);
+  if (code === "ENOENT") return Error("uv not found");
+  if (typeof code === "number") return Error(`verifier exited with code ${code}`);
+  return Error("verifier failed");
 }
 
 export function createWorker(root: string, vm: string) {

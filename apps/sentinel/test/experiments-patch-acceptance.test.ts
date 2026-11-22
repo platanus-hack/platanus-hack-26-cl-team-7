@@ -374,8 +374,8 @@ describe("experiment service with the patch step", () => {
       expect(e.elapsedMs!, key).toBeGreaterThanOrEqual(0);
       checked++;
     }
-    // inputs, traffic, research, patch and feedback for each project.
-    expect(checked).toBe(5 * ExperimentProject.options.length);
+    // inputs, traffic, detection, containment (both start running with traffic), research, patch and feedback for each project.
+    expect(checked).toBe(7 * ExperimentProject.options.length);
   });
 
   it("measures elapsedMs with the injected clock, from each stage's running event", async () => {

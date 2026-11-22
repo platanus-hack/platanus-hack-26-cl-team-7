@@ -1,14 +1,17 @@
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
-import type { ExperimentEvent, FixtureResult, PatchEdit } from "@sentinel/contracts";
+import type { ExperimentEvent, FixtureResult, PatchEdit, PatchResult } from "@sentinel/contracts";
 import { Hono } from "hono";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMastraPatchModel, createPatcher, emptyPatch, type PatchModel, type Patcher } from "../src/experiments/patch.ts";
 import { createExperimentProviders } from "../src/experiments/providers.ts";
 import { experimentRoutes } from "../src/experiments/routes.ts";
 import { createExperimentService } from "../src/experiments/service.ts";
 import { ExperimentStore } from "../src/experiments/store.ts";
-import type { Verify, VerifyOutput } from "../src/experiments/worker.ts";
+import { createVerifier, type Verify, type VerifyOutput } from "../src/experiments/worker.ts";
 import { migrate } from "../src/schema.ts";
 
 type Research = Extract<ExperimentEvent, { kind: "research" }>;
@@ -199,29 +202,33 @@ describe("createMastraPatchModel", () => {
   });
 });
 
+type Emit = (event: ExperimentEvent) => void;
+type LiveOptions = { passed?: boolean; now?: () => number; worker?: (emit: Emit) => Promise<void> };
+
 /** The experiment service around a fake worker that measures one surco case, a fake patcher and the real providers without keys. */
-function liveSetup(patcher: Patcher | undefined) {
+function liveSetup(patcher: Patcher | undefined, options: LiveOptions = {}) {
   const db = new DatabaseSync(":memory:");
   migrate(db);
   const store = new ExperimentStore(db);
   const providers = createExperimentProviders("x", {});
   vi.spyOn(providers, "cases").mockReturnValue(1);
-  const worker = { readiness: async () => null, run: async (_id: string, _notes: string[], _first: string, emit: (event: ExperimentEvent) => void) => {
+  const measure = options.worker ?? (async (emit: Emit) => {
     emit({ kind: "stage", project: "surco", stage: "fixtures", status: "running" });
-    emit(fixture());
+    emit(fixture({ passed: options.passed ?? true }));
     emit({ kind: "stage", project: "surco", stage: "fixtures", status: "passed" });
-  } };
-  const service = createExperimentService(store, worker, providers, patcher, clock());
+  });
+  const worker = { readiness: async () => null, run: async (_id: string, _notes: string[], _first: string, emit: Emit) => measure(emit) };
+  const service = createExperimentService(store, worker, providers, patcher, options.now ?? clock());
   return { db, store, service };
 }
 
-async function runLive(patcher: Patcher | undefined) {
-  const { db, store, service } = liveSetup(patcher);
+async function runLive(patcher: Patcher | undefined, options: LiveOptions = {}) {
+  const { db, store, service } = liveSetup(patcher, options);
   try {
     const started = await service.start("surco");
     if ("error" in started) throw Error(started.error);
     await vi.waitFor(() => expect(store.get(started.id)?.status).not.toBe("running"));
-    return { run: store.get(started.id)!, events: store.entries(started.id).map(({ event }) => event) };
+    return { id: started.id, run: store.get(started.id)!, events: store.entries(started.id).map(({ event }) => event) };
   } finally {
     service.stop();
     db.close();
@@ -276,7 +283,7 @@ describe("backfill", () => {
     const store = new ExperimentStore(db);
     let release = () => {};
     const gate = new Promise<void>((resolve) => { release = resolve; });
-    const patcher: Patcher = { patch: vi.fn(async (project) => { await gate; return emptyPatch(project, "unavailable", "gate"); }) };
+    const patcher: Patcher = { patch: vi.fn(async (project) => { await gate; return emptyPatch(project, "failed", "gate"); }) };
     const service = createExperimentService(store, undefined, createExperimentProviders("x", {}), patcher, clock());
     const app = new Hono().route("/v1", experimentRoutes(store, service));
     try {
@@ -299,7 +306,7 @@ describe("backfill", () => {
       expect(streamed.lastIndexOf("event: done")).toBeGreaterThan(streamed.lastIndexOf('"kind":"patch"'));
       const events = store.entries(id).slice(before).map(({ event }) => event);
       expect(events.filter((e) => e.kind === "patch")).toHaveLength(4);
-      expect(events.filter((e) => e.kind === "stage" && e.stage === "patch" && e.status === "degraded")).toHaveLength(4);
+      expect(events.filter((e) => e.kind === "stage" && e.stage === "patch" && e.status === "failed")).toHaveLength(4);
       await service.backfill(id);
       expect(store.entries(id)).toHaveLength(before + 12);
       expect(patcher.patch).toHaveBeenCalledTimes(4);
@@ -324,6 +331,319 @@ describe("backfill", () => {
       expect(patch).not.toHaveBeenCalled();
       expect(store.entries(id).some((e) => e.event.kind === "patch")).toBe(false);
     } finally {
+      db.close();
+    }
+  });
+});
+
+/* ------------------- observability and retry of the patch step ------------------- */
+
+const scratch: string[] = [];
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+  for (const dir of scratch.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+const lines = (spy: { mock: { calls: unknown[][] } }) => spy.mock.calls.map((args) => args.map(String).join(" "));
+
+/** A clock that only moves when a test says so. */
+function manual(start = 1_000) {
+  const time = { t: start };
+  return { time, now: () => time.t };
+}
+
+describe("backfill retry", () => {
+  it("retries a project whose patch was unavailable or unconfigured and never one that ended verified, failed or no_finding", async () => {
+    const db = new DatabaseSync(":memory:");
+    migrate(db);
+    const store = new ExperimentStore(db);
+    const answers: Record<string, PatchResult["status"]> = { bruma: "unavailable", litoral: "unconfigured", surco: "verified", bank: "no_finding" };
+    const patch = vi.fn(async (project: FixtureResult["project"]) => emptyPatch(project, answers[project]!));
+    const service = createExperimentService(store, undefined, createExperimentProviders("x", {}), { patch }, clock());
+    const retried = () => patch.mock.calls.splice(0).map(([project]) => project).sort();
+    try {
+      const id = store.list().find((run) => run.mode === "recorded")!.id;
+      await service.backfill(id);
+      expect(retried()).toEqual(["bank", "bruma", "litoral", "surco"]);
+      await service.backfill(id);
+      expect(retried()).toEqual(["bruma", "litoral"]);
+      Object.assign(answers, { bruma: "failed", litoral: "unavailable" });
+      await service.backfill(id);
+      expect(retried()).toEqual(["bruma", "litoral"]);
+      await service.backfill(id);
+      expect(retried()).toEqual(["litoral"]);
+      answers.litoral = "verified";
+      await service.backfill(id);
+      expect(retried()).toEqual(["litoral"]);
+      await service.backfill(id);
+      expect(retried()).toEqual([]);
+      const statuses = (project: string) => store.entries(id).flatMap(({ event }) => (event.kind === "patch" && event.project === project ? [event.status] : []));
+      expect(statuses("litoral")).toEqual(["unconfigured", "unconfigured", "unavailable", "unavailable", "verified"]);
+      expect(statuses("surco")).toEqual(["verified"]);
+    } finally {
+      service.stop();
+      db.close();
+    }
+  });
+});
+
+describe("backfill and run logs", () => {
+  it("logs when a backfill starts and ends, with the injected clock", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const db = new DatabaseSync(":memory:");
+    migrate(db);
+    const store = new ExperimentStore(db);
+    const { time, now } = manual();
+    const patch = vi.fn(async (project: FixtureResult["project"]) => { time.t += 100; return emptyPatch(project, "failed"); });
+    const service = createExperimentService(store, undefined, createExperimentProviders("x", {}), { patch }, now);
+    try {
+      const id = store.list().find((run) => run.mode === "recorded")!.id;
+      await service.backfill(id);
+      const out = lines(log).filter((line) => line.includes("backfill="));
+      expect(out).toEqual([`[experiments] run=${id} backfill=start projects=bruma,litoral,surco,bank`, `[experiments] run=${id} backfill=end ms=400`]);
+    } finally {
+      service.stop();
+      db.close();
+    }
+  });
+
+  it("logs one finishing line for a completed run and for a run whose measurements did not match", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const ok = await runLive(undefined);
+    const bad = await runLive(undefined, { passed: false });
+    const finished = lines(log).filter((line) => / status=(completed|failed)$/.test(line));
+    expect(finished).toEqual([`[experiments] run=${ok.id} status=completed`, `[experiments] run=${bad.id} status=failed`]);
+    expect(bad.run).toMatchObject({ status: "failed", error: "Una o más mediciones no coincidieron con lo esperado." });
+  });
+
+  it("logs the failure of a run that throws, keeps the stored Spanish error and ends the steps it started", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const fail = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { time, now } = manual();
+    const { id, run, events } = await runLive(undefined, { now, worker: async (emit) => {
+      emit({ kind: "stage", project: "surco", stage: "traffic", status: "running" });
+      time.t += 500;
+      throw Error("Fixture worker\ninterrupted");
+    } });
+    expect(lines(fail)).toEqual([`[experiments] run=${id} status=failed error=Fixture worker interrupted`]);
+    expect(lines(log).some((line) => line.startsWith(`[experiments] run=${id} status=`))).toBe(false);
+    expect(run).toMatchObject({ status: "failed", error: "Falló la ejecución local. Se conservaron las observaciones registradas." });
+    const stages = events.flatMap((e) => (e.kind === "stage" ? [e] : []));
+    for (const name of ["detection", "containment"] as const) {
+      expect(stages.filter((e) => e.stage === name).map((e) => [e.status, e.elapsedMs])).toEqual([["running", undefined], ["failed", 500]]);
+    }
+  });
+});
+
+describe("patch result log line", () => {
+  const verified: PatchResult = { ...emptyPatch("surco", "verified"), model: "fake-model", attempts: 2, timings: { agentMs: 1200, verifyMs: 340 }, tokens: { input: 900, output: 150 },
+    replay: { attacks: { yes: 0, total: 3 }, legit: { yes: 2, total: 2 } } };
+
+  it("prints status, attempts, timings, tokens, replay counts and the error as JSON, and nothing from the edits", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const { id } = await runLive({ patch: async () => ({ ...verified, edits: [edit], explanation: "SECRET-EXPLANATION" }) });
+    const out = lines(log).filter((line) => line.includes(" patch="));
+    expect(out).toEqual([`[experiments] run=${id} project=surco patch=verified attempts=2 agentMs=1200 verifyMs=340 tokensIn=900 tokensOut=150 replay=0/3 legit=2/2 error=null`]);
+
+    const missing = await runLive({ patch: async (project) => emptyPatch(project, "unavailable", 'uv not found\n"quoted"') });
+    const unavailable = lines(log).filter((line) => line.includes(`run=${missing.id} `) && line.includes(" patch="));
+    expect(unavailable).toEqual([`[experiments] run=${missing.id} project=surco patch=unavailable attempts=0 agentMs=0 verifyMs=0 tokensIn=0 tokensOut=0 replay=- legit=- error="uv not found\\n\\"quoted\\""`]);
+  });
+
+  it("prints patch=aborted, and no result line, when the run is stopped while the patch step runs", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const db = new DatabaseSync(":memory:");
+    migrate(db);
+    const store = new ExperimentStore(db);
+    const providers = createExperimentProviders("x", {});
+    vi.spyOn(providers, "cases").mockReturnValue(1);
+    const waiting = vi.fn();
+    const patcher: Patcher = { patch: async (project, _cases, _research, signal) => {
+      waiting();
+      await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
+      return { ...verified, project };
+    } };
+    const worker = { readiness: async () => null, run: async (_id: string, _notes: string[], _first: string, emit: (event: ExperimentEvent) => void) => { emit(fixture()); } };
+    const service = createExperimentService(store, worker, providers, patcher, clock());
+    try {
+      const started = await service.start("surco");
+      if ("error" in started) throw Error(started.error);
+      await vi.waitFor(() => expect(waiting).toHaveBeenCalled());
+      service.stop();
+      await vi.waitFor(() => expect(lines(log).filter((line) => line.includes(" patch="))).toEqual([`[experiments] run=${started.id} project=surco patch=aborted`]));
+      expect(store.entries(started.id).some(({ event }) => event.kind === "patch")).toBe(false);
+    } finally {
+      service.stop();
+      db.close();
+    }
+  });
+});
+
+describe("strip start", () => {
+  it("appends detection and containment running when traffic starts, and ends both with elapsedMs from that moment", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const { time, now } = manual(10_000);
+    const { events } = await runLive(undefined, { now, worker: async (emit) => {
+      emit({ kind: "stage", project: "surco", stage: "traffic", status: "running" });
+      time.t += 300;
+      // A repeated running event for the same stage must not restart its clock.
+      emit({ kind: "stage", project: "surco", stage: "detection", status: "running" });
+      time.t += 200;
+      emit(fixture());
+      emit({ kind: "stage", project: "surco", stage: "traffic", status: "passed" });
+    } });
+    const order = trace(events);
+    expect(order.slice(order.indexOf("traffic:running"), order.indexOf("traffic:running") + 3)).toEqual(["traffic:running", "detection:running", "containment:running"]);
+    const stages = events.flatMap((e) => (e.kind === "stage" ? [e] : []));
+    const ends = (name: string) => stages.filter((e) => e.stage === name && e.status !== "running").map((e) => [e.status, e.elapsedMs]);
+    expect(ends("detection")).toEqual([["passed", 500]]);
+    expect(ends("containment")).toEqual([["passed", 500]]);
+    expect(ends("traffic")).toEqual([["passed", 500]]);
+  });
+});
+
+describe("createVerifier", () => {
+  /** Puts a fake `uv` first on PATH. `body` is a POSIX shell script; its output is what the verifier must never repeat. */
+  function fakeUv(body: string) {
+    const dir = mkdtempSync(join(tmpdir(), "fake-uv-"));
+    scratch.push(dir);
+    writeFileSync(join(dir, "uv"), `#!/bin/sh\n${body}\n`, { mode: 0o755 });
+    vi.stubEnv("PATH", `${dir}${delimiter}${process.env.PATH ?? ""}`);
+  }
+  const outcome = (work: Promise<unknown>) => work.then(() => "resolved", (err: unknown) => (err instanceof Error ? err.message : String(err)));
+  const closed = '{"applied":true,"error":null,"attacks":{"yes":0,"total":2},"legit":{"yes":1,"total":1}}';
+
+  it("parses the PATCH line and keeps provider keys away from the child", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "sk-ant-SECRET");
+    vi.stubEnv("FIRECRAWL_API_KEY", "fc-SECRET");
+    fakeUv('echo noise\nprintf \'PATCH {"applied":false,"error":"key=%s %s","attacks":{"yes":0,"total":0},"legit":{"yes":0,"total":0}}\\n\' "${ANTHROPIC_API_KEY-unset}" "${FIRECRAWL_API_KEY-unset}"');
+    const verify = createVerifier(root);
+    expect(await verify("surco", [edit], signal)).toMatchObject({ applied: false, error: "key=unset unset" });
+    fakeUv(`echo 'PATCH ${closed}'`);
+    expect(await verify("surco", [edit], signal)).toEqual(JSON.parse(closed));
+  });
+
+  it("reports the exit code, never the output, command line or temp path", async () => {
+    fakeUv("echo SECRET-STDOUT\necho SECRET-STDERR >&2\nexit 3");
+    expect(await outcome(createVerifier(root)("surco", [edit], signal))).toBe("verifier exited with code 3");
+  });
+
+  it("reports a missing uv", async () => {
+    const empty = mkdtempSync(join(tmpdir(), "no-uv-"));
+    scratch.push(empty);
+    vi.stubEnv("PATH", empty);
+    expect(await outcome(createVerifier(root)("surco", [edit], signal))).toBe("uv not found");
+  });
+
+  it("never repeats what the verifier printed when its result is missing or malformed", async () => {
+    const verify = createVerifier(root);
+    fakeUv("echo SECRET-STDOUT");
+    expect(await outcome(verify("surco", [edit], signal))).toBe("verifier printed no result");
+    fakeUv("echo 'PATCH {SECRET-STDOUT'");
+    expect(await outcome(verify("surco", [edit], signal))).toBe("verifier printed an invalid result");
+    fakeUv('echo \'PATCH {"applied":"SECRET-STDOUT"}\'');
+    expect(await outcome(verify("surco", [edit], signal))).toBe("verifier printed an invalid result");
+  });
+
+  it("stops with a readable message when the caller aborts, before or while the verifier runs", async () => {
+    const marker = join(mkdtempSync(join(tmpdir(), "marker-")), "started");
+    scratch.push(join(marker, ".."));
+    vi.stubEnv("MARKER", marker);
+    fakeUv(': > "$MARKER"\nexec sleep 30');
+    const verify = createVerifier(root);
+    const early = new AbortController();
+    early.abort();
+    expect(await outcome(verify("surco", [edit], early.signal))).toBe("verifier stopped");
+    const live = new AbortController();
+    const pending = outcome(verify("surco", [edit], live.signal));
+    await vi.waitFor(() => expect(existsSync(marker)).toBe(true));
+    live.abort();
+    expect(await pending).toBe("verifier stopped");
+  });
+
+  it("reports a timeout in seconds when the verifier outlives its budget", async () => {
+    fakeUv("exec sleep 30");
+    expect(await outcome(createVerifier(root, 100)("surco", [edit], signal))).toBe("verifier timed out after 0.1 s");
+  });
+});
+
+describe("event stream push", () => {
+  function streamSetup() {
+    const db = new DatabaseSync(":memory:");
+    migrate(db);
+    const store = new ExperimentStore(db);
+    const service = createExperimentService(store, undefined, createExperimentProviders("x", {}));
+    const app = new Hono().route("/v1", experimentRoutes(store, service));
+    store.start("live-1");
+    return { db, store, service, app };
+  }
+  const waiting = (store: ExperimentStore, count: number) => vi.waitFor(() => expect(store.changes.listenerCount("live-1")).toBe(count), { interval: 2, timeout: 2_000 });
+  async function readUntil(reader: ReadableStreamDefaultReader<Uint8Array>, state: { text: string }, done: (text: string) => boolean) {
+    const decoder = new TextDecoder();
+    while (!done(state.text)) {
+      const chunk = await reader.read();
+      if (chunk.done) return;
+      state.text += decoder.decode(chunk.value, { stream: true });
+    }
+  }
+  const stageEvent = (stage: "traffic" | "detection"): ExperimentEvent => ({ kind: "stage", project: "surco", stage, status: "running" });
+
+  it("delivers an appended entry well before the 350 ms fallback and frees its listener when the run ends", async () => {
+    const { db, store, service, app } = streamSetup();
+    try {
+      const response = await app.request("/v1/experiments/runs/live-1/events");
+      const reader = response.body!.getReader();
+      const state = { text: "" };
+      await waiting(store, 1);
+      const started = performance.now();
+      store.append("live-1", stageEvent("traffic"));
+      await readUntil(reader, state, (text) => text.includes("event: entry"));
+      expect(performance.now() - started).toBeLessThan(200);
+      expect(state.text).toContain('"stage":"traffic"');
+
+      const finished = performance.now();
+      store.finish("live-1", "completed");
+      await readUntil(reader, state, (text) => text.includes("event: done"));
+      expect(performance.now() - finished).toBeLessThan(200);
+      await readUntil(reader, state, () => false);
+      expect(store.changes.listenerCount("live-1")).toBe(0);
+    } finally {
+      service.stop();
+      db.close();
+    }
+  });
+
+  it("still delivers by the 350 ms fallback when no change is announced", async () => {
+    const { db, store, service, app } = streamSetup();
+    try {
+      const response = await app.request("/v1/experiments/runs/live-1/events");
+      const reader = response.body!.getReader();
+      const state = { text: "" };
+      await waiting(store, 1);
+      vi.spyOn(store.changes, "emit").mockReturnValue(false);
+      store.append("live-1", stageEvent("detection"));
+      const deadline = new Promise<never>((_, reject) => { setTimeout(() => reject(Error("no entry within 3 s")), 3_000).unref(); });
+      await Promise.race([readUntil(reader, state, (text) => text.includes("event: entry")), deadline]);
+      expect(state.text).toContain('"stage":"detection"');
+      await reader.cancel();
+      await waiting(store, 0);
+    } finally {
+      service.stop();
+      db.close();
+    }
+  });
+
+  it("leaves no listener behind when the client disconnects while the stream waits", async () => {
+    const { db, store, service, app } = streamSetup();
+    try {
+      const response = await app.request("/v1/experiments/runs/live-1/events");
+      const reader = response.body!.getReader();
+      await waiting(store, 1);
+      await reader.cancel();
+      await waiting(store, 0);
+    } finally {
+      service.stop();
       db.close();
     }
   });

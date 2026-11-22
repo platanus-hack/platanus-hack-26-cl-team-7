@@ -1,3 +1,4 @@
+import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import { ExperimentDetail, ExperimentEvent, ExperimentRun, type ExperimentEntry } from "@sentinel/contracts";
@@ -12,6 +13,8 @@ export class ExperimentStore {
   private readonly db: DatabaseSync;
   /** Finished runs that the patch step is still adding events to. */
   private readonly patching = new Set<string>();
+  /** Emits a run id whenever that run's entries or status change, so event streams wake without polling. */
+  readonly changes = new EventEmitter().setMaxListeners(0);
 
   constructor(db: DatabaseSync, readRecording = () => readFileSync(recording, "utf8")) {
     this.db = db;
@@ -48,6 +51,7 @@ export class ExperimentStore {
   setPatching(id: string, on: boolean) {
     if (on) this.patching.add(id);
     else this.patching.delete(id);
+    this.changes.emit(id);
   }
 
   entries(id: string, after = 0): ExperimentEntry[] {
@@ -68,6 +72,7 @@ export class ExperimentStore {
   finish(id: string, status: "completed" | "failed" | "interrupted", error: string | null = null) {
     this.db.prepare("UPDATE experiment_runs SET status=?, finished=?, error=? WHERE id=? AND status='running'")
       .run(status, new Date().toISOString(), error, id);
+    this.changes.emit(id);
   }
 
   private withPatching(run: ExperimentRun): ExperimentRun {
@@ -78,5 +83,6 @@ export class ExperimentStore {
     this.db.prepare(`INSERT INTO experiment_entries (run_id, seq, at, event)
       SELECT ?, COALESCE(MAX(seq), 0)+1, ?, ? FROM experiment_entries WHERE run_id=?`)
       .run(id, at, JSON.stringify(ExperimentEvent.parse(event)), id);
+    this.changes.emit(id);
   }
 }

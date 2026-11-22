@@ -12,6 +12,9 @@ type ResearchEvent = Extract<ExperimentEvent, { kind: "research" }>;
 type StageStatus = Extract<ExperimentEvent, { kind: "stage" }>["status"];
 
 const patchStage: Record<PatchResult["status"], StageStatus> = { verified: "passed", failed: "failed", unavailable: "degraded", unconfigured: "degraded", no_finding: "skipped" };
+/** A backfill retries a project whose latest patch could not run (`unavailable`, `unconfigured`); these end it for good. */
+const settledPatch = new Set<PatchResult["status"]>(["verified", "failed", "no_finding"]);
+const ratio = (count: { yes: number; total: number }) => `${count.yes}/${count.total}`;
 
 export function createExperimentService(store: ExperimentStore, worker: Worker | undefined, providers: Providers, patcher?: Patcher, now: () => number = Date.now) {
   let starting = false;
@@ -21,39 +24,51 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
   const backfillController = new AbortController();
 
   /**
-   * Appends events for one run. A terminal stage event gets `elapsedMs` (time since the same project's `running` event for that
-   * stage) and one log line. Events stay ordered per project because each project awaits its steps in sequence.
+   * Appends events for one run. A terminal stage event gets `elapsedMs` (time since the same project's first `running` event
+   * for that stage) and one log line. Events stay ordered per project because each project awaits its steps in sequence.
    */
   function emitter(id: string, signal: AbortSignal) {
     const started = new Map<string, number>();
+    const open = new Set<string>();
     const append = (event: ExperimentEvent) => {
       if (signal.aborted) return;
       if (event.kind === "stage") {
         const key = `${event.project}:${event.stage}`;
         const since = started.get(key);
-        if (event.status === "running") started.set(key, now());
-        else if (since !== undefined) event = { ...event, elapsedMs: Math.max(0, now() - since) };
-        if (event.status !== "running") console.log(`[experiments] run=${id} project=${event.project} stage=${event.stage} status=${event.status} ms=${event.elapsedMs ?? "-"}`);
+        if (event.status === "running") {
+          if (since === undefined) started.set(key, now());
+          open.add(key);
+        } else {
+          open.delete(key);
+          if (since !== undefined) event = { ...event, elapsedMs: Math.max(0, now() - since) };
+          console.log(`[experiments] run=${id} project=${event.project} stage=${event.stage} status=${event.status} ms=${event.elapsedMs ?? "-"}`);
+        }
       }
       store.append(id, event);
     };
     const stage = (project: ExperimentProject, name: ExperimentStage, status: StageStatus) => append({ kind: "stage", project, stage: name, status });
+    /** Ends with `failed` a stage that is still running, so a broken run never leaves a step running in the panel. */
+    const abandon = (project: ExperimentProject, name: ExperimentStage) => { if (open.has(`${project}:${name}`)) stage(project, name, "failed"); };
 
     /** Runs after research for one project. Whatever happens here never changes the research events or the run's result. */
     async function patchStep(project: ExperimentProject, cases: FixtureResult[], research: ResearchEvent) {
       if (!patcher || signal.aborted) return;
       stage(project, "patch", "running");
       const result = await patcher.patch(project, cases, research, signal).catch(() => emptyPatch(project, "unavailable", "The patch step failed."));
+      // An aborted run drops the event below, so the log must not claim a result.
+      if (signal.aborted) return void console.log(`[experiments] run=${id} project=${project} patch=aborted`);
       append(result);
       stage(project, "patch", patchStage[result.status]);
-      console.log(`[experiments] run=${id} project=${project} patch=${result.status} attempts=${result.attempts} agentMs=${result.timings.agentMs} verifyMs=${result.timings.verifyMs} tokensIn=${result.tokens.input} tokensOut=${result.tokens.output}`);
+      const replay = result.replay;
+      console.log(`[experiments] run=${id} project=${project} patch=${result.status} attempts=${result.attempts} agentMs=${result.timings.agentMs} verifyMs=${result.timings.verifyMs} `
+        + `tokensIn=${result.tokens.input} tokensOut=${result.tokens.output} replay=${replay ? ratio(replay.attacks) : "-"} legit=${replay ? ratio(replay.legit) : "-"} error=${JSON.stringify(result.error)}`);
     }
 
-    return { append, stage, patchStep };
+    return { append, stage, abandon, patchStep };
   }
 
   async function execute(id: string, signal: AbortSignal, selected?: ExperimentProject) {
-    const { append, stage, patchStep } = emitter(id, signal);
+    const { append, stage, abandon, patchStep } = emitter(id, signal);
     const projects = selected ? [selected] : ExperimentProject.options;
     const fixtures = new Map(projects.map((project) => [project, [] as FixtureResult[]]));
     let passed = true;
@@ -65,6 +80,11 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
       for (const project of projects) stage(project, "inputs", plan.provider === "openrouter" ? "passed" : "degraded");
       await worker!.run(id, plan.notes, plan.first, (event) => {
         append(event);
+        // Detection and containment are judged after the worker ends; the strip shows them running while the worker measures.
+        if (event.kind === "stage" && event.stage === "traffic" && event.status === "running") {
+          stage(event.project, "detection", "running");
+          stage(event.project, "containment", "running");
+        }
         if (event.kind === "fixture") fixtures.get(event.project)!.push(event);
         if ((event.kind === "stage" && event.status === "failed") || (event.kind === "fixture" && !event.passed)) passed = false;
       }, signal, selected);
@@ -97,9 +117,14 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
         };
         await Promise.all([research(), feedback()]);
       }));
-      if (!signal.aborted) store.finish(id, passed ? "completed" : "failed", passed ? null : "Una o más mediciones no coincidieron con lo esperado.");
-    } catch {
-      if (!signal.aborted) store.finish(id, "failed", "Falló la ejecución local. Se conservaron las observaciones registradas.");
+      if (signal.aborted) return;
+      console.log(`[experiments] run=${id} status=${passed ? "completed" : "failed"}`);
+      store.finish(id, passed ? "completed" : "failed", passed ? null : "Una o más mediciones no coincidieron con lo esperado.");
+    } catch (err) {
+      if (signal.aborted) return;
+      console.error(`[experiments] run=${id} status=failed error=${(err instanceof Error ? err.message : String(err)).replace(/\s+/g, " ").slice(0, 300)}`);
+      for (const project of projects) for (const name of ["detection", "containment"] as const) abandon(project, name);
+      store.finish(id, "failed", "Falló la ejecución local. Se conservaron las observaciones registradas.");
     }
   }
 
@@ -133,15 +158,21 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
     const jobs = ExperimentProject.options.flatMap((project) => {
       const research = events.find((e): e is ResearchEvent => e.kind === "research" && e.project === project);
       const cases = events.filter((e): e is FixtureResult => e.kind === "fixture" && e.project === project);
-      const patched = events.some((e) => e.kind === "patch" && e.project === project);
-      return research && cases.length && !patched ? [{ project, cases, research }] : [];
+      const settled = events.some((e) => e.kind === "patch" && e.project === project && settledPatch.has(e.status));
+      return research && cases.length && !settled ? [{ project, cases, research }] : [];
     });
     if (!jobs.length) return Promise.resolve();
     const { patchStep } = emitter(runId, backfillController.signal);
+    const started = now();
+    console.log(`[experiments] run=${runId} backfill=start projects=${jobs.map((j) => j.project).join(",")}`);
     store.setPatching(runId, true);
     const job = Promise.all(jobs.map(({ project, cases, research }) => patchStep(project, cases, research)))
       .then(() => undefined, (err: unknown) => console.error(`[experiments] run=${runId} backfill failed: ${err instanceof Error ? err.message : String(err)}`))
-      .finally(() => { store.setPatching(runId, false); backfilling.delete(runId); });
+      .finally(() => {
+        console.log(`[experiments] run=${runId} backfill=end ms=${Math.max(0, now() - started)}`);
+        store.setPatching(runId, false);
+        backfilling.delete(runId);
+      });
     backfilling.set(runId, job);
     return job;
   }
