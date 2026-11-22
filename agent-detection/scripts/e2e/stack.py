@@ -148,6 +148,13 @@ def digest(db: Path) -> dict[str, tuple[int, str]]:
     return out
 
 
+def one(db: Path, sql: str, *params: object) -> object:
+    """The first column of the first row of a read-only query on a shop database, or None."""
+    with contextlib.closing(sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=5)) as conn:
+        row = conn.execute(sql, params).fetchone()
+    return None if row is None else row[0]
+
+
 def sentinel_rows(sql: str, *params: str) -> list[tuple[object, ...]]:
     """Rows of a read-only query on run/sentinel.db."""
     uri = f"file:{RUN / 'sentinel.db'}?mode=ro"

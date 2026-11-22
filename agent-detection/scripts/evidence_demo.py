@@ -81,7 +81,10 @@ def detector_trials(first: str = "benign") -> list[dict[str, object]]:
     routes = RouteTable.from_patterns([{"pattern": path} for path in MOCK_BANK_PATHS])
     detector = Detector(routes, Thresholds())
     trials = []
-    profiles = (("benign", BENIGN_PATHS), ("unlisted", UNLISTED_PATHS))
+    profiles: tuple[tuple[str, tuple[str, ...]], ...] = (
+        ("benign", BENIGN_PATHS),
+        ("unlisted", UNLISTED_PATHS),
+    )
     if first == "unlisted":
         profiles = profiles[::-1]
     for index, (profile, paths) in enumerate(profiles, 1):

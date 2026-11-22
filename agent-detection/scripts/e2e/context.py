@@ -27,6 +27,7 @@ DEMO_USER = "alice"
 # the twin this is how an attacker gets a session, since the twin holds no real password.
 TWIN_BYPASS = "username=%27+OR+1%3D1+--&password=anything"
 REAL_DB = RUN / "real.db"
+TWIN_DB = RUN / "twin.db"
 V4, V6 = "127.0.0.1", "::1"
 
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import runpy
+
 import pytest
 
 from eval import swarm
@@ -71,3 +73,13 @@ def test_a_row_that_loses_a_rule_verdict_is_not_ok() -> None:
     )
     assert not lost.ok
     assert table([lost]).endswith("| NO |")
+
+
+@pytest.mark.filterwarnings("ignore:.*found in sys.modules:RuntimeWarning")
+def test_running_the_module_exits_with_the_commands_code(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as done:
+        runpy.run_module("eval.swarm", run_name="__main__")
+    assert done.value.code == 0
+    assert "| swarm_shared |" in capsys.readouterr().out

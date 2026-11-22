@@ -4,8 +4,9 @@
 
 Stops any running stack, deletes the router's keys, spool and patches from earlier runs (so
 127.0.0.1 starts unflagged), starts every service, runs the checks and stops the stack again.
-Benign requests only: the one flag is GET /.env, which R3 marks critical. The planted flaws on the
-twin are covered by tests/test_twin_*.py and tests/test_mirror_tap_e2e.py, not here.
+The flag is GET /.env, which R3 marks critical. One attack request follows it: the flagged client
+signs in on the twin through the shop's planted login flaw, which also confirms a finding on its
+track. The other planted flaws are covered by tests/test_twin_*.py and tests/test_mirror_tap_e2e.py.
 
 Checks: 1 routing, 2 recording, 3 real data untouched, 4 follow keys, 5 lane parity, 6 performance,
 7 humans, 8 resilience, 9 swarm link. Each prints PASS or FAIL with its evidence; the report holds

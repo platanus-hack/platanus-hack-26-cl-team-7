@@ -7,8 +7,9 @@ key) must reach the twin, and so must a twin-issued session cookie sent from ::1
 User-Agent. The router is restarted once in the middle: the keys must survive it.
 
 Copy on flag writes a masked account (demo.own): on the twin the copied session is signed in under
-a masked name, and the real password is refused, because the twin holds none. The twin-issued
-session comes from the shop's planted login flaw (TWIN_BYPASS), as an attacker would get one.
+the masked name of the same account, and the real password is refused, because the twin holds
+none. The twin-issued session comes from the shop's planted login flaw (TWIN_BYPASS), which signs
+in as the twin's first user, as an attacker would get one.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from .context import (
     REAL_DB,
     RECORD_LIMIT,
     TWIN_BYPASS,
+    TWIN_DB,
     V4,
     V6,
     Ctx,
@@ -74,12 +76,15 @@ def run(ctx: Ctx) -> None:
     ]
     restarted = [f"{s.method} {s.path} {in_logs(s)} {s.reply.status}" for s in after]
     masked, twin_user = user_of(copied.reply), user_of(followed.reply)
+    demo_id = stack.one(REAL_DB, "SELECT id FROM users WHERE username = ?", DEMO_USER)
+    masked_name = stack.one(TWIN_DB, "SELECT username FROM users WHERE id = ?", demo_id)
+    first_name = stack.one(TWIN_DB, "SELECT username FROM users ORDER BY id LIMIT 1")
     survived = all(in_logs(s) == (0, 1) for s in after) and user_of(after[1].reply) == twin_user
     follow = [
         ("real cookie on real before flag", user_of(real_user.reply) == DEMO_USER
          and in_logs(real_user) == (1, 0)),
         ("same real cookie signed in on twin under a masked name (copy on flag)",
-         _is_name(masked) and masked != DEMO_USER and in_logs(copied) == (0, 1)),
+         _is_name(masked) and masked == masked_name != DEMO_USER and in_logs(copied) == (0, 1)),
         ("twin account page signed in, masked", account.reply.status == 200
          and f"Signed in as {masked}" in account.reply.text()
          and f"Signed in as {DEMO_USER}" not in account.reply.text()),
@@ -88,7 +93,7 @@ def run(ctx: Ctx) -> None:
         ("twin issued its own session", bool(ctx.twin_cookie)
          and ctx.twin_cookie != ctx.real_cookie and twin_login.reply.status == 303),
         ("twin cookie from ::1 + new UA -> twin", _is_name(twin_user)
-         and twin_user != DEMO_USER and in_logs(followed) == (0, 1)),
+         and twin_user == first_name and in_logs(followed) == (0, 1)),
         ("same IP, other UA -> twin (ip key)", in_logs(other_agent) == (0, 1)),
         (f"after router restart (pid {pid}) every key still routes to twin", survived),
     ]
