@@ -152,8 +152,8 @@
     <div><span>3</span><b>Negar la confirmación</b><small>si la respuesta trae la prueba del ataque, no sale</small></div>
     <div><span>4</span><b>Mostrar y arreglar</b><small>su recorrido, la falla y un arreglo propuesto</small></div>
   </div>
-  <img class="captura" src="img/panel-resumen-1600.png" alt="Panel de Reaper: sin Reaper la prueba del ataque llegó en 2 de 2 casos; con Reaper, en 0 de 2">
-  <div class="nota">«Reaper se pone delante de tu sitio y hace cuatro cosas. Uno: detecta sondeos, quién pide rutas que no existen o archivos sensibles. Dos: desde ahí, a esa sesión le responde una copia falsa del sitio. Tres: si una respuesta trae la prueba de que el ataque funcionó, no se la entrega. Y cuatro: te muestra qué hizo, qué falla usó y cómo arreglarla. Esta es una captura real del panel: sin Reaper, la prueba llegó en 2 de 2 casos; con Reaper, en 0 de 2.»</div>
+  <img class="captura" src="img/panel-resumen-1600.png" alt="Panel de Reaper con Next.js: sin Reaper la prueba del ataque llegó en 1 de 1 casos; con Reaper, en 0 de 1">
+  <div class="nota">«Reaper se pone delante de tu sitio y hace cuatro cosas. Uno: detecta sondeos, quién pide rutas que no existen o archivos sensibles. Dos: desde ahí, a esa sesión le responde una copia falsa del sitio. Tres: si una respuesta trae la prueba de que el ataque funcionó, no se la entrega. Y cuatro: te muestra qué hizo, qué falla usó y cómo arreglarla. Esta es una captura real del panel, contra una falla real de Next.js: sin Reaper la prueba llegó; con Reaper, no.»</div>
 </section>
 
 <section class="lamina" data-t="0:30">
@@ -161,12 +161,12 @@
     <img src="img/panel-trafico-1600.png" alt="Detalle en el panel: la misma solicitud sin Reaper trae el dato privado; con Reaper, un error creíble">
     <div>
       <p class="envivo">Demo en vivo aquí</p>
-      <p class="grande" style="font-weight:700">El atacante pidió un recibo con datos privados. Recibió un error creíble.</p>
+      <p class="grande" style="font-weight:700">El atacante se saltó el login de Next.js con una falla real. Recibió un error creíble.</p>
       <p class="medio suave" style="margin-top:28px">Y el panel ya tiene la falla que usó y cómo arreglarla.</p>
       <p class="url">pnpm install &amp;&amp; pnpm start</p>
     </div>
   </div>
-  <div class="nota">[Demo en vivo: panel en http://127.0.0.1:8787, sitio Bruma Remuneraciones, botón «Modo demo»; avanzar con →. Son 7 pasos, ver el guion.] «Esto es Reaper. Una plataforma de remuneraciones con una falla conocida. Sin Reaper, la respuesta trae el dato privado: el atacante confirma que su ataque funcionó. La misma solicitud pasando por Reaper: ve la prueba y la cambia por un error creíble. El reintento ya ni llega al servicio. Resultado: 2 de 2 sin Reaper, 0 de 2 con Reaper, y los clientes legítimos pasaron 3 de 3. Y abajo, la falla y el arreglo propuesto.» Si no hay panel: contar lo mismo sobre esta captura. La prueba grabada usa solicitudes fijas, no un agente de IA: decirlo si preguntan.</div>
+  <div class="nota">[Demo en vivo: panel en http://127.0.0.1:8787, sitio Next.js, botón «Modo demo»; avanzar con →. Son 7 pasos, ver el guion.] «Esto es Reaper delante de un Next.js real con una falla real, publicada: permite saltarse el login. Sin Reaper, la página protegida sale: el atacante confirma que funcionó. La misma solicitud pasando por Reaper: ve la prueba y la cambia por un error creíble. El reintento ya ni llega al servicio. Y abajo, la falla y el arreglo propuesto.» Si no hay panel: video de respaldo o esta captura. La prueba grabada usa solicitudes fijas, no un agente de IA: decirlo si preguntan.</div>
 </section>
 
 <section class="lamina" data-t="0:15">
@@ -201,13 +201,13 @@
 <section class="lamina" data-t="0:20">
   <p class="etiqueta">Lo que todavía no hace</p>
   <ul class="limites">
-    <li>No evita el primer golpe: el primer intento igual se ejecutó en el servidor. El reintento ya no llega: 7 de 7 contenidos.</li>
+    <li>No evita el primer golpe: el primer intento igual se ejecutó en el servidor. El reintento ya no llega: 2 de 2 contenidos, contra fallas reales de Next.js y Vite.</li>
     <li>La detección contra agentes de IA se midió en un solo equipo, con una tienda de demostración; frente a escáneres clásicos encuentra 1 de cada 10 sesiones.</li>
     <li>El benchmark mide una sola app de prueba, con las reglas por defecto de Cloudflare.</li>
   </ul>
   <p class="cierre">Que el agente no sepa<br>si su ataque funcionó.</p>
   <p class="medio suave" style="margin-top:40px"><img src="logo.svg" alt="Reaper" width="56" height="56" style="vertical-align:-14px;margin-right:16px"><b class="real">team-7</b> · reaper.haroldmedrano33.workers.dev</p>
-  <div class="nota">«Lo decimos de frente: no evita el primer golpe, el primer intento igual se ejecuta en el servidor. Lo que evita es que el atacante reciba la prueba, y el reintento ya no llega: 7 de 7 contenidos en la prueba grabada. La detección marcó 30 de 30 agentes de IA, pero en un solo equipo y con una tienda de demostración; frente a escáneres clásicos encuentra 1 de cada 10 sondeos. Y el benchmark es una sola app de prueba con las reglas por defecto de Cloudflare. Lo que sí tenemos es el mecanismo funcionando y medido. Reaper: que el agente no sepa si su ataque funcionó. Somos team-7, gracias.»
+  <div class="nota">«Lo decimos de frente: no evita el primer golpe, el primer intento igual se ejecuta en el servidor. Lo que evita es que el atacante reciba la prueba, y el reintento ya no llega: 2 de 2 contenidos, contra fallas reales de Next.js y Vite. La detección marcó 30 de 30 agentes de IA, pero en un solo equipo y con una tienda de demostración; frente a escáneres clásicos encuentra 1 de cada 10 sondeos. Y el benchmark es una sola app de prueba con las reglas por defecto de Cloudflare. Lo que sí tenemos es el mecanismo funcionando y medido. Reaper: que el agente no sepa si su ataque funcionó. Somos team-7, gracias.»
   <br><br><b>PREGUNTAS ENSAYADAS</b>
   <br><b>«Cloudflare ya lo hace.»</b> «Sí, y eso valida la idea: retener la respuesta de un ataque exitoso sirve. Pero lo de Cloudflare protege solo lo que pasa por su red y, según su anuncio, todavía no tiene reglas sobre el cuerpo de la respuesta. Reaper es abierto, corre delante de tus servidores, responde algo falso y te explica el recorrido. En nuestro benchmark, con sus reglas por defecto del plan gratuito, la prueba llegó 20 de 20 por Cloudflare y 0 de 20 por Reaper. Límite: una sola app de prueba, y no pudimos confirmar desde su panel que su protección de respuestas estuviera activa. No decimos que seamos mejores: decimos lo que medimos.»
   <br><b>«¿Dónde está la IA?»</b> «El atacante es un agente de IA. Con agentes medimos tres cosas: la confirmación negada con dos modelos atacando, 20 de 20 a 0 de 20; la detección y el desvío con tres modelos, 30 de 30 ataques marcados y desviados a la copia falsa y 0 de 30 agentes legítimos marcados; y Espejismo, 95 corridas con 8 modelos. Límite: un solo equipo y una tienda de demostración. Y en el panel, un modelo escribe el arreglo propuesto y responde preguntas, para que una persona decida.»

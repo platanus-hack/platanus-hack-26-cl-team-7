@@ -38,13 +38,15 @@ Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelv
 Cloudflare lanzó el 21/10/2026 una protección que retiene la respuesta de un ataque exitoso ([anuncio](https://blog.cloudflare.com/full-transaction-waf/)), solo para el tráfico que pasa por su red y todavía sin reglas sobre el cuerpo de la respuesta. La idea de mandar al atacante a una copia falsa también está publicada este mes en un trabajo académico ([Gingerbread House](https://arxiv.org/abs/2611.07611)), sin código abierto. Reaper es abierto, corre delante de tus propios servidores y no se queda en bloquear: responde algo falso y creíble, y te explica el recorrido del agente.
 
 ## Límites, dichos de frente
-- **No evita el primer golpe:** en nuestras pruebas, el primer intento del ataque igual se ejecutó en el servidor. Lo que Reaper hace después sí lo medimos: el reintento ya no llega al servicio (7 de 7 reintentos contenidos en la prueba grabada de los cuatro servicios), y cuando la detección marca antes al agente, lo desvía antes de que lea datos sensibles (0 de 30 los leyeron). Parchar sigue siendo lo único que evita el primer golpe.
+- **No evita el primer golpe:** en nuestras pruebas, el primer intento del ataque igual se ejecutó en el servidor. Lo que Reaper hace después sí lo medimos: el reintento ya no llega al servicio (2 de 2 reintentos contenidos en la prueba grabada contra Next.js y Vite, con pruebas de concepto reales de CVE-2025-29927 y CVE-2025-30208), y cuando la detección marca antes al agente, lo desvía antes de que lea datos sensibles (0 de 30 los leyeron). Parchar sigue siendo lo único que evita el primer golpe.
 - La detección contra agentes de IA se midió en un solo equipo local, con una tienda de demostración con fallas plantadas y un tope de 40 peticiones por ataque; siempre marcó la misma regla (pedir un recurso crítico). Contra escáneres clásicos que no piden nada crítico, esa misma detección encuentra 1 de cada 10 sesiones.
 - El benchmark contra Cloudflare usa sus reglas por defecto en plan gratuito: sus primeras protecciones de respuesta cubren una falla concreta, y no pudimos confirmar desde el panel que estuvieran activas en la zona. Mide una sola app de prueba.
 - Son muestras chicas, y con agentes de IA reales hay pocas corridas en la pieza de confirmación.
 - En Espejismo el caso más grave se provocó con una instrucción de atacante, y en 16 a 22 de 35 corridas sin ella el agente escribió que sospechaba estar en una prueba.
 
 ## Verlo
+- **El panel de Reaper, funcionando en línea:** https://neowaf.paoloose.site (botón «Modo demo», 7 pasos).
+- La web y las láminas: https://reaper.haroldmedrano33.workers.dev
 - Las 95 corridas reales de Espejismo, lo que cada agente reportó contra lo que registró el sistema: https://espejismo-demo.haroldmedrano33.workers.dev/explorar
 - Videos: [la propuesta](https://espejismo-demo.haroldmedrano33.workers.dev/video/propuesta.mp4) · [lo dicho contra lo registrado](https://espejismo-demo.haroldmedrano33.workers.dev/video/dicho-vs-hecho.mp4)
 - El panel de Reaper corre en local con `pnpm install && pnpm start` (modo de repetición, sin credenciales).
