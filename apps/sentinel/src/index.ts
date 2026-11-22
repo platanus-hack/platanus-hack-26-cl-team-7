@@ -72,7 +72,7 @@ const experimentStore = new ExperimentStore(db);
 const experimentLab = resolve(here, "../lab");
 const experimentService = createExperimentService(experimentStore, localOnly ? createWorker(experimentLab, setting("ULTIMO_PASO_LIMA_VM") || "espejismo") : undefined,
   createExperimentProviders(experimentLab, providers));
-const app = createApp({ store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence,
+const app = createApp({ store, bus, ai, deception, webRoot, presentationRoot: resolve(repoRoot, "landing"), allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence,
   experiments: [experimentStore, experimentService] });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";

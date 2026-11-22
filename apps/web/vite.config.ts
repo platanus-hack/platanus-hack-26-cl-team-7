@@ -34,7 +34,7 @@ export default defineConfig({
   clearScreen: false,
   // Same origin in development too: the browser talks to Vite, and Vite forwards /v1 to Sentinel.
   // The Host header is kept (changeOrigin: false) so Sentinel sees Origin and Host match.
-  server: { port: 5173, strictPort: true, proxy: { "/v1": { target: SENTINEL, changeOrigin: false } } },
+  server: { port: 5173, strictPort: true, proxy: { "/v1": { target: SENTINEL, changeOrigin: false }, "/presentacion": { target: SENTINEL, changeOrigin: false } } },
   build: {
     target: "es2022",
     sourcemap: false,

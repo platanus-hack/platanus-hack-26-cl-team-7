@@ -21,11 +21,8 @@ function TitleBar({ view, select }: { view: View; select: (view: View) => void }
   return (
     <header className="bar">
       <div className="mark">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-          <path d="M10 2.5l6 2.3v4.6c0 4-2.6 6.9-6 8.1-3.4-1.2-6-4.1-6-8.1V4.8z" />
-          <path d="M7.2 10.2l2 2 3.6-3.9" />
-        </svg>
-        Sentinel
+        <img src="/presentacion/logo.svg" width={24} height={24} alt="" />
+        Centinela
       </div>
       {conn === "reconnecting" && (
         <span className="conn" role="status">
@@ -39,7 +36,8 @@ function TitleBar({ view, select }: { view: View; select: (view: View) => void }
           Sentinel está desconectado
         </span>
       )}
-      <nav className="ml-auto flex items-center gap-2" aria-label="Vistas de Sentinel">
+      <nav className="ml-auto flex items-center gap-2" aria-label="Vistas de Centinela">
+        <a className="ask" href="/presentacion/">Presentación</a>
         <button type="button" className="ask" aria-pressed={view === "experiments"} onClick={() => select("experiments")}>Experimentos</button>
         <button type="button" className="ask" aria-pressed={view === "mirror"} onClick={() => select("mirror")}>Mirror</button>
         <button type="button" className="ask" aria-pressed={view === "evidence"} onClick={() => select("evidence")}>Demo de evidencia</button>

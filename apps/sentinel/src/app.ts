@@ -26,6 +26,7 @@ import { evidenceDemoRoutes } from "./evidence-demo/routes.ts";
 import { experimentRoutes } from "./experiments/routes.ts";
 import { fail, requireToken } from "./http.ts";
 import type { Store } from "./store.ts";
+import { mountPresentation } from "./presentation.ts";
 
 export interface AppDeps {
   store: Store;
@@ -39,6 +40,7 @@ export interface AppDeps {
   allowedOrigins?: string[];
   /** Folder with the built web app. When it holds an index.html, Sentinel serves it at "/". */
   webRoot?: string;
+  presentationRoot?: string;
   /** Host names the API answers besides localhost. Anything else is refused, which stops DNS rebinding. */
   allowedHosts?: string[];
   /** When set, POST /v1/events and POST /v1/deception/events need `Authorization: Bearer <token>`. */
@@ -53,7 +55,7 @@ const MAX_QUEUED_FRAMES = 1000;
 const MAX_QUEUED_BYTES = 16 * 1024 * 1024;
 const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
 
-export function createApp({ store, bus, ai, deception, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null, evaluateEvidence, experiments }: AppDeps) {
+export function createApp({ store, bus, ai, deception, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, presentationRoot, allowedHosts = [], ingestToken, reports = null, evaluateEvidence, experiments }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
@@ -251,6 +253,7 @@ export function createApp({ store, bus, ai, deception, version = "0.1.0", starte
 
   const root = new Hono();
   root.route("/", app);
+  if (presentationRoot && existsSync(join(presentationRoot, "index.html"))) mountPresentation(root, presentationRoot);
   if (webRoot && existsSync(join(webRoot, "index.html"))) {
     // Hashed asset names never change content, so browsers keep them for a year.
     // The app shell must not be cached, so a new build shows at once.
