@@ -1,11 +1,11 @@
 # evidencia-agentes
 
-Evidencia de que Centinela (detección + desvío a la gemela, carpeta `agent-detection/`) funciona
+Evidencia de que Gríngola (detección + desvío a la gemela, carpeta `agent-detection/`) funciona
 contra **agentes de IA reales**, no solo contra escáneres clásicos. Mide, de punta a punta, qué
-pasa cuando un agente LLM ataca la tienda a través de Centinela.
+pasa cuando un agente LLM ataca la tienda a través de Gríngola.
 
 - **`RESULTADOS.md`** — el informe: límites primero, tabla por modelo con IC95 de Wilson, 3 casos
-  con citas, caso de uso como incidente, tabla problema→Centinela→cifra y frase de pitch.
+  con citas, caso de uso como incidente, tabla problema→Gríngola→cifra y frase de pitch.
 - **`runner/`** — el arnés (stdlib + OpenRouter):
   - `agent.py` — un agente LLM con una sola herramienta HTTP contra el borde.
   - `oracle.py` / `enrich.py` — verdad independiente desde el `access.log` y el panel (no desde

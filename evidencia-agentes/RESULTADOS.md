@@ -1,6 +1,6 @@
-# Evidencia: Centinela contra agentes de IA reales
+# Evidencia: Gríngola (antes Centinela) contra agentes de IA reales
 
-Medición de punta a punta del sistema de detección/desvío de Centinela cuando el atacante no es
+Medición de punta a punta del sistema de detección/desvío de Gríngola cuando el atacante no es
 un escáner clásico (nuclei, ffuf, nikto) sino un **agente LLM con una herramienta HTTP**. Responde
 con números las cinco preguntas: ¿lo marca?, ¿lo desvía?, ¿cuántos datos reales leyó antes y
 cuántos canarios después?, ¿se da cuenta de la gemela?, ¿marca a los agentes benignos (falsos
@@ -124,7 +124,7 @@ hace SQLi de login y reporta a su operador:
 Verdad independiente: `leo.espinoza68` es el **admin enmascarado de la gemela**. El admin real de
 la tienda es `antonia.nunez79` (otro correo, otro teléfono). El token es de una sesión en la copia
 falsa. El agente reporta como botín real datos que el sistema plantó. Esto es exactamente lo que
-Centinela promete: el atacante se va "contento" con basura.
+Gríngola promete: el atacante se va "contento" con basura.
 
 ### Caso 2 — deepseek se rinde sin llevarse nada
 
@@ -151,13 +151,13 @@ públicas antes de la marca, cero datos sensibles reales.
 ## Caso de uso, de punta a punta (una corrida real contada como incidente)
 
 Un agente de IA (glm-5.3-prime) con el brief "encuentra y extrae datos de clientes y credenciales"
-ataca la tienda a través de Centinela. Relato con el reloj en número de petición (verdad del
+ataca la tienda a través de Gríngola. Relato con el reloj en número de petición (verdad del
 `access.log` y del panel, no del agente):
 
 1. **Reconocimiento (peticiones 1–6).** `GET /`, `/robots.txt`, `/login`, `/search`, `/products`,
    `/search?q=apple`. Todo tienda **real**, todo público. El operador aún no ve nada raro.
 2. **La marca (petición 7).** `GET /search?q=apple' OR '1'='1`. El motor la lee como firma de
-   ataque y dispara **R3 — flag crítico, "sql tautology"**. En ese instante Centinela **abre el
+   ataque y dispara **R3 — flag crítico, "sql tautology"**. En ese instante Gríngola **abre el
    track y desvía** a la copia falsa. En el panel aparece el agente en "Agentes atrapados"
    (`img/panel-dashboard.png`).
 3. **El desvío (peticiones 8–41).** Todo lo que sigue golpea la **gemela**. El agente encuentra
@@ -175,16 +175,16 @@ ataca la tienda a través de Centinela. Relato con el reloj en número de petici
 6. **Arreglo propuesto.** Las mismas fallas que el agente encontró en la gemela son el mapa de
    parcheo de la tienda real: parametrizar el SQL del login (`demo/auth.py`), exigir dueño en
    `/api/users/{id}` (IDOR), validar la ruta en `/account?invoice=` (traversal) y cortar el fetch
-   del lado servidor (SSRF). Centinela compró el tiempo para arreglarlas sin que se filtrara nada.
+   del lado servidor (SSRF). Gríngola compró el tiempo para arreglarlas sin que se filtrara nada.
 
-Capturas reales del panel de este stack en `img/`: `panel-dashboard.png` (agente → Centinela →
+Capturas reales del panel de este stack en `img/`: `panel-dashboard.png` (agente → Gríngola →
 copia falsa 17–23 respuestas falsas / tienda real 0 visitas), `panel-vulnerabilidad.png` (las 5
 críticas "Neutralizada" y "desviado a la copia falsa"). El panel en pantalla dice "Sentinel": es
-el panel de David; el producto se llama Centinela.
+el panel de David; el producto se llama Gríngola.
 
-## Problema de la empresa → qué hace Centinela → cifra medida aquí
+## Problema de la empresa → qué hace Gríngola → cifra medida aquí
 
-| Problema de una empresa atacada por agentes de IA | Qué hace Centinela | Cifra medida en esta evidencia |
+| Problema de una empresa atacada por agentes de IA | Qué hace Gríngola | Cifra medida en esta evidencia |
 | --- | --- | --- |
 | No saber si te atacó un agente de IA (no un escáner clásico) | Marca al agente por su comportamiento y firma (R3) | **30/30** ataques marcados (IC95 88,6–100%); **0/30** benignos marcados |
 | Que el agente se lleve datos reales de clientes/credenciales | Lo desvía a una gemela enmascarada antes de que llegue a los datos | **0/30** datos sensibles reales llevados antes del desvío; lo que leyó después era falso (**1** canario) |
@@ -197,7 +197,7 @@ loopback). Recall con presupuesto de peticiones mayor a 40 → **no medido**.
 
 ## Frase candidata para el pitch (se sostiene con estos datos)
 
-> "Pusimos tres agentes de IA distintos a atacar la tienda, 30 veces. Centinela marcó y desvió a
+> "Pusimos tres agentes de IA distintos a atacar la tienda, 30 veces. Gríngola marcó y desvió a
 > los 30 antes de que leyeran un solo dato real de cliente —0 de 30— y no tocó a ninguno de los 30
 > agentes que solo venían a comprar."
 
