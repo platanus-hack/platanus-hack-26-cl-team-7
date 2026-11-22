@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquidación octubre 2026 · Bruma Portal</title>
+<meta name="description" content="Detalle de la liquidación de sueldo de octubre 2026.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%2210%22%20fill%3D%22%23B4583A%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2212.6%22%20r%3D%226.3%22%20fill%3D%22%23FBEEE5%22%2F%3E%3Crect%20x%3D%224.5%22%20y%3D%2215.8%22%20width%3D%2223%22%20height%3D%223.8%22%20rx%3D%221.9%22%20fill%3D%22%23B4583A%22%2F%3E%3Crect%20x%3D%228.5%22%20y%3D%2220.8%22%20width%3D%2219%22%20height%3D%223%22%20rx%3D%221.5%22%20fill%3D%22%23FBEEE5%22%20fill-opacity%3D%22.74%22%2F%3E%3Crect%20x%3D%224.5%22%20y%3D%2225.2%22%20width%3D%2212%22%20height%3D%222.2%22%20rx%3D%221.1%22%20fill%3D%22%23FBEEE5%22%20fill-opacity%3D%22.42%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300..800&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<style type="text/tailwindcss">
+@theme static {
+  --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* capas: canvas > sheet > tile > well */
+  --color-canvas: #ebe5da;
+  --color-sheet: #f6f2ea;
+  --color-tile: #fdfbf7;
+  --color-well: #eee8dd;
+  --color-line: #e2dacd;
+  --color-line-2: #d2c8b8;
+
+  --color-ink: #27211c;
+  --color-ink-2: #5a5148;
+  --color-ink-3: #7a7064;
+  --color-ink-4: #aea496;
+
+  /* acento unico: arcilla */
+  --color-clay: #b4583a;
+  --color-clay-2: #964329;
+  --color-clay-soft: #f1dcd0;
+  --color-clay-wash: #f8ebe3;
+  --color-clay-line: #e8cbbb;
+
+  /* datos: calmos, sin saturar */
+  --color-sage: #5f806a;
+  --color-sage-soft: #dde9df;
+  --color-sage-ink: #3a5842;
+  --color-ochre: #a67a2c;
+  --color-ochre-soft: #f1e6c9;
+  --color-ochre-ink: #6c4d11;
+  --color-slate: #5b7c90;
+  --color-slate-soft: #dbe6ec;
+  --color-slate-ink: #355669;
+  --color-wine: #9c3d4a;
+  --color-wine-soft: #f0d9db;
+  --color-sand: #d8ccb9;
+
+  --radius-tile: 28px;
+  --radius-card: 20px;
+  --radius-ctl: 14px;
+  --radius-chip: 10px;
+
+  --text-micro: 11.5px;
+  --text-micro--line-height: 1.4;
+  --text-caption: 12.5px;
+  --text-caption--line-height: 1.45;
+  --text-small: 13.5px;
+  --text-small--line-height: 1.5;
+  --text-body: 15px;
+  --text-body--line-height: 1.55;
+  --text-lead: 17px;
+  --text-lead--line-height: 1.5;
+  --text-title: 22px;
+  --text-title--line-height: 1.25;
+  --text-h1: 30px;
+  --text-h1--line-height: 1.12;
+  --text-display: 44px;
+  --text-display--line-height: 1.05;
+}
+
+@layer base {
+  html { background: var(--color-canvas); }
+  body {
+    margin: 0; font-family: var(--font-sans); font-size: 15px; line-height: 1.55;
+    color: var(--color-ink); background: var(--color-canvas);
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  button { cursor: pointer; }
+  ::selection { background: var(--color-clay-soft); }
+  :focus-visible { outline: 2px solid var(--color-clay); outline-offset: 2px; }
+  svg.i { flex: none; }
+}
+
+@layer components {
+  /* capas */
+  .sheet { background: var(--color-sheet); border-radius: 32px; }
+  .tile { background: var(--color-tile); border: 1px solid var(--color-line); border-radius: var(--radius-tile); }
+  .tile-sm { background: var(--color-tile); border: 1px solid var(--color-line); border-radius: var(--radius-card); }
+  .well { background: var(--color-well); border-radius: var(--radius-card); }
+  .well-sm { background: var(--color-well); border-radius: var(--radius-ctl); }
+  .tint { background: var(--color-clay-wash); border: 1px solid var(--color-clay-line); border-radius: var(--radius-tile); }
+
+  .eyebrow { font-size: 11.5px; line-height: 1.4; letter-spacing: .07em; text-transform: uppercase; color: var(--color-ink-3); font-weight: 500; }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.045em; font-feature-settings: "zero"; font-weight: 500; }
+  .num .d { font-style: normal; margin: 0 -.13em 0 -.1em; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+
+  /* controles tactiles */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 17px;
+    border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; color: var(--color-ink);
+    background: var(--color-tile); border: 1px solid var(--color-line-2);
+    box-shadow: inset 0 1px 0 #fff, 0 1px 1px rgb(70 50 30 / .06);
+    transition: background .15s, transform .08s, box-shadow .15s;
+  }
+  .btn:hover { background: #fff; }
+  .btn:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgb(70 50 30 / .14); }
+  .btn-sm { height: 34px; padding: 0 14px; font-size: 13px; gap: 6px; }
+  .btn-icon { width: 40px; padding: 0; }
+  .btn-accent {
+    background: var(--color-clay); color: #fff7f1; border-color: var(--color-clay-2);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .22), inset 0 -1px 0 rgb(0 0 0 / .12), 0 1px 1px rgb(120 50 20 / .22);
+  }
+  .btn-accent:hover { background: #bd6040; }
+  .btn-accent:active { box-shadow: inset 0 2px 4px rgb(0 0 0 / .22); }
+  .btn-ghost { background: transparent; border-color: transparent; box-shadow: none; }
+  .btn-ghost:hover { background: rgb(255 255 255 / .55); }
+  .btn[disabled], .btn.is-off { color: var(--color-ink-4); background: var(--color-well); border-color: var(--color-line); box-shadow: none; cursor: not-allowed; transform: none; }
+
+  .field {
+    width: 100%; height: 46px; padding: 0 16px; border-radius: var(--radius-ctl); font: inherit; font-size: 15px; color: var(--color-ink);
+    background: var(--color-tile); border: 1px solid var(--color-line-2);
+    box-shadow: inset 0 1px 2px rgb(70 50 30 / .06);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field::placeholder { color: var(--color-ink-4); }
+  .field:focus { outline: none; border-color: var(--color-clay); box-shadow: 0 0 0 4px rgb(180 88 58 / .14); }
+  .field-pill { border-radius: 999px; }
+
+  .seg { display: inline-flex; padding: 4px; gap: 2px; border-radius: 999px; background: var(--color-well); box-shadow: inset 0 1px 2px rgb(70 50 30 / .09); }
+  .seg > * { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--color-ink-2); white-space: nowrap; background: transparent; border: 0; }
+  .seg > .on { background: var(--color-tile); color: var(--color-ink); box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgb(70 50 30 / .14); }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; color: var(--color-ink-2); background: var(--color-well); white-space: nowrap; }
+  .chip-clay { background: var(--color-clay-soft); color: var(--color-clay-2); }
+  .chip b { font-weight: 600; color: var(--color-ink); }
+  .chip-clay b { color: var(--color-clay-2); }
+
+  .st { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+  .st::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: currentColor; opacity: .85; }
+  .st-ok { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .st-warn { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .st-info { background: var(--color-slate-soft); color: var(--color-slate-ink); }
+  .st-mute { background: var(--color-well); color: var(--color-ink-2); }
+  .st-bad { background: var(--color-wine-soft); color: var(--color-wine); }
+
+  .delta { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 500; height: 22px; padding: 0 8px; border-radius: 99px; }
+  .delta-up { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .delta-warn { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .delta-flat { background: var(--color-well); color: var(--color-ink-2); }
+
+  .kbd { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 7px; font-family: var(--font-mono); font-size: 11.5px; color: var(--color-ink-3); background: var(--color-well); box-shadow: inset 0 -1px 0 var(--color-line-2); }
+
+  .sw { position: relative; width: 44px; height: 26px; border-radius: 99px; background: var(--color-line-2); box-shadow: inset 0 1px 3px rgb(70 50 30 / .18); flex: none; border: 0; padding: 0; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 99px; background: #fff; box-shadow: 0 1px 2px rgb(70 50 30 / .28); transition: transform .2s; }
+  .sw.on { background: var(--color-clay); }
+  .sw.on::after { transform: translateX(18px); }
+
+  .cb { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid var(--color-line-2); background: var(--color-tile); display: inline-grid; place-items: center; flex: none; color: #fff; }
+  .cb.on { background: var(--color-clay); border-color: var(--color-clay-2); }
+
+  .avatar { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 99px; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; }
+  .av-clay { background: var(--color-clay-soft); color: var(--color-clay-2); }
+  .av-sage { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .av-slate { background: var(--color-slate-soft); color: var(--color-slate-ink); }
+  .av-ochre { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .av-sand { background: var(--color-sand); color: var(--color-ink); }
+
+  .ico-disc { display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 99px; background: var(--color-well); color: var(--color-clay); }
+
+  /* navegacion */
+  .nav-i { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--color-ink-2); transition: background .15s, color .15s; }
+  .nav-i:hover { background: rgb(255 255 255 / .5); color: var(--color-ink); }
+  .nav-i.on { background: var(--color-tile); color: var(--color-ink); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px var(--color-line), 0 1px 2px rgb(70 50 30 / .08); }
+  .nav-i.on svg { color: var(--color-clay); }
+
+  /* tabla en filas de grilla */
+  .tr { display: grid; grid-template-columns: var(--cols); column-gap: 12px; align-items: center; padding: 13px 22px; border-top: 1px solid var(--color-line); }
+  .tr:hover { background: rgb(238 232 221 / .35); }
+  .tr.th { border-top: 0; padding-top: 14px; padding-bottom: 12px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-3); font-weight: 500; background: transparent; }
+  .tr.th:hover { background: transparent; }
+  .tr.sel { background: var(--color-clay-wash); }
+
+  /* linea de tiempo de nomina */
+  .tl { display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); }
+  .tl-s { position: relative; padding: 44px 10px 0 0; }
+  .tl-n { position: absolute; top: 0; left: 0; width: 32px; height: 32px; border-radius: 99px; display: grid; place-items: center; background: var(--color-well); border: 1.5px solid var(--color-line-2); color: var(--color-ink-3); font-family: var(--font-mono); font-size: 12px; }
+  .tl-s::before { content: ""; position: absolute; top: 15px; left: 42px; right: 10px; height: 2px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+  .tl-s:last-child::before { display: none; }
+  .tl-s.done::before { background: var(--color-clay); }
+  .tl-s.done .tl-n { background: var(--color-clay); border-color: var(--color-clay-2); color: #fff7f1; box-shadow: inset 0 1px 0 rgb(255 255 255 / .22); }
+  .tl-s.now .tl-n { background: var(--color-tile); border: 2px solid var(--color-clay); color: var(--color-clay); box-shadow: 0 0 0 5px var(--color-clay-soft); }
+  .tl-t { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .tl-m { margin-top: 3px; font-size: 12.5px; color: var(--color-ink-3); line-height: 1.35; }
+  .tl-s.pend .tl-t { color: var(--color-ink-2); font-weight: 500; }
+  .tl-v { grid-template-columns: 1fr; }
+  .tl-v .tl-s { padding: 4px 0 24px 50px; min-height: 48px; }
+  .tl-v .tl-s:last-child { padding-bottom: 0; }
+  .tl-v .tl-s::before { top: 38px; bottom: 6px; left: 15px; right: auto; width: 2px; height: auto; background: repeating-linear-gradient(180deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+  .tl-v .tl-s.done::before { background: var(--color-clay); }
+  @media (max-width: 719px) {
+    .tl { grid-template-columns: 1fr; }
+    .tl-s { padding: 4px 0 24px 50px; min-height: 48px; }
+    .tl-s:last-child { padding-bottom: 0; }
+    .tl-s::before { top: 38px; bottom: 6px; left: 15px; right: auto; width: 2px; height: auto; background: repeating-linear-gradient(180deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+    .tl-s.done::before { background: var(--color-clay); }
+  }
+
+  /* indicador de staging del portal: una sola linea corta */
+  .stg { display: flex; align-items: center; justify-content: center; gap: 8px; height: 30px; padding: 0 16px; background: #efe3c3; border-bottom: 1px solid #e0cf9f; color: var(--color-ochre-ink); font-size: 12.5px; line-height: 1; white-space: nowrap; }
+  .stg::before { content: ""; width: 6px; height: 6px; border-radius: 9px; background: #c9972f; }
+}
+
+
+.cols-liq { --cols: minmax(0,1fr) auto; }
+@media (min-width: 640px) { .cols-liq { --cols: minmax(0,1fr) 120px 130px; } }
+
+</style>
+</head>
+<body class="">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="10" fill="#B4583A"/><circle cx="16" cy="12.6" r="6.3" fill="#FBEEE5"/><rect x="4.5" y="15.8" width="23" height="3.8" rx="1.9" fill="#B4583A"/><rect x="8.5" y="20.8" width="19" height="3" rx="1.5" fill="#FBEEE5" fill-opacity=".74"/><rect x="4.5" y="25.2" width="12" height="2.2" rx="1.1" fill="#FBEEE5" fill-opacity=".42"/></symbol><symbol id="i-l-alt-arrow-right" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7"/></symbol><symbol id="i-l-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18.75 9.71v-.705C18.75 5.136 15.726 2 12 2S5.25 5.136 5.25 9.005v.705a4.4 4.4 0 0 1-.692 2.375L3.45 13.81c-1.011 1.575-.239 3.716 1.52 4.214a25.8 25.8 0 0 0 14.06 0c1.759-.498 2.531-2.639 1.52-4.213l-1.108-1.725a4.4 4.4 0 0 1-.693-2.375Z"/><path stroke-linecap="round" d="M7.5 19c.655 1.748 2.422 3 4.5 3s3.845-1.252 4.5-3"/></g></symbol><symbol id="i-l-document-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10c0-3.771 0-5.657 1.172-6.828S7.229 2 11 2h2c3.771 0 5.657 0 6.828 1.172S21 6.229 21 10v4c0 3.771 0 5.657-1.172 6.828S16.771 22 13 22h-2c-3.771 0-5.657 0-6.828-1.172S3 17.771 3 14z"/><path stroke-linecap="round" d="M8 12h8M8 8h8m-8 8h5"/></g></symbol><symbol id="i-l-download-minimalistic" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15c0 2.828 0 4.243.879 5.121C4.757 21 6.172 21 9 21h6c2.828 0 4.243 0 5.121-.879C21 19.243 21 17.828 21 15M12 3v13m0 0l4-4.375M12 16l-4-4.375"/></symbol><symbol id="i-l-folder" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M18 10h-5"/><path d="M2 6.95c0-.883 0-1.324.07-1.692A4 4 0 0 1 5.257 2.07C5.626 2 6.068 2 6.95 2c.386 0 .58 0 .766.017a4 4 0 0 1 2.18.904c.144.119.28.255.554.529L11 4c.816.816 1.224 1.224 1.712 1.495a4 4 0 0 0 .848.352C14.098 6 14.675 6 15.828 6h.374c2.632 0 3.949 0 4.804.77q.119.105.224.224c.77.855.77 2.172.77 4.804V14c0 3.771 0 5.657-1.172 6.828S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.172S2 17.771 2 14z"/></g></symbol><symbol id="i-l-home-2" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12.204c0-2.289 0-3.433.52-4.381c.518-.949 1.467-1.537 3.364-2.715l2-1.241C9.889 2.622 10.892 2 12 2s2.11.622 4.116 1.867l2 1.241c1.897 1.178 2.846 1.766 3.365 2.715S22 9.915 22 12.203v1.522c0 3.9 0 5.851-1.172 7.063S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.212S2 17.626 2 13.725z"/><path stroke-linecap="round" d="M12 15v3"/></g></symbol><symbol id="i-l-sun-2" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4 12H2m20 0h-2m-.222-7.777l-2.222 2.031M4.222 4.223l2.222 2.031m0 11.302l-2.222 2.222m15.556-.001l-2.222-2.222"/></g></symbol><symbol id="i-l-user-rounded" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="4"/><ellipse cx="12" cy="17" rx="7" ry="4"/></g></symbol></defs></svg>
+
+<div class="min-h-dvh flex flex-col">
+  
+<div class="stg" role="status">
+  <span class="stg-tag">Entorno de pruebas</span>
+</div>
+  <header class="flex items-center gap-4 h-[68px] px-4 lg:px-8 shrink-0">
+    <a href="v1-inicio.html" class="flex items-center gap-3"><svg class="size-8 shrink-0" aria-hidden="true"><use href="#logo"/></svg><span class="text-[18px] font-semibold tracking-tight">Bruma</span><span class="chip !h-[22px] !px-2 text-micro">Portal</span></a>
+    <nav class="seg mx-auto max-md:hidden" aria-label="Principal"><a href="v1-inicio.html" class="">Inicio</a><a href="v2-liquidacion.html" class="on">Liquidaciones</a><a href="#" class="">Vacaciones</a><a href="#" class="">Documentos</a><a href="#" class="">Perfil</a></nav>
+    <div class="flex items-center gap-2 ml-auto md:ml-0">
+      <button class="btn btn-icon btn-ghost relative" aria-label="Notificaciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-bell"/></svg><span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-clay ring-2 ring-canvas"></span></button>
+      <button class="flex items-center gap-2.5 h-10 pl-1 sm:pr-3 rounded-full hover:bg-white/55 transition" aria-label="Mi cuenta">
+        <span class="avatar av-clay !size-8">CV</span>
+        <span class="hidden lg:block text-left leading-tight"><span class="block text-small font-medium">Camila Valdés</span><span class="block text-micro text-ink-3">Producto</span></span>
+      </button>
+    </div>
+  </header>
+  <main class="sheet flex-1 mx-2 mb-2 lg:mx-3 lg:mb-3 px-5 pt-7 pb-28 md:pb-10 lg:px-10 lg:pt-9">
+    <div class="max-w-[1120px] mx-auto">
+<div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 mb-7">
+  <div>
+    <nav class="flex items-center gap-1.5 text-small text-ink-3" aria-label="Ruta"><a href="v1-inicio.html" class="hover:text-ink">Inicio</a><svg class="i size-3.5" aria-hidden="true"><use href="#i-l-alt-arrow-right"/></svg><a href="#" class="hover:text-ink">Liquidaciones</a><svg class="i size-3.5" aria-hidden="true"><use href="#i-l-alt-arrow-right"/></svg><span class="text-ink">Octubre 2026</span></nav>
+    <h1 class="text-h1 sm:text-[34px] font-semibold tracking-tight mt-3">Liquidación de sueldo</h1>
+    <p class="text-body text-ink-2 mt-1.5">Octubre 2026 · pagada el 30 de octubre</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2.5">
+    <div class="seg" role="tablist" aria-label="Mes"><button>Jul</button><button>Ago</button><button>Sep</button><button class="on">Oct</button></div>
+    <button class="btn btn-accent"><svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-download-minimalistic"/></svg> Descargar PDF</button>
+  </div>
+</div>
+
+<div class="grid grid-cols-12 gap-4 items-start">
+  <section class="tile col-span-12 lg:col-span-8 overflow-hidden">
+    <div class="p-6 lg:p-7 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5">
+      <div><div class="text-caption text-ink-3">Colaboradora</div><div class="text-[14.5px] mt-0.5">Camila Valdés Rojas</div></div>
+      <div><div class="text-caption text-ink-3">RUT</div><div class="mono text-[14px] mt-0.5">17.254.883-0</div></div>
+      <div><div class="text-caption text-ink-3">Cargo</div><div class="text-[14.5px] mt-0.5">Analista de Producto</div></div>
+      <div><div class="text-caption text-ink-3">Centro de costo</div><div class="text-[14.5px] mt-0.5">Producto · CC-210</div></div>
+      <div><div class="text-caption text-ink-3">Días trabajados</div><div class="mono text-[14px] mt-0.5">30 de 30</div></div>
+    </div>
+
+    <div class="tr th cols-liq !border-t !border-line"><div>Haberes</div><div class="max-sm:hidden">Tipo</div><div class="text-right">Monto</div></div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Sueldo base</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">$1.650.000</div>
+  </div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Gratificación legal</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">$213.354</div>
+  </div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Horas extra</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">$54.200</div>
+  </div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Asignación de colación</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">$62.000</div>
+  </div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Asignación de movilización</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">$48.000</div>
+  </div>
+    <div class="tr cols-liq !py-3 bg-well/60"><div class="text-small font-medium">Total haberes</div><div class="max-sm:hidden"></div><div class="mono text-[14.5px] font-medium text-right">$2.027.554</div></div>
+
+    <div class="tr th cols-liq !border-t !border-line"><div>Descuentos legales</div><div class="max-sm:hidden">Tasa</div><div class="text-right">Monto</div></div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">AFP</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">−$213.807</div>
+  </div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Salud · Fonasa</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">−$134.229</div>
+  </div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Seguro de cesantía</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">−$11.505</div>
+  </div>
+    
+  <div class="tr cols-liq !py-3">
+    <div class="min-w-0"><div class="text-[14.5px]">Impuesto único de segunda categoría</div></div>
+    <div class="max-sm:hidden"></div>
+    <div class="mono text-[14px] text-right">−$24.791</div>
+  </div>
+    <div class="tr cols-liq !py-3 bg-well/60"><div class="text-small font-medium">Total descuentos</div><div class="max-sm:hidden"></div><div class="mono text-[14.5px] font-medium text-right">−$384.332</div></div>
+
+    <div class="m-4 lg:m-5 rounded-[22px] bg-clay-wash border border-clay-line px-6 py-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+      <div><div class="eyebrow !text-clay-2">Sueldo líquido</div></div>
+      <div class="num text-[38px] sm:text-[44px] leading-none">$1<i class="d">.</i>643<i class="d">.</i>222</div>
+    </div>
+  </section>
+
+  <aside class="col-span-12 lg:col-span-4 flex flex-col gap-4">
+    <section class="tile p-6">
+      <div class="flex items-center justify-between"><span class="eyebrow">Sueldo líquido</span><span class="st st-ok">Pagada</span></div>
+      <div class="num text-[40px] leading-none mt-3">$1<i class="d">.</i>643<i class="d">.</i>222</div>
+      <div class="flex gap-1 mt-5" role="img" aria-label="Sueldo líquido 81 %, descuentos 19 %">
+        <i class="h-3 rounded-full bg-clay" style="flex:1643222"></i><i class="h-3 rounded-full" style="flex:384332;background:#a9bcc8"></i>
+      </div>
+      <ul class="mt-4 flex flex-col gap-2.5 text-small">
+        <li class="flex items-center gap-2.5"><i class="size-2.5 rounded-[4px] bg-clay"></i><span class="flex-1">Sueldo líquido</span><span class="mono text-ink-2">81 %</span></li>
+        <li class="flex items-center gap-2.5"><i class="size-2.5 rounded-[4px]" style="background:#a9bcc8"></i><span class="flex-1">Descuentos legales</span><span class="mono text-ink-2">19 %</span></li>
+      </ul>
+    </section>
+
+    <section class="tile p-6">
+      <h2 class="text-[17px] font-semibold">Base de cálculo</h2>
+      <dl class="mt-4 flex flex-col text-small">
+        <div class="flex justify-between py-2.5"><dt class="text-ink-3">Renta imponible</dt><dd class="mono">$1.917.554</dd></div>
+        <div class="flex justify-between py-2.5 border-t border-line"><dt class="text-ink-3">Renta tributable</dt><dd class="mono">$1.558.013</dd></div>
+        <div class="flex justify-between py-2.5 border-t border-line"><dt class="text-ink-3">Declarada en Previred</dt><dd class="mono">10 nov 2026</dd></div>
+      </dl>
+    </section>
+
+  </aside>
+</div></div>
+  </main>
+  <nav class="md:hidden fixed bottom-3 inset-x-3 z-10 flex justify-between p-1.5 rounded-full bg-ink/95 text-[#e9e2d6]" aria-label="Principal">
+    <a href="v1-inicio.html" class="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full text-[10.5px] "><svg class="i size-5" aria-hidden="true"><use href="#i-l-home-2"/></svg>Inicio</a><a href="v2-liquidacion.html" class="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full text-[10.5px] bg-white/14 text-white"><svg class="i size-5" aria-hidden="true"><use href="#i-l-document-text"/></svg>Liquidaciones</a><a href="#" class="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full text-[10.5px] "><svg class="i size-5" aria-hidden="true"><use href="#i-l-sun-2"/></svg>Vacaciones</a><a href="#" class="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full text-[10.5px] "><svg class="i size-5" aria-hidden="true"><use href="#i-l-folder"/></svg>Documentos</a><a href="#" class="flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-full text-[10.5px] "><svg class="i size-5" aria-hidden="true"><use href="#i-l-user-rounded"/></svg>Perfil</a>
+  </nav>
+</div>
+</body>
+</html>

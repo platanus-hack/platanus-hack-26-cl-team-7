@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inicia sesión · Bruma Consola</title>
+<meta name="description" content="Acceso a la consola de administración de remuneraciones.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%2210%22%20fill%3D%22%23B4583A%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2212.6%22%20r%3D%226.3%22%20fill%3D%22%23FBEEE5%22%2F%3E%3Crect%20x%3D%224.5%22%20y%3D%2215.8%22%20width%3D%2223%22%20height%3D%223.8%22%20rx%3D%221.9%22%20fill%3D%22%23B4583A%22%2F%3E%3Crect%20x%3D%228.5%22%20y%3D%2220.8%22%20width%3D%2219%22%20height%3D%223%22%20rx%3D%221.5%22%20fill%3D%22%23FBEEE5%22%20fill-opacity%3D%22.74%22%2F%3E%3Crect%20x%3D%224.5%22%20y%3D%2225.2%22%20width%3D%2212%22%20height%3D%222.2%22%20rx%3D%221.1%22%20fill%3D%22%23FBEEE5%22%20fill-opacity%3D%22.42%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300..800&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<style type="text/tailwindcss">
+@theme static {
+  --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* capas: canvas > sheet > tile > well */
+  --color-canvas: #ebe5da;
+  --color-sheet: #f6f2ea;
+  --color-tile: #fdfbf7;
+  --color-well: #eee8dd;
+  --color-line: #e2dacd;
+  --color-line-2: #d2c8b8;
+
+  --color-ink: #27211c;
+  --color-ink-2: #5a5148;
+  --color-ink-3: #7a7064;
+  --color-ink-4: #aea496;
+
+  /* acento unico: arcilla */
+  --color-clay: #b4583a;
+  --color-clay-2: #964329;
+  --color-clay-soft: #f1dcd0;
+  --color-clay-wash: #f8ebe3;
+  --color-clay-line: #e8cbbb;
+
+  /* datos: calmos, sin saturar */
+  --color-sage: #5f806a;
+  --color-sage-soft: #dde9df;
+  --color-sage-ink: #3a5842;
+  --color-ochre: #a67a2c;
+  --color-ochre-soft: #f1e6c9;
+  --color-ochre-ink: #6c4d11;
+  --color-slate: #5b7c90;
+  --color-slate-soft: #dbe6ec;
+  --color-slate-ink: #355669;
+  --color-wine: #9c3d4a;
+  --color-wine-soft: #f0d9db;
+  --color-sand: #d8ccb9;
+
+  --radius-tile: 28px;
+  --radius-card: 20px;
+  --radius-ctl: 14px;
+  --radius-chip: 10px;
+
+  --text-micro: 11.5px;
+  --text-micro--line-height: 1.4;
+  --text-caption: 12.5px;
+  --text-caption--line-height: 1.45;
+  --text-small: 13.5px;
+  --text-small--line-height: 1.5;
+  --text-body: 15px;
+  --text-body--line-height: 1.55;
+  --text-lead: 17px;
+  --text-lead--line-height: 1.5;
+  --text-title: 22px;
+  --text-title--line-height: 1.25;
+  --text-h1: 30px;
+  --text-h1--line-height: 1.12;
+  --text-display: 44px;
+  --text-display--line-height: 1.05;
+}
+
+@layer base {
+  html { background: var(--color-canvas); }
+  body {
+    margin: 0; font-family: var(--font-sans); font-size: 15px; line-height: 1.55;
+    color: var(--color-ink); background: var(--color-canvas);
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  button { cursor: pointer; }
+  ::selection { background: var(--color-clay-soft); }
+  :focus-visible { outline: 2px solid var(--color-clay); outline-offset: 2px; }
+  svg.i { flex: none; }
+}
+
+@layer components {
+  /* capas */
+  .sheet { background: var(--color-sheet); border-radius: 32px; }
+  .tile { background: var(--color-tile); border: 1px solid var(--color-line); border-radius: var(--radius-tile); }
+  .tile-sm { background: var(--color-tile); border: 1px solid var(--color-line); border-radius: var(--radius-card); }
+  .well { background: var(--color-well); border-radius: var(--radius-card); }
+  .well-sm { background: var(--color-well); border-radius: var(--radius-ctl); }
+  .tint { background: var(--color-clay-wash); border: 1px solid var(--color-clay-line); border-radius: var(--radius-tile); }
+
+  .eyebrow { font-size: 11.5px; line-height: 1.4; letter-spacing: .07em; text-transform: uppercase; color: var(--color-ink-3); font-weight: 500; }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.045em; font-feature-settings: "zero"; font-weight: 500; }
+  .num .d { font-style: normal; margin: 0 -.13em 0 -.1em; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+
+  /* controles tactiles */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 17px;
+    border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; color: var(--color-ink);
+    background: var(--color-tile); border: 1px solid var(--color-line-2);
+    box-shadow: inset 0 1px 0 #fff, 0 1px 1px rgb(70 50 30 / .06);
+    transition: background .15s, transform .08s, box-shadow .15s;
+  }
+  .btn:hover { background: #fff; }
+  .btn:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgb(70 50 30 / .14); }
+  .btn-sm { height: 34px; padding: 0 14px; font-size: 13px; gap: 6px; }
+  .btn-icon { width: 40px; padding: 0; }
+  .btn-accent {
+    background: var(--color-clay); color: #fff7f1; border-color: var(--color-clay-2);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .22), inset 0 -1px 0 rgb(0 0 0 / .12), 0 1px 1px rgb(120 50 20 / .22);
+  }
+  .btn-accent:hover { background: #bd6040; }
+  .btn-accent:active { box-shadow: inset 0 2px 4px rgb(0 0 0 / .22); }
+  .btn-ghost { background: transparent; border-color: transparent; box-shadow: none; }
+  .btn-ghost:hover { background: rgb(255 255 255 / .55); }
+  .btn[disabled], .btn.is-off { color: var(--color-ink-4); background: var(--color-well); border-color: var(--color-line); box-shadow: none; cursor: not-allowed; transform: none; }
+
+  .field {
+    width: 100%; height: 46px; padding: 0 16px; border-radius: var(--radius-ctl); font: inherit; font-size: 15px; color: var(--color-ink);
+    background: var(--color-tile); border: 1px solid var(--color-line-2);
+    box-shadow: inset 0 1px 2px rgb(70 50 30 / .06);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field::placeholder { color: var(--color-ink-4); }
+  .field:focus { outline: none; border-color: var(--color-clay); box-shadow: 0 0 0 4px rgb(180 88 58 / .14); }
+  .field-pill { border-radius: 999px; }
+
+  .seg { display: inline-flex; padding: 4px; gap: 2px; border-radius: 999px; background: var(--color-well); box-shadow: inset 0 1px 2px rgb(70 50 30 / .09); }
+  .seg > * { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--color-ink-2); white-space: nowrap; background: transparent; border: 0; }
+  .seg > .on { background: var(--color-tile); color: var(--color-ink); box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgb(70 50 30 / .14); }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; color: var(--color-ink-2); background: var(--color-well); white-space: nowrap; }
+  .chip-clay { background: var(--color-clay-soft); color: var(--color-clay-2); }
+  .chip b { font-weight: 600; color: var(--color-ink); }
+  .chip-clay b { color: var(--color-clay-2); }
+
+  .st { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+  .st::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: currentColor; opacity: .85; }
+  .st-ok { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .st-warn { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .st-info { background: var(--color-slate-soft); color: var(--color-slate-ink); }
+  .st-mute { background: var(--color-well); color: var(--color-ink-2); }
+  .st-bad { background: var(--color-wine-soft); color: var(--color-wine); }
+
+  .delta { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 500; height: 22px; padding: 0 8px; border-radius: 99px; }
+  .delta-up { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .delta-warn { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .delta-flat { background: var(--color-well); color: var(--color-ink-2); }
+
+  .kbd { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 7px; font-family: var(--font-mono); font-size: 11.5px; color: var(--color-ink-3); background: var(--color-well); box-shadow: inset 0 -1px 0 var(--color-line-2); }
+
+  .sw { position: relative; width: 44px; height: 26px; border-radius: 99px; background: var(--color-line-2); box-shadow: inset 0 1px 3px rgb(70 50 30 / .18); flex: none; border: 0; padding: 0; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 99px; background: #fff; box-shadow: 0 1px 2px rgb(70 50 30 / .28); transition: transform .2s; }
+  .sw.on { background: var(--color-clay); }
+  .sw.on::after { transform: translateX(18px); }
+
+  .cb { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid var(--color-line-2); background: var(--color-tile); display: inline-grid; place-items: center; flex: none; color: #fff; }
+  .cb.on { background: var(--color-clay); border-color: var(--color-clay-2); }
+
+  .avatar { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 99px; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; }
+  .av-clay { background: var(--color-clay-soft); color: var(--color-clay-2); }
+  .av-sage { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .av-slate { background: var(--color-slate-soft); color: var(--color-slate-ink); }
+  .av-ochre { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .av-sand { background: var(--color-sand); color: var(--color-ink); }
+
+  .ico-disc { display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 99px; background: var(--color-well); color: var(--color-clay); }
+
+  /* navegacion */
+  .nav-i { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--color-ink-2); transition: background .15s, color .15s; }
+  .nav-i:hover { background: rgb(255 255 255 / .5); color: var(--color-ink); }
+  .nav-i.on { background: var(--color-tile); color: var(--color-ink); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px var(--color-line), 0 1px 2px rgb(70 50 30 / .08); }
+  .nav-i.on svg { color: var(--color-clay); }
+
+  /* tabla en filas de grilla */
+  .tr { display: grid; grid-template-columns: var(--cols); column-gap: 12px; align-items: center; padding: 13px 22px; border-top: 1px solid var(--color-line); }
+  .tr:hover { background: rgb(238 232 221 / .35); }
+  .tr.th { border-top: 0; padding-top: 14px; padding-bottom: 12px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-3); font-weight: 500; background: transparent; }
+  .tr.th:hover { background: transparent; }
+  .tr.sel { background: var(--color-clay-wash); }
+
+  /* linea de tiempo de nomina */
+  .tl { display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); }
+  .tl-s { position: relative; padding: 44px 10px 0 0; }
+  .tl-n { position: absolute; top: 0; left: 0; width: 32px; height: 32px; border-radius: 99px; display: grid; place-items: center; background: var(--color-well); border: 1.5px solid var(--color-line-2); color: var(--color-ink-3); font-family: var(--font-mono); font-size: 12px; }
+  .tl-s::before { content: ""; position: absolute; top: 15px; left: 42px; right: 10px; height: 2px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+  .tl-s:last-child::before { display: none; }
+  .tl-s.done::before { background: var(--color-clay); }
+  .tl-s.done .tl-n { background: var(--color-clay); border-color: var(--color-clay-2); color: #fff7f1; box-shadow: inset 0 1px 0 rgb(255 255 255 / .22); }
+  .tl-s.now .tl-n { background: var(--color-tile); border: 2px solid var(--color-clay); color: var(--color-clay); box-shadow: 0 0 0 5px var(--color-clay-soft); }
+  .tl-t { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .tl-m { margin-top: 3px; font-size: 12.5px; color: var(--color-ink-3); line-height: 1.35; }
+  .tl-s.pend .tl-t { color: var(--color-ink-2); font-weight: 500; }
+  .tl-v { grid-template-columns: 1fr; }
+  .tl-v .tl-s { padding: 4px 0 24px 50px; min-height: 48px; }
+  .tl-v .tl-s:last-child { padding-bottom: 0; }
+  .tl-v .tl-s::before { top: 38px; bottom: 6px; left: 15px; right: auto; width: 2px; height: auto; background: repeating-linear-gradient(180deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+  .tl-v .tl-s.done::before { background: var(--color-clay); }
+  @media (max-width: 719px) {
+    .tl { grid-template-columns: 1fr; }
+    .tl-s { padding: 4px 0 24px 50px; min-height: 48px; }
+    .tl-s:last-child { padding-bottom: 0; }
+    .tl-s::before { top: 38px; bottom: 6px; left: 15px; right: auto; width: 2px; height: auto; background: repeating-linear-gradient(180deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+    .tl-s.done::before { background: var(--color-clay); }
+  }
+
+  /* indicador de staging del portal: una sola linea corta */
+  .stg { display: flex; align-items: center; justify-content: center; gap: 8px; height: 30px; padding: 0 16px; background: #efe3c3; border-bottom: 1px solid #e0cf9f; color: var(--color-ochre-ink); font-size: 12.5px; line-height: 1; white-space: nowrap; }
+  .stg::before { content: ""; width: 6px; height: 6px; border-radius: 9px; background: #c9972f; }
+}
+
+
+</style>
+</head>
+<body class="">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="10" fill="#B4583A"/><circle cx="16" cy="12.6" r="6.3" fill="#FBEEE5"/><rect x="4.5" y="15.8" width="23" height="3.8" rx="1.9" fill="#B4583A"/><rect x="8.5" y="20.8" width="19" height="3" rx="1.5" fill="#FBEEE5" fill-opacity=".74"/><rect x="4.5" y="25.2" width="12" height="2.2" rx="1.1" fill="#FBEEE5" fill-opacity=".42"/></symbol><symbol id="i-d-shield-check" viewBox="0 0 24 24"><path fill="currentColor" d="M3.378 5.082C3 5.62 3 7.22 3 10.417v1.574c0 5.638 4.239 8.375 6.899 9.536c.721.315 1.082.473 2.101.473c1.02 0 1.38-.158 2.101-.473C16.761 20.365 21 17.63 21 11.991v-1.574c0-3.198 0-4.797-.378-5.335c-.377-.537-1.88-1.052-4.887-2.081l-.573-.196C13.595 2.268 12.812 2 12 2s-1.595.268-3.162.805L8.265 3c-3.007 1.03-4.51 1.545-4.887 2.082" opacity=".5"/><path fill="currentColor" d="M15.06 10.5a.75.75 0 0 0-1.12-1l-3.011 3.374l-.87-.974a.75.75 0 0 0-1.118 1l1.428 1.6a.75.75 0 0 0 1.119 0z"/></symbol><symbol id="i-l-arrow-right" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 12h16m0 0l-6-6m6 6l-6 6"/></symbol><symbol id="i-l-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.275 15.296C2.425 14.192 2 13.639 2 12c0-1.64.425-2.191 1.275-3.296C4.972 6.5 7.818 4 12 4s7.028 2.5 8.725 4.704C21.575 9.81 22 10.361 22 12c0 1.64-.425 2.191-1.275 3.296C19.028 17.5 16.182 20 12 20s-7.028-2.5-8.725-4.704Z"/><path d="M15 12a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z"/></g></symbol><symbol id="i-l-key" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linejoin="round" d="M15.68 14.587c3.49 0 6.32-2.818 6.32-6.294S19.17 2 15.68 2S9.363 4.818 9.363 8.293c0 1.61.734 2.781.734 2.781l-7.642 7.61c-.343.342-.823 1.23 0 2.05l.882.878c.343.293 1.205.703 1.91 0l1.03-1.024c1.028 1.024 2.204.439 2.645-.147c.734-1.024-.147-2.049-.147-2.049l.294-.293c1.41 1.406 2.645.586 3.086 0c.735-1.024 0-2.049 0-2.049c-.294-.585-.882-.585-.147-1.317l.882-.878c.705.585 2.155.732 2.792.732Z"/><path d="M17.885 8.294a2.2 2.2 0 0 1-2.204 2.195a2.2 2.2 0 0 1-2.204-2.195a2.2 2.2 0 0 1 2.204-2.196a2.2 2.2 0 0 1 2.204 2.196Z"/></g></symbol></defs></svg>
+
+<div class="min-h-dvh grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] p-0 lg:p-3 gap-0 lg:gap-3">
+  <!-- Formulario -->
+  <section class="flex flex-col px-6 py-6 sm:px-10 lg:px-14 lg:py-8 min-h-dvh lg:min-h-0">
+    <a href="#" class="flex items-center gap-3 h-10">
+      <svg class="size-9 shrink-0" aria-hidden="true"><use href="#logo"/></svg>
+      <span class="text-[19px] font-semibold tracking-tight">Bruma</span>
+      <span class="chip !h-[22px] !px-2 text-micro">Consola</span>
+    </a>
+
+    <div class="flex-1 flex items-center">
+      <form class="w-full max-w-[400px] mx-auto py-10" onsubmit="return false">
+        <div class="eyebrow">Consola de administración</div>
+        <h1 class="text-[32px] leading-[1.1] font-semibold tracking-tight mt-2">Inicia sesión</h1>
+
+        <div class="mt-8 flex flex-col gap-4">
+          <label class="block">
+            <span class="block text-small font-medium mb-2">Correo electrónico</span>
+            <input class="field" type="email" placeholder="nombre@empresa.cl" autocomplete="username">
+          </label>
+          <label class="block">
+            <span class="flex items-center justify-between mb-2"><span class="text-small font-medium">Contraseña</span><a href="#" class="text-small text-clay-2 font-medium hover:underline">¿La olvidaste?</a></span>
+            <span class="relative block">
+              <input class="field !pr-12" type="password" placeholder="Tu contraseña" autocomplete="current-password">
+              <button type="button" class="absolute right-1.5 top-1/2 -translate-y-1/2 size-9 grid place-items-center rounded-full text-ink-3 hover:bg-well" aria-label="Mostrar contraseña"><svg class="i size-5" aria-hidden="true"><use href="#i-l-eye"/></svg></button>
+            </span>
+          </label>
+        </div>
+
+        <label class="mt-5 flex items-center gap-3 cursor-pointer select-none">
+          <button type="button" class="sw on" role="switch" aria-checked="true" aria-label="Mantener sesión"></button>
+          <span class="text-small"><span class="font-medium">Mantener sesión</span></span>
+        </label>
+
+        <button class="btn btn-accent w-full !h-12 !text-[15px] mt-6" type="submit">Iniciar sesión <svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-arrow-right"/></svg></button>
+
+        <div class="flex items-center gap-4 my-5 text-caption text-ink-3"><span class="h-px flex-1 bg-line-2/70"></span>o<span class="h-px flex-1 bg-line-2/70"></span></div>
+
+        <button class="btn is-off w-full !h-12 !text-[15px] justify-between" type="button" disabled aria-disabled="true">
+          <span class="flex items-center gap-2.5"><svg class="i size-5" aria-hidden="true"><use href="#i-l-key"/></svg><span><span class="max-sm:hidden">Continuar con </span>SSO corporativo</span></span>
+          <span class="chip !h-6 text-micro">Plan Empresa</span>
+        </button>
+
+      </form>
+    </div>
+
+    <footer class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-caption text-ink-3">
+      <span>© 2026 Bruma Remuneraciones SpA</span>
+    </footer>
+  </section>
+
+  <!-- Panel de capas -->
+  <aside class="sheet relative overflow-hidden hidden lg:block" aria-hidden="true">
+    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 760 840" preserveAspectRatio="xMaxYMin slice">
+      <path d="M402 240a158 158 0 0 1 316 0z" fill="#f3e2d8"/>
+      <path d="M460 240a100 100 0 0 1 200 0z" fill="#e9c6b3"/>
+      <rect x="150" y="258" width="640" height="52" rx="26" fill="#ede6da"/>
+      <rect x="-20" y="330" width="560" height="46" rx="23" fill="#e6ddcf"/>
+      <rect x="250" y="396" width="520" height="40" rx="20" fill="#e0d6c5" fill-opacity=".75"/>
+    </svg>
+
+    <div class="relative h-full p-12 flex flex-col gap-4">
+      <div class="max-w-[330px]"><div class="eyebrow">Bruma Remuneraciones</div><p class="text-[26px] leading-[1.2] font-semibold tracking-tight mt-3">Cálculo, revisión, pago y Previred en un solo lugar.</p></div>
+      <div class="flex-1"></div>
+      <div class="tile-sm p-5 w-[360px] self-end -mb-1">
+        <div class="flex items-center justify-between"><span class="eyebrow">Liquidaciones de octubre</span><span class="st st-ok">Emitidas</span></div>
+        <div class="num text-[34px] mt-2.5">139<span class="text-ink-3 text-[20px]"> / 139</span></div>
+        <div class="mt-3 flex gap-1.5"><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i><i class="h-1.5 flex-1 rounded-full bg-clay"></i></div>
+      </div>
+      <div class="tile-sm p-5 w-[360px] self-start ml-6">
+        <div class="flex items-center gap-3">
+          <span class="ico-disc !size-10"><svg class="i size-5" aria-hidden="true"><use href="#i-d-shield-check"/></svg></span>
+          <div><div class="text-small font-medium">Previred declarado</div></div>
+        </div>
+      </div>
+      <div class="tile-sm p-5 w-[360px] self-end">
+        <div class="flex items-center justify-between"><span class="eyebrow">Próximo pago</span><span class="mono text-caption text-ink-3">en 8 días</span></div>
+        <div class="flex items-baseline gap-2.5 mt-2"><span class="num text-[34px] leading-none">30</span><span class="text-[24px] leading-none font-semibold tracking-tight">nov 2026</span></div>
+      </div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

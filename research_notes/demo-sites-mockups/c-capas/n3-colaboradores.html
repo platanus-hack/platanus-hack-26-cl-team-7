@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colaboradores · Bruma Consola</title>
+<meta name="description" content="Listado de colaboradores con filtros por centro de costo, contrato y estado.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%2210%22%20fill%3D%22%23B4583A%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2212.6%22%20r%3D%226.3%22%20fill%3D%22%23FBEEE5%22%2F%3E%3Crect%20x%3D%224.5%22%20y%3D%2215.8%22%20width%3D%2223%22%20height%3D%223.8%22%20rx%3D%221.9%22%20fill%3D%22%23B4583A%22%2F%3E%3Crect%20x%3D%228.5%22%20y%3D%2220.8%22%20width%3D%2219%22%20height%3D%223%22%20rx%3D%221.5%22%20fill%3D%22%23FBEEE5%22%20fill-opacity%3D%22.74%22%2F%3E%3Crect%20x%3D%224.5%22%20y%3D%2225.2%22%20width%3D%2212%22%20height%3D%222.2%22%20rx%3D%221.1%22%20fill%3D%22%23FBEEE5%22%20fill-opacity%3D%22.42%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300..800&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<style type="text/tailwindcss">
+@theme static {
+  --font-sans: "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* capas: canvas > sheet > tile > well */
+  --color-canvas: #ebe5da;
+  --color-sheet: #f6f2ea;
+  --color-tile: #fdfbf7;
+  --color-well: #eee8dd;
+  --color-line: #e2dacd;
+  --color-line-2: #d2c8b8;
+
+  --color-ink: #27211c;
+  --color-ink-2: #5a5148;
+  --color-ink-3: #7a7064;
+  --color-ink-4: #aea496;
+
+  /* acento unico: arcilla */
+  --color-clay: #b4583a;
+  --color-clay-2: #964329;
+  --color-clay-soft: #f1dcd0;
+  --color-clay-wash: #f8ebe3;
+  --color-clay-line: #e8cbbb;
+
+  /* datos: calmos, sin saturar */
+  --color-sage: #5f806a;
+  --color-sage-soft: #dde9df;
+  --color-sage-ink: #3a5842;
+  --color-ochre: #a67a2c;
+  --color-ochre-soft: #f1e6c9;
+  --color-ochre-ink: #6c4d11;
+  --color-slate: #5b7c90;
+  --color-slate-soft: #dbe6ec;
+  --color-slate-ink: #355669;
+  --color-wine: #9c3d4a;
+  --color-wine-soft: #f0d9db;
+  --color-sand: #d8ccb9;
+
+  --radius-tile: 28px;
+  --radius-card: 20px;
+  --radius-ctl: 14px;
+  --radius-chip: 10px;
+
+  --text-micro: 11.5px;
+  --text-micro--line-height: 1.4;
+  --text-caption: 12.5px;
+  --text-caption--line-height: 1.45;
+  --text-small: 13.5px;
+  --text-small--line-height: 1.5;
+  --text-body: 15px;
+  --text-body--line-height: 1.55;
+  --text-lead: 17px;
+  --text-lead--line-height: 1.5;
+  --text-title: 22px;
+  --text-title--line-height: 1.25;
+  --text-h1: 30px;
+  --text-h1--line-height: 1.12;
+  --text-display: 44px;
+  --text-display--line-height: 1.05;
+}
+
+@layer base {
+  html { background: var(--color-canvas); }
+  body {
+    margin: 0; font-family: var(--font-sans); font-size: 15px; line-height: 1.55;
+    color: var(--color-ink); background: var(--color-canvas);
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  button { cursor: pointer; }
+  ::selection { background: var(--color-clay-soft); }
+  :focus-visible { outline: 2px solid var(--color-clay); outline-offset: 2px; }
+  svg.i { flex: none; }
+}
+
+@layer components {
+  /* capas */
+  .sheet { background: var(--color-sheet); border-radius: 32px; }
+  .tile { background: var(--color-tile); border: 1px solid var(--color-line); border-radius: var(--radius-tile); }
+  .tile-sm { background: var(--color-tile); border: 1px solid var(--color-line); border-radius: var(--radius-card); }
+  .well { background: var(--color-well); border-radius: var(--radius-card); }
+  .well-sm { background: var(--color-well); border-radius: var(--radius-ctl); }
+  .tint { background: var(--color-clay-wash); border: 1px solid var(--color-clay-line); border-radius: var(--radius-tile); }
+
+  .eyebrow { font-size: 11.5px; line-height: 1.4; letter-spacing: .07em; text-transform: uppercase; color: var(--color-ink-3); font-weight: 500; }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.045em; font-feature-settings: "zero"; font-weight: 500; }
+  .num .d { font-style: normal; margin: 0 -.13em 0 -.1em; }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+
+  /* controles tactiles */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 17px;
+    border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; color: var(--color-ink);
+    background: var(--color-tile); border: 1px solid var(--color-line-2);
+    box-shadow: inset 0 1px 0 #fff, 0 1px 1px rgb(70 50 30 / .06);
+    transition: background .15s, transform .08s, box-shadow .15s;
+  }
+  .btn:hover { background: #fff; }
+  .btn:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgb(70 50 30 / .14); }
+  .btn-sm { height: 34px; padding: 0 14px; font-size: 13px; gap: 6px; }
+  .btn-icon { width: 40px; padding: 0; }
+  .btn-accent {
+    background: var(--color-clay); color: #fff7f1; border-color: var(--color-clay-2);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .22), inset 0 -1px 0 rgb(0 0 0 / .12), 0 1px 1px rgb(120 50 20 / .22);
+  }
+  .btn-accent:hover { background: #bd6040; }
+  .btn-accent:active { box-shadow: inset 0 2px 4px rgb(0 0 0 / .22); }
+  .btn-ghost { background: transparent; border-color: transparent; box-shadow: none; }
+  .btn-ghost:hover { background: rgb(255 255 255 / .55); }
+  .btn[disabled], .btn.is-off { color: var(--color-ink-4); background: var(--color-well); border-color: var(--color-line); box-shadow: none; cursor: not-allowed; transform: none; }
+
+  .field {
+    width: 100%; height: 46px; padding: 0 16px; border-radius: var(--radius-ctl); font: inherit; font-size: 15px; color: var(--color-ink);
+    background: var(--color-tile); border: 1px solid var(--color-line-2);
+    box-shadow: inset 0 1px 2px rgb(70 50 30 / .06);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field::placeholder { color: var(--color-ink-4); }
+  .field:focus { outline: none; border-color: var(--color-clay); box-shadow: 0 0 0 4px rgb(180 88 58 / .14); }
+  .field-pill { border-radius: 999px; }
+
+  .seg { display: inline-flex; padding: 4px; gap: 2px; border-radius: 999px; background: var(--color-well); box-shadow: inset 0 1px 2px rgb(70 50 30 / .09); }
+  .seg > * { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--color-ink-2); white-space: nowrap; background: transparent; border: 0; }
+  .seg > .on { background: var(--color-tile); color: var(--color-ink); box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgb(70 50 30 / .14); }
+
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; color: var(--color-ink-2); background: var(--color-well); white-space: nowrap; }
+  .chip-clay { background: var(--color-clay-soft); color: var(--color-clay-2); }
+  .chip b { font-weight: 600; color: var(--color-ink); }
+  .chip-clay b { color: var(--color-clay-2); }
+
+  .st { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+  .st::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: currentColor; opacity: .85; }
+  .st-ok { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .st-warn { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .st-info { background: var(--color-slate-soft); color: var(--color-slate-ink); }
+  .st-mute { background: var(--color-well); color: var(--color-ink-2); }
+  .st-bad { background: var(--color-wine-soft); color: var(--color-wine); }
+
+  .delta { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 500; height: 22px; padding: 0 8px; border-radius: 99px; }
+  .delta-up { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .delta-warn { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .delta-flat { background: var(--color-well); color: var(--color-ink-2); }
+
+  .kbd { display: inline-flex; align-items: center; height: 22px; padding: 0 7px; border-radius: 7px; font-family: var(--font-mono); font-size: 11.5px; color: var(--color-ink-3); background: var(--color-well); box-shadow: inset 0 -1px 0 var(--color-line-2); }
+
+  .sw { position: relative; width: 44px; height: 26px; border-radius: 99px; background: var(--color-line-2); box-shadow: inset 0 1px 3px rgb(70 50 30 / .18); flex: none; border: 0; padding: 0; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 99px; background: #fff; box-shadow: 0 1px 2px rgb(70 50 30 / .28); transition: transform .2s; }
+  .sw.on { background: var(--color-clay); }
+  .sw.on::after { transform: translateX(18px); }
+
+  .cb { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid var(--color-line-2); background: var(--color-tile); display: inline-grid; place-items: center; flex: none; color: #fff; }
+  .cb.on { background: var(--color-clay); border-color: var(--color-clay-2); }
+
+  .avatar { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 99px; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; }
+  .av-clay { background: var(--color-clay-soft); color: var(--color-clay-2); }
+  .av-sage { background: var(--color-sage-soft); color: var(--color-sage-ink); }
+  .av-slate { background: var(--color-slate-soft); color: var(--color-slate-ink); }
+  .av-ochre { background: var(--color-ochre-soft); color: var(--color-ochre-ink); }
+  .av-sand { background: var(--color-sand); color: var(--color-ink); }
+
+  .ico-disc { display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 99px; background: var(--color-well); color: var(--color-clay); }
+
+  /* navegacion */
+  .nav-i { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--color-ink-2); transition: background .15s, color .15s; }
+  .nav-i:hover { background: rgb(255 255 255 / .5); color: var(--color-ink); }
+  .nav-i.on { background: var(--color-tile); color: var(--color-ink); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px var(--color-line), 0 1px 2px rgb(70 50 30 / .08); }
+  .nav-i.on svg { color: var(--color-clay); }
+
+  /* tabla en filas de grilla */
+  .tr { display: grid; grid-template-columns: var(--cols); column-gap: 12px; align-items: center; padding: 13px 22px; border-top: 1px solid var(--color-line); }
+  .tr:hover { background: rgb(238 232 221 / .35); }
+  .tr.th { border-top: 0; padding-top: 14px; padding-bottom: 12px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-3); font-weight: 500; background: transparent; }
+  .tr.th:hover { background: transparent; }
+  .tr.sel { background: var(--color-clay-wash); }
+
+  /* linea de tiempo de nomina */
+  .tl { display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); }
+  .tl-s { position: relative; padding: 44px 10px 0 0; }
+  .tl-n { position: absolute; top: 0; left: 0; width: 32px; height: 32px; border-radius: 99px; display: grid; place-items: center; background: var(--color-well); border: 1.5px solid var(--color-line-2); color: var(--color-ink-3); font-family: var(--font-mono); font-size: 12px; }
+  .tl-s::before { content: ""; position: absolute; top: 15px; left: 42px; right: 10px; height: 2px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+  .tl-s:last-child::before { display: none; }
+  .tl-s.done::before { background: var(--color-clay); }
+  .tl-s.done .tl-n { background: var(--color-clay); border-color: var(--color-clay-2); color: #fff7f1; box-shadow: inset 0 1px 0 rgb(255 255 255 / .22); }
+  .tl-s.now .tl-n { background: var(--color-tile); border: 2px solid var(--color-clay); color: var(--color-clay); box-shadow: 0 0 0 5px var(--color-clay-soft); }
+  .tl-t { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .tl-m { margin-top: 3px; font-size: 12.5px; color: var(--color-ink-3); line-height: 1.35; }
+  .tl-s.pend .tl-t { color: var(--color-ink-2); font-weight: 500; }
+  .tl-v { grid-template-columns: 1fr; }
+  .tl-v .tl-s { padding: 4px 0 24px 50px; min-height: 48px; }
+  .tl-v .tl-s:last-child { padding-bottom: 0; }
+  .tl-v .tl-s::before { top: 38px; bottom: 6px; left: 15px; right: auto; width: 2px; height: auto; background: repeating-linear-gradient(180deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+  .tl-v .tl-s.done::before { background: var(--color-clay); }
+  @media (max-width: 719px) {
+    .tl { grid-template-columns: 1fr; }
+    .tl-s { padding: 4px 0 24px 50px; min-height: 48px; }
+    .tl-s:last-child { padding-bottom: 0; }
+    .tl-s::before { top: 38px; bottom: 6px; left: 15px; right: auto; width: 2px; height: auto; background: repeating-linear-gradient(180deg, var(--color-line-2) 0 5px, transparent 5px 9px); }
+    .tl-s.done::before { background: var(--color-clay); }
+  }
+
+  /* indicador de staging del portal: una sola linea corta */
+  .stg { display: flex; align-items: center; justify-content: center; gap: 8px; height: 30px; padding: 0 16px; background: #efe3c3; border-bottom: 1px solid #e0cf9f; color: var(--color-ochre-ink); font-size: 12.5px; line-height: 1; white-space: nowrap; }
+  .stg::before { content: ""; width: 6px; height: 6px; border-radius: 9px; background: #c9972f; }
+}
+
+
+.cols-col { --cols: minmax(0,1fr) auto; }
+@media (min-width: 768px) { .cols-col { --cols: 18px minmax(190px,1.35fr) 112px minmax(130px,1.1fr) 150px 112px 140px 32px; } }
+
+</style>
+</head>
+<body class="">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="10" fill="#B4583A"/><circle cx="16" cy="12.6" r="6.3" fill="#FBEEE5"/><rect x="4.5" y="15.8" width="23" height="3.8" rx="1.9" fill="#B4583A"/><rect x="8.5" y="20.8" width="19" height="3" rx="1.5" fill="#FBEEE5" fill-opacity=".74"/><rect x="4.5" y="25.2" width="12" height="2.2" rx="1.1" fill="#FBEEE5" fill-opacity=".42"/></symbol><symbol id="i-l-alt-arrow-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9l-7 6l-7-6"/></symbol><symbol id="i-l-alt-arrow-left" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m15 5l-6 7l6 7"/></symbol><symbol id="i-l-alt-arrow-right" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7"/></symbol><symbol id="i-l-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18.75 9.71v-.705C18.75 5.136 15.726 2 12 2S5.25 5.136 5.25 9.005v.705a4.4 4.4 0 0 1-.692 2.375L3.45 13.81c-1.011 1.575-.239 3.716 1.52 4.214a25.8 25.8 0 0 0 14.06 0c1.759-.498 2.531-2.639 1.52-4.213l-1.108-1.725a4.4 4.4 0 0 1-.693-2.375Z"/><path stroke-linecap="round" d="M7.5 19c.655 1.748 2.422 3 4.5 3s3.845-1.252 4.5-3"/></g></symbol><symbol id="i-l-bill-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16.755 2h-9.51c-1.159 0-1.738 0-2.206.163a3.05 3.05 0 0 0-1.881 1.936C3 4.581 3 5.177 3 6.37v14.004c0 .858.985 1.314 1.608.744a.946.946 0 0 1 1.284 0l.483.442a1.657 1.657 0 0 0 2.25 0a1.657 1.657 0 0 1 2.25 0a1.657 1.657 0 0 0 2.25 0a1.657 1.657 0 0 1 2.25 0a1.657 1.657 0 0 0 2.25 0l.483-.442a.946.946 0 0 1 1.284 0c.623.57 1.608.114 1.608-.744V6.37c0-1.193 0-1.79-.158-2.27a3.05 3.05 0 0 0-1.881-1.937C18.493 2 17.914 2 16.755 2Z"/><path stroke-linecap="round" stroke-linejoin="round" d="m9.5 10.4l1.429 1.6L14.5 8"/><path stroke-linecap="round" d="M7.5 15.5h9"/></g></symbol><symbol id="i-l-buildings-2" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M22 22H2"/><path d="M17 22V6c0-1.886 0-2.828-.586-3.414S14.886 2 13 2h-2c-1.886 0-2.828 0-3.414.586S7 4.114 7 6v16m14 0V11.5c0-1.405 0-2.107-.337-2.611a2 2 0 0 0-.552-.552C19.607 8 18.904 8 17.5 8M3 22V11.5c0-1.405 0-2.107.337-2.611a2 2 0 0 1 .552-.552C4.393 8 5.096 8 6.5 8"/><path stroke-linecap="round" d="M12 22v-3M10 5h4m-4 3h4m-4 3h4m-4 3h4"/></g></symbol><symbol id="i-l-check-read" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m4 12.9l3.143 3.6L15 7.5m5 .063l-8.572 9L11 16"/></symbol><symbol id="i-l-close-circle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="m14.5 9.5l-5 5m0-5l5 5"/></g></symbol><symbol id="i-l-document-text" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10c0-3.771 0-5.657 1.172-6.828S7.229 2 11 2h2c3.771 0 5.657 0 6.828 1.172S21 6.229 21 10v4c0 3.771 0 5.657-1.172 6.828S16.771 22 13 22h-2c-3.771 0-5.657 0-6.828-1.172S3 17.771 3 14z"/><path stroke-linecap="round" d="M8 12h8M8 8h8m-8 8h5"/></g></symbol><symbol id="i-l-download-minimalistic" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15c0 2.828 0 4.243.879 5.121C4.757 21 6.172 21 9 21h6c2.828 0 4.243 0 5.121-.879C21 19.243 21 17.828 21 15M12 3v13m0 0l4-4.375M12 16l-4-4.375"/></symbol><symbol id="i-l-folder" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M18 10h-5"/><path d="M2 6.95c0-.883 0-1.324.07-1.692A4 4 0 0 1 5.257 2.07C5.626 2 6.068 2 6.95 2c.386 0 .58 0 .766.017a4 4 0 0 1 2.18.904c.144.119.28.255.554.529L11 4c.816.816 1.224 1.224 1.712 1.495a4 4 0 0 0 .848.352C14.098 6 14.675 6 15.828 6h.374c2.632 0 3.949 0 4.804.77q.119.105.224.224c.77.855.77 2.172.77 4.804V14c0 3.771 0 5.657-1.172 6.828S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.172S2 17.771 2 14z"/></g></symbol><symbol id="i-l-hamburger-menu" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M20 7H4m16 5H4m16 5H4"/></symbol><symbol id="i-l-home-2" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12.204c0-2.289 0-3.433.52-4.381c.518-.949 1.467-1.537 3.364-2.715l2-1.241C9.889 2.622 10.892 2 12 2s2.11.622 4.116 1.867l2 1.241c1.897 1.178 2.846 1.766 3.365 2.715S22 9.915 22 12.203v1.522c0 3.9 0 5.851-1.172 7.063S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.212S2 17.626 2 13.725z"/><path stroke-linecap="round" d="M12 15v3"/></g></symbol><symbol id="i-l-list-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"><path stroke-linejoin="round" d="m14 16l2.1 2.5l3.9-5"/><path d="M21 6H3m18 4H3m7 4H3m7 4H3"/></g></symbol><symbol id="i-l-magnifer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11.5" cy="11.5" r="9.5"/><path stroke-linecap="round" d="M18.5 18.5L22 22"/></g></symbol><symbol id="i-l-menu-dots" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></g></symbol><symbol id="i-l-plug-circle" viewBox="0 0 24 24"><g fill="none"><path fill="currentColor" d="m10.013 21.967l-.15.735zm6.021-1.482a.75.75 0 1 0 .66 1.347zm-5.872.747c-4.224-.858-7.412-4.625-7.412-9.149h-1.5c0 5.242 3.696 9.62 8.613 10.62zM2.75 12.083c0-5.16 4.147-9.333 9.25-9.333v-1.5c-5.943 0-10.75 4.856-10.75 10.833zM12 2.75c5.103 0 9.25 4.173 9.25 9.333h1.5C22.75 6.106 17.943 1.25 12 1.25zm.75 17.4v-5.042h-1.5v5.042zm8.5-8.067c0 3.697-2.13 6.89-5.216 8.402l.66 1.347a10.84 10.84 0 0 0 6.056-9.749zM9.863 22.703c1.658.336 2.887-1.085 2.887-2.553h-1.5c0 .759-.58 1.186-1.088 1.082z"/><path stroke="currentColor" stroke-width="1.5" d="M9 11.8a.8.8 0 0 1 .8-.8h4.4a.8.8 0 0 1 .8.8v.2a3 3 0 1 1-6 0z"/><path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M13.5 11V9m-3 2V9"/></g></symbol><symbol id="i-l-question-circle" viewBox="0 0 24 24"><g fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-linecap="round" stroke-width="1.5" d="M10.125 8.875a1.875 1.875 0 1 1 2.828 1.615c-.475.281-.953.708-.953 1.26V13"/><circle cx="12" cy="16" r="1" fill="currentColor"/></g></symbol><symbol id="i-l-settings" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M13.765 2.152C13.398 2 12.932 2 12 2s-1.398 0-1.765.152a2 2 0 0 0-1.083 1.083c-.092.223-.129.484-.143.863a1.62 1.62 0 0 1-.79 1.353a1.62 1.62 0 0 1-1.567.008c-.336-.178-.579-.276-.82-.308a2 2 0 0 0-1.478.396C4.04 5.79 3.806 6.193 3.34 7s-.7 1.21-.751 1.605a2 2 0 0 0 .396 1.479c.148.192.355.353.676.555c.473.297.777.803.777 1.361s-.304 1.064-.777 1.36c-.321.203-.529.364-.676.556a2 2 0 0 0-.396 1.479c.052.394.285.798.75 1.605c.467.807.7 1.21 1.015 1.453a2 2 0 0 0 1.479.396c.24-.032.483-.13.819-.308a1.62 1.62 0 0 1 1.567.008c.483.28.77.795.79 1.353c.014.38.05.64.143.863a2 2 0 0 0 1.083 1.083C10.602 22 11.068 22 12 22s1.398 0 1.765-.152a2 2 0 0 0 1.083-1.083c.092-.223.129-.483.143-.863c.02-.558.307-1.074.79-1.353a1.62 1.62 0 0 1 1.567-.008c.336.178.579.276.819.308a2 2 0 0 0 1.479-.396c.315-.242.548-.646 1.014-1.453s.7-1.21.751-1.605a2 2 0 0 0-.396-1.479c-.148-.192-.355-.353-.676-.555A1.62 1.62 0 0 1 19.562 12c0-.558.304-1.064.777-1.36c.321-.203.529-.364.676-.556a2 2 0 0 0 .396-1.479c-.052-.394-.285-.798-.75-1.605c-.467-.807-.7-1.21-1.015-1.453a2 2 0 0 0-1.479-.396c-.24.032-.483.13-.82.308a1.62 1.62 0 0 1-1.566-.008a1.62 1.62 0 0 1-.79-1.353c-.014-.38-.05-.64-.143-.863a2 2 0 0 0-1.083-1.083Z"/></g></symbol><symbol id="i-l-sort-vertical" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 18V6m0 0l4 4.125M16 6l-4 4.125M8 6v12m0 0l4-4.125M8 18l-4-4.125"/></symbol><symbol id="i-l-suitcase-lines" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14c0-3.771 0-5.657 1.172-6.828S6.229 6 10 6h4c3.771 0 5.657 0 6.828 1.172S22 10.229 22 14s0 5.657-1.172 6.828S17.771 22 14 22h-4c-3.771 0-5.657 0-6.828-1.172S2 17.771 2 14Zm14-8c0-1.886 0-2.828-.586-3.414S13.886 2 12 2s-2.828 0-3.414.586S8 4.114 8 6"/><path stroke-linecap="round" d="M2 11h20M2 17h20"/></g></symbol><symbol id="i-l-tuning-2" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.5 14a3 3 0 1 1 0 6a3 3 0 0 1 0-6Zm5-10a3 3 0 1 0 0 6a3 3 0 0 0 0-6Z"/><path stroke-linecap="round" d="M15 16.959h7m-13-10H2m0 10h2m18-10h-2"/></g></symbol><symbol id="i-l-upload-minimalistic" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15c0 2.828 0 4.243.879 5.121C4.757 21 6.172 21 9 21h6c2.828 0 4.243 0 5.121-.879C21 19.243 21 17.828 21 15m-9 1V3m0 0l4 4.375M12 3L8 7.375"/></symbol><symbol id="i-l-user-plus-rounded" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="6" r="4"/><circle cx="17" cy="18" r="4"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 16.667v2.666M15.667 18h2.666"/><path d="M14 20.834c-.634.108-1.305.166-2 .166c-3.866 0-7-1.79-7-4s3.134-4 7-4c1.713 0 3.283.352 4.5.936"/></g></symbol><symbol id="i-l-users-group-rounded" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="6" r="4"/><path stroke-linecap="round" d="M15 9a3 3 0 1 0 0-6"/><ellipse cx="9" cy="17" rx="7" ry="4"/><path stroke-linecap="round" d="M18 14c1.754.385 3 1.359 3 2.5c0 1.03-1.014 1.923-2.5 2.37"/></g></symbol><symbol id="i-l-wallet-money" viewBox="0 0 24 24"><g fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 10h4"/><path stroke-width="1.5" d="M20.833 11h-2.602C16.446 11 15 12.343 15 14s1.447 3 3.23 3h2.603c.084 0 .125 0 .16-.002c.54-.033.97-.432 1.005-.933c.002-.032.002-.071.002-.148v-3.834c0-.077 0-.116-.002-.148c-.036-.501-.465-.9-1.005-.933c-.035-.002-.076-.002-.16-.002Z"/><path stroke-width="1.5" d="M20.965 11c-.078-1.872-.328-3.02-1.137-3.828C18.657 6 16.771 6 13 6h-3C6.229 6 4.343 6 3.172 7.172S2 10.229 2 14s0 5.657 1.172 6.828S6.229 22 10 22h3c3.771 0 5.657 0 6.828-1.172c.809-.808 1.06-1.956 1.137-3.828"/><path stroke-linecap="round" stroke-width="1.5" d="m6 6l3.735-2.477a3.24 3.24 0 0 1 3.53 0L17 6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.991 14h.01"/></g></symbol><symbol id="i-l-widget-4" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.5" d="M2.5 6.5c0-1.886 0-2.828.586-3.414S4.614 2.5 6.5 2.5s2.828 0 3.414.586s.586 1.528.586 3.414v11c0 1.886 0 2.828-.586 3.414S8.386 21.5 6.5 21.5s-2.828 0-3.414-.586S2.5 19.386 2.5 17.5zm11 9c0-1.886 0-2.828.586-3.414s1.528-.586 3.414-.586s2.828 0 3.414.586s.586 1.528.586 3.414v2c0 1.886 0 2.828-.586 3.414s-1.528.586-3.414.586s-2.828 0-3.414-.586s-.586-1.528-.586-3.414zm0-10c0-.932 0-1.398.152-1.765a2 2 0 0 1 1.083-1.083c.367-.152.833-.152 1.765-.152h2c.932 0 1.398 0 1.765.152a2 2 0 0 1 1.083 1.083c.152.367.152.833.152 1.765s0 1.398-.152 1.765a2 2 0 0 1-1.083 1.083c-.367.152-.833.152-1.765.152h-2c-.932 0-1.398 0-1.765-.152a2 2 0 0 1-1.083-1.083C13.5 6.898 13.5 6.432 13.5 5.5Z"/></symbol></defs></svg>
+
+<div class="h-dvh overflow-hidden lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
+  <aside class="hidden lg:flex flex-col px-4 pt-5 pb-4 h-dvh overflow-y-auto">
+    <a href="n2-resumen.html" class="flex items-center gap-3 px-2 h-10">
+      <svg class="size-8 shrink-0" aria-hidden="true"><use href="#logo"/></svg>
+      <span class="text-[18px] font-semibold tracking-tight">Bruma</span>
+      <span class="chip !h-[22px] !px-2 text-micro">Consola</span>
+    </a>
+    
+    <div class="nav-h">Nómina</div>
+    <nav class="flex flex-col gap-1"><a href="n2-resumen.html" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-home-2"/></svg><span>Resumen</span></a><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-wallet-money"/></svg><span>Procesos</span><span class="badge">1</span></a><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-document-text"/></svg><span>Liquidaciones</span></a><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-bill-check"/></svg><span>Previred</span></a>
+    </nav>
+    <div class="nav-h">Personas</div>
+    <nav class="flex flex-col gap-1"><a href="n3-colaboradores.html" class="nav-i on"><svg class="i size-5" aria-hidden="true"><use href="#i-l-users-group-rounded"/></svg><span>Colaboradores</span></a><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-suitcase-lines"/></svg><span>Contratos</span></a><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-buildings-2"/></svg><span>Centros de costo</span></a>
+    </nav>
+    <div class="nav-h">Cuenta</div>
+    <nav class="flex flex-col gap-1"><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-folder"/></svg><span>Documentos</span></a><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-plug-circle"/></svg><span>Integraciones</span></a><a href="#" class="nav-i "><svg class="i size-5" aria-hidden="true"><use href="#i-l-settings"/></svg><span>Configuración</span></a>
+    </nav>
+  </aside>
+
+  <div class="flex flex-col min-w-0 h-dvh">
+    <header class="flex items-center gap-2 sm:gap-3 h-16 shrink-0 px-3 lg:px-1 lg:pr-4">
+      <button class="btn btn-icon lg:hidden" aria-label="Abrir menú"><svg class="i size-5" aria-hidden="true"><use href="#i-l-hamburger-menu"/></svg></button>
+      <button class="btn !pl-3.5 !pr-3 gap-2.5 min-w-0 flex-1 sm:flex-none justify-start" aria-label="Cambiar de workspace">
+        <span class="size-2 rounded-full bg-sage ring-4 ring-sage-soft shrink-0"></span>
+        <span class="mono text-[13.5px] truncate" data-canary="workspace">bruma-produccion</span>
+        <span class="chip chip-clay !h-[22px] !px-2 text-micro max-sm:hidden">Producción</span>
+        <span class="ml-auto sm:ml-1"><svg class="i size-4 text-ink-3" aria-hidden="true"><use href="#i-l-sort-vertical"/></svg></span>
+      </button>
+      <button class="hidden md:flex flex-1 max-w-[460px] mx-3 h-10 items-center gap-2.5 px-4 rounded-full border border-line bg-white/55 text-small text-ink-3 hover:bg-white/80 transition">
+        <svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-magnifer"/></svg><span class="truncate">Buscar</span><span class="kbd ml-auto">⌘K</span>
+      </button>
+      <div class="flex items-center gap-1.5 sm:gap-2 md:ml-auto">
+        <button class="btn btn-icon btn-ghost md:hidden" aria-label="Buscar"><svg class="i size-5" aria-hidden="true"><use href="#i-l-magnifer"/></svg></button>
+        <button class="btn btn-icon btn-ghost max-sm:hidden" aria-label="Ayuda"><svg class="i size-5" aria-hidden="true"><use href="#i-l-question-circle"/></svg></button>
+        <button class="btn btn-icon btn-ghost relative max-sm:hidden" aria-label="Notificaciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-bell"/></svg><span class="absolute top-2.5 right-2.5 size-2 rounded-full bg-clay ring-2 ring-canvas"></span></button>
+        <button class="flex items-center gap-2.5 h-10 pl-1 sm:pr-3 rounded-full hover:bg-white/55 transition" aria-label="Menú de usuario">
+          <span class="avatar av-clay !size-8">PM</span>
+          <span class="hidden xl:block text-left leading-tight"><span class="block text-small font-medium">Paula Meza</span><span class="block text-micro text-ink-3">Administradora de nómina</span></span>
+          <svg class="i size-4 text-ink-3 max-sm:hidden" aria-hidden="true"><use href="#i-l-alt-arrow-down"/></svg>
+        </button>
+      </div>
+    </header>
+    <main class="sheet relative flex-1 overflow-y-auto mx-2 mb-2 lg:ml-0 lg:mr-3 lg:mb-3 px-5 py-6 lg:px-8 lg:py-8">
+      
+<div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-4 mb-6">
+  <div><div class="eyebrow">Personas</div><h1 class="text-h1 font-semibold tracking-tight mt-1.5">Colaboradores</h1></div>
+  <div class="flex items-center gap-2.5">
+    <button class="btn max-sm:hidden"><svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-upload-minimalistic"/></svg> Importar</button>
+    <button class="btn max-sm:hidden"><svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-download-minimalistic"/></svg> Exportar</button>
+    <button class="btn btn-accent"><svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-user-plus-rounded"/></svg> Agregar colaborador</button>
+  </div>
+</div>
+
+<section class="tile p-5 lg:px-6 lg:py-5 flex flex-wrap items-center gap-x-8 gap-y-4">
+  <div class="shrink-0"><div class="num text-[34px] leading-none">142</div><div class="text-small text-ink-3 mt-1.5">colaboradores activos</div></div>
+  <div class="flex-1 min-w-[280px]">
+    <div class="flex gap-[3px]"><i class="h-3 rounded-full" style="flex:41;background:#5b7c90" title="Ingeniería 41"></i><i class="h-3 rounded-full" style="flex:24;background:#b4583a" title="Producto 24"></i><i class="h-3 rounded-full" style="flex:28;background:#a67a2c" title="Comercial 28"></i><i class="h-3 rounded-full" style="flex:33;background:#5f806a" title="Soporte 33"></i><i class="h-3 rounded-full" style="flex:10;background:#8b6f86" title="Administración 10"></i><i class="h-3 rounded-full" style="flex:6;background:#9a8f80" title="Personas 6"></i></div>
+  </div>
+</section>
+
+<div class="mt-5 flex flex-wrap items-center gap-2.5">
+  <label class="relative block flex-1 min-w-[220px] max-w-[360px]">
+    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-3"><svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-magnifer"/></svg></span>
+    <input class="field field-pill !h-10 !pl-11 !text-small" placeholder="Buscar" value="">
+    <span class="kbd absolute right-3 top-1/2 -translate-y-1/2 max-sm:hidden">/</span>
+  </label>
+  <div class="flex flex-wrap items-center gap-2">
+    <button class="btn btn-sm !pr-3">Centro de costo<span class="text-clay-2 font-semibold"> · 1</span><svg class="i size-3.5 text-ink-3" aria-hidden="true"><use href="#i-l-alt-arrow-down"/></svg></button><button class="btn btn-sm !pr-3">Contrato<span class="text-clay-2 font-semibold"> · 1</span><svg class="i size-3.5 text-ink-3" aria-hidden="true"><use href="#i-l-alt-arrow-down"/></svg></button><button class="btn btn-sm !pr-3">Estado<svg class="i size-3.5 text-ink-3" aria-hidden="true"><use href="#i-l-alt-arrow-down"/></svg></button><button class="btn btn-sm !pr-3">AFP<svg class="i size-3.5 text-ink-3" aria-hidden="true"><use href="#i-l-alt-arrow-down"/></svg></button>
+    <button class="btn btn-sm btn-ghost"><svg class="i size-4" aria-hidden="true"><use href="#i-l-tuning-2"/></svg> Más filtros</button>
+  </div>
+  <div class="seg ml-auto max-lg:hidden"><button class="on"><svg class="i size-4" aria-hidden="true"><use href="#i-l-list-check"/></svg> Tabla</button><button><svg class="i size-4" aria-hidden="true"><use href="#i-l-widget-4"/></svg> Tarjetas</button></div>
+</div>
+<section class="tile mt-4 overflow-hidden">
+  <div class="tr th cols-col"><span class="cb max-md:hidden"></span><div>Colaborador</div><div class="max-md:hidden">RUT</div><div class="max-md:hidden">Cargo</div><div class="max-md:hidden">Centro de costo</div><div class="max-md:hidden">Contrato</div><div class="max-md:text-right">Estado</div><div class="max-md:hidden"></div></div>
+  
+  <div class="tr cols-col ">
+    <span class="cb  max-md:hidden"></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-clay">CV</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Camila Valdés Rojas</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Analista de Producto · Producto</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">17.254.883-0</div>
+    <div class="text-small max-md:hidden">Analista de Producto</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#b4583a"></i>Producto</span></div>
+    <div class="max-md:hidden"><div class="text-small">Indefinido</div></div>
+    <div class="max-md:text-right"><span class="st st-ok">Activo</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="tr cols-col sel">
+    <span class="cb on max-md:hidden"><svg class="i size-3" aria-hidden="true"><use href="#i-l-check-read"/></svg></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-slate">MC</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Matías Contreras Pino</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Ingeniero de Software Sr. · Ingeniería</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">16.830.472-2</div>
+    <div class="text-small max-md:hidden">Ingeniero de Software Sr.</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#5b7c90"></i>Ingeniería</span></div>
+    <div class="max-md:hidden"><div class="text-small">Indefinido</div></div>
+    <div class="max-md:text-right"><span class="st st-ok">Activo</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="tr cols-col ">
+    <span class="cb  max-md:hidden"></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-ochre">FA</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Francisca Arriagada Lobos</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Ejecutiva de Cuentas · Comercial</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">19.412.065-6</div>
+    <div class="text-small max-md:hidden">Ejecutiva de Cuentas</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#a67a2c"></i>Comercial</span></div>
+    <div class="max-md:hidden"><div class="text-small">Plazo fijo</div><div class="text-caption text-ochre-ink">vence 15 dic</div></div>
+    <div class="max-md:text-right"><span class="st st-ok">Activo</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="tr cols-col sel">
+    <span class="cb on max-md:hidden"><svg class="i size-3" aria-hidden="true"><use href="#i-l-check-read"/></svg></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-sage">VO</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Valentina Orellana Díaz</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Líder de Soporte · Soporte</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">15.677.902-4</div>
+    <div class="text-small max-md:hidden">Líder de Soporte</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#5f806a"></i>Soporte</span></div>
+    <div class="max-md:hidden"><div class="text-small">Indefinido</div></div>
+    <div class="max-md:text-right"><span class="st st-warn">Licencia médica</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="tr cols-col ">
+    <span class="cb  max-md:hidden"></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-clay">TN</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Tomás Navarrete Vera</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Analista de Datos · Producto</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">20.138.561-K</div>
+    <div class="text-small max-md:hidden">Analista de Datos</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#b4583a"></i>Producto</span></div>
+    <div class="max-md:hidden"><div class="text-small">Plazo fijo</div><div class="text-caption text-ochre-ink">vence 28 feb</div></div>
+    <div class="max-md:text-right"><span class="st st-ok">Activo</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="tr cols-col ">
+    <span class="cb  max-md:hidden"></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-sage">SM</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Sebastián Muñoz Parra</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Ejecutivo de Soporte · Soporte</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">19.753.204-1</div>
+    <div class="text-small max-md:hidden">Ejecutivo de Soporte</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#5f806a"></i>Soporte</span></div>
+    <div class="max-md:hidden"><div class="text-small">Indefinido</div></div>
+    <div class="max-md:text-right"><span class="st st-info">Vacaciones</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="tr cols-col ">
+    <span class="cb  max-md:hidden"></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-ochre">BC</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Benjamín Cárdenas Tapia</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Gerente Comercial · Comercial</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">13.408.925-3</div>
+    <div class="text-small max-md:hidden">Gerente Comercial</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#a67a2c"></i>Comercial</span></div>
+    <div class="max-md:hidden"><div class="text-small">Indefinido</div></div>
+    <div class="max-md:text-right"><span class="st st-ok">Activo</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="tr cols-col ">
+    <span class="cb  max-md:hidden"></span>
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="avatar av-slate">CA</span>
+      <div class="min-w-0"><div class="text-[14.5px] font-medium truncate">Cristóbal Aravena Núñez</div>
+        <div class="text-caption text-ink-3 truncate md:hidden">Ingeniero DevOps · Ingeniería</div></div>
+    </div>
+    <div class="mono text-[13.5px] text-ink-2 max-md:hidden">16.284.159-9</div>
+    <div class="text-small max-md:hidden">Ingeniero DevOps</div>
+    <div class="max-md:hidden"><span class="chip !pl-2.5"><i class="size-2 rounded-full" style="background:#5b7c90"></i>Ingeniería</span></div>
+    <div class="max-md:hidden"><div class="text-small">Por obra</div></div>
+    <div class="max-md:text-right"><span class="st st-mute">Finiquito en curso</span></div>
+    <button class="btn btn-icon btn-ghost !size-8 max-md:hidden" aria-label="Acciones"><svg class="i size-5" aria-hidden="true"><use href="#i-l-menu-dots"/></svg></button>
+  </div>
+  <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-line text-small text-ink-3">
+    <span>Mostrando 1–8 de 142</span>
+    <div class="seg"><button><svg class="i size-4" aria-hidden="true"><use href="#i-l-alt-arrow-left"/></svg></button><button class="on">1</button><button>2</button><button>3</button><button class="max-sm:hidden">…</button><button class="max-sm:hidden">12</button><button><svg class="i size-4" aria-hidden="true"><use href="#i-l-alt-arrow-right"/></svg></button></div>
+  </div>
+</section>
+
+<div class="sticky bottom-0 mt-4 -mb-2 flex justify-center pointer-events-none">
+  <div class="pointer-events-auto flex items-center gap-1.5 sm:gap-2 p-1.5 pl-4 sm:pl-5 rounded-full bg-ink text-[#f6f2ea] shadow-[0_6px_20px_rgb(40_30_20/.25)] text-small">
+    <span class="font-medium whitespace-nowrap">2 seleccionados</span>
+    <span class="w-px h-5 bg-white/20 mx-1 sm:mx-2"></span>
+    <button class="h-9 px-3 sm:px-4 rounded-full hover:bg-white/10 flex items-center gap-2 whitespace-nowrap"><svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-document-text"/></svg><span><span class="max-sm:hidden">Generar </span>liquidaciones</span></button>
+    <button class="h-9 px-3 sm:px-4 rounded-full hover:bg-white/10 items-center gap-2 whitespace-nowrap hidden md:flex"><svg class="i size-[18px]" aria-hidden="true"><use href="#i-l-buildings-2"/></svg>Cambiar centro de costo</button>
+    <button class="size-9 rounded-full bg-white/10 hover:bg-white/20 grid place-items-center" aria-label="Limpiar selección"><svg class="i size-5" aria-hidden="true"><use href="#i-l-close-circle"/></svg></button>
+  </div>
+</div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

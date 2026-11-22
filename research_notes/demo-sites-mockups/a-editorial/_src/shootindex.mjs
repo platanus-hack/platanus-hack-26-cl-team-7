@@ -1,0 +1,14 @@
+import { chromium } from '/Users/lp1/.local/lib/node_modules/@playwright/cli/node_modules/playwright-core/index.mjs';
+import path from 'node:path';
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+await p.goto('file://' + path.join(root, 'index.html'), { waitUntil: 'networkidle' });
+await p.evaluate(() => document.fonts.ready);
+await p.waitForTimeout(600);
+await p.screenshot({ path: path.join(root, 'shots/full/index.png'), fullPage: true });
+const m = await b.newPage({ viewport: { width: 390, height: 844 } });
+await m.goto('file://' + path.join(root, 'index.html'), { waitUntil: 'networkidle' });
+await m.waitForTimeout(600);
+console.log('index mobile scrollWidth', await m.evaluate(() => document.documentElement.scrollWidth));
+await b.close();

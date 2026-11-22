@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colaboradores · Bruma Consola</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300..700;1,400&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<style>html{background:#F3EEE3;color:#16140E}body{margin:0}</style>
+<style type="text/tailwindcss">
+@theme {
+  --color-paper: #F3EEE3;
+  --color-paper-2: #EAE3D3;
+  --color-sheet: #FBF8F1;
+  --color-ink: #16140E;
+  --color-ink-2: #454036;
+  --color-ink-3: #6E685C;
+  --color-rule: #D6CCB8;
+  --color-rule-2: #E4DCCB;
+  --color-forest: #1E4B38;
+  --color-forest-2: #2B6549;
+  --color-moss: #DAE4D3;
+  --color-ochre: #A85F12;
+  --color-ochre-soft: #F0DDB2;
+  --color-brick: #9A3626;
+  --color-brick-soft: #F1D9D0;
+  --font-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 1.2;
+  --text-title: 2.75rem;
+  --text-title--line-height: 1.04;
+  --text-fig: 2.75rem;
+  --text-fig--line-height: 1;
+  --text-fig-lg: 5.5rem;
+  --text-fig-lg--line-height: 0.95;
+}
+@layer base {
+  html { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body { font-size: 15px; line-height: 1.45; min-height: 100vh; }
+  ::selection { background: var(--color-moss); }
+  :focus-visible { outline: 2px solid var(--color-forest); outline-offset: 2px; border-radius: 2px; }
+  button { font: inherit; cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  a { color: inherit; text-decoration: none; }
+}
+@layer components {
+  .ic { width: 1.125rem; height: 1.125rem; flex: none; }
+  .label { font-size: .6875rem; line-height: 1rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 500; color: var(--color-ink-3); }
+  .fig { font-family: var(--font-serif); font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum", "lnum"; letter-spacing: -.02em; font-weight: 350; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .serif { font-family: var(--font-serif); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; height: 2.5rem; padding: 0 1.1rem; border-radius: var(--radius-sm); font-size: .875rem; font-weight: 500; white-space: nowrap; transition: background-color .15s, color .15s, border-color .15s, transform .1s; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--color-ink); color: var(--color-paper); }
+  .btn-primary:hover { background: var(--color-forest); }
+  .btn-ghost { border: 1px solid var(--color-ink); color: var(--color-ink); }
+  .btn-ghost:hover { background: var(--color-ink); color: var(--color-paper); }
+  .link { background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat; padding-bottom: 1px; transition: background-size .2s; }
+  .link:hover { background-size: 0 1px; }
+  .status { display: inline-flex; align-items: center; gap: .5rem; font-size: .8125rem; font-weight: 500; white-space: nowrap; }
+  .status::before { content: ""; width: .5rem; height: .5rem; border-radius: 99px; background: currentColor; }
+  .status-ok { color: var(--color-forest); }
+  .status-warn { color: var(--color-ochre); }
+  .status-bad { color: var(--color-brick); }
+  .status-idle { color: var(--color-ink-3); }
+  .status-idle::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+  .ledger { width: 100%; border-collapse: collapse; }
+  .ledger thead th { text-align: left; padding: .6rem .75rem; font-size: .6875rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 500; color: var(--color-ink-3); border-top: 3px double var(--color-ink); border-bottom: 1px solid var(--color-ink); white-space: nowrap; }
+  .ledger tbody td { padding: .85rem .75rem; border-bottom: 1px solid var(--color-rule); vertical-align: middle; font-variant-numeric: tabular-nums; }
+  .ledger tbody tr:hover td { background: var(--color-sheet); }
+  .ledger .r { text-align: right; }
+  .ledger-tight thead th, .ledger-tight tbody td { padding-left: .5rem; padding-right: .5rem; }
+  .ledger tr > :first-child { padding-left: 0; }
+  .ledger tr > :last-child { padding-right: 0; }
+  .avatar { width: 2rem; height: 2rem; border-radius: 99px; display: inline-grid; place-items: center; font-size: .6875rem; font-weight: 600; letter-spacing: .03em; flex: none; }
+  .tag { display: inline-flex; align-items: center; height: 1.25rem; padding: 0 .45rem; border-radius: var(--radius-xs); font-size: .6875rem; font-weight: 500; letter-spacing: .02em; }
+  .field { display: block; width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--color-ink); padding: .6rem 0; font-size: 1rem; color: var(--color-ink); border-radius: 0; }
+  .field::placeholder { color: color-mix(in srgb, var(--color-ink-3) 75%, transparent); }
+  .field:focus { outline: none; border-bottom-color: var(--color-forest); box-shadow: 0 1px 0 0 var(--color-forest); }
+  .kbd { font-family: var(--font-sans); font-size: .6875rem; font-weight: 500; padding: .1rem .35rem; border: 1px solid var(--color-rule); border-radius: var(--radius-xs); color: var(--color-ink-3); background: var(--color-sheet); }
+}
+</style>
+</head>
+<body class="bg-paper text-ink">
+<div class="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] min-h-screen">
+  
+<aside class="hidden lg:flex flex-col sticky top-0 h-screen border-r border-rule px-5 pt-6 pb-5">
+  <a href="n2-resumen.html" class="px-3">
+  <span class="inline-flex items-center gap-2.5">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1E4B38"/><circle cx="16" cy="13.5" r="7" fill="#F3EEE3"/><rect x="7" y="14.6" width="18" height="1.5" fill="#1E4B38"/><rect x="7" y="17.9" width="18" height="1.5" fill="#1E4B38"/><rect x="8" y="23.6" width="16" height="1.8" rx=".9" fill="#F3EEE3" opacity=".55"/></svg>
+    <span class="font-serif text-[1.5rem] leading-none font-medium tracking-tight text-ink">Bruma</span>
+    <span class="label  pt-0.5">Consola</span>
+  </span></a>
+  <nav class="mt-9 flex-1 overflow-y-auto -mx-1 px-1" aria-label="Principal">
+    
+      <ul class="space-y-0.5 ">
+        <li><a href="n2-resumen.html"  class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] text-ink-2 hover:text-ink hover:bg-paper-2/60">
+            <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M217.9,110.1l-80-80a14,14,0,0,0-19.8,0l-80,80A13.92,13.92,0,0,0,34,120v96a6,6,0,0,0,6,6h64a6,6,0,0,0,6-6V158h36v58a6,6,0,0,0,6,6h64a6,6,0,0,0,6-6V120A13.92,13.92,0,0,0,217.9,110.1ZM210,210H158V152a6,6,0,0,0-6-6H104a6,6,0,0,0-6,6v58H46V120a2,2,0,0,1,.58-1.42l80-80a2,2,0,0,1,2.84,0l80,80A2,2,0,0,1,210,120Z"/></svg><span>Resumen</span></a></li><li><a href="n3-colaboradores.html" aria-current="page" class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] bg-paper-2 text-ink font-medium">
+            <svg class="ic text-forest" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M112.6,158.43a58,58,0,1,0-57.2,0A93.83,93.83,0,0,0,5.21,196.72a6,6,0,0,0,10.05,6.56,82,82,0,0,1,137.48,0,6,6,0,0,0,10-6.56A93.83,93.83,0,0,0,112.6,158.43ZM38,108a46,46,0,1,1,46,46A46.06,46.06,0,0,1,38,108Zm211,97a6,6,0,0,1-8.3-1.74A81.8,81.8,0,0,0,172,166a6,6,0,0,1,0-12,46,46,0,1,0-17.08-88.73,6,6,0,1,1-4.46-11.14,58,58,0,0,1,50.14,104.3,93.83,93.83,0,0,1,50.19,38.29A6,6,0,0,1,249,205Z"/></svg><span>Colaboradores</span></a></li>
+      </ul>
+      <ul class="space-y-0.5 mt-7">
+        <li><a href="#"  class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] text-ink-2 hover:text-ink hover:bg-paper-2/60">
+            <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M216,66H56a10,10,0,0,1,0-20H192a6,6,0,0,0,0-12H56A22,22,0,0,0,34,56V184a22,22,0,0,0,22,22H216a14,14,0,0,0,14-14V80A14,14,0,0,0,216,66Zm2,126a2,2,0,0,1-2,2H56a10,10,0,0,1-10-10V75.59A21.84,21.84,0,0,0,56,78H216a2,2,0,0,1,2,2Zm-28-60a10,10,0,1,1-10-10A10,10,0,0,1,190,132Z"/></svg><span>Nómina</span></a></li><li><a href="#"  class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] text-ink-2 hover:text-ink hover:bg-paper-2/60">
+            <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M182,104a6,6,0,0,1-6,6H80a6,6,0,0,1,0-12h96A6,6,0,0,1,182,104Zm-6,26H80a6,6,0,0,0,0,12h96a6,6,0,0,0,0-12Zm54-74V208a6,6,0,0,1-2.85,5.1,5.93,5.93,0,0,1-3.15.9,6,6,0,0,1-2.68-.63L192,198.71l-29.32,14.66a6,6,0,0,1-5.36,0L128,198.71,98.68,213.37a6,6,0,0,1-5.36,0L64,198.71,34.68,213.37A6,6,0,0,1,26,208V56A14,14,0,0,1,40,42H216A14,14,0,0,1,230,56Zm-12,0a2,2,0,0,0-2-2H40a2,2,0,0,0-2,2V198.29l23.32-11.66a6,6,0,0,1,5.36,0L96,201.29l29.32-14.66a6,6,0,0,1,5.36,0L160,201.29l29.32-14.66a6,6,0,0,1,5.36,0L218,198.29Z"/></svg><span>Liquidaciones</span></a></li><li><a href="#"  class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] text-ink-2 hover:text-ink hover:bg-paper-2/60">
+            <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M24,102H50v68H32a6,6,0,0,0,0,12H224a6,6,0,0,0,0-12H206V102h26a6,6,0,0,0,3.14-11.11l-104-64a6,6,0,0,0-6.28,0l-104,64A6,6,0,0,0,24,102Zm38,0H98v68H62Zm84,0v68H110V102Zm48,68H158V102h36ZM128,39l82.8,51H45.2ZM246,208a6,6,0,0,1-6,6H16a6,6,0,0,1,0-12H240A6,6,0,0,1,246,208Z"/></svg><span>Previred</span></a></li>
+      </ul>
+      <ul class="space-y-0.5 mt-7">
+        <li><a href="#"  class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] text-ink-2 hover:text-ink hover:bg-paper-2/60">
+            <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M240,210H222V96a14,14,0,0,0-14-14H142V32a14,14,0,0,0-21.77-11.64l-80,53.33A14,14,0,0,0,34,85.34V210H16a6,6,0,0,0,0,12H240a6,6,0,0,0,0-12ZM208,94a2,2,0,0,1,2,2V210H142V94ZM46,85.34a2,2,0,0,1,.89-1.66l80-53.34A2,2,0,0,1,130,32V210H46ZM110,112v16a6,6,0,0,1-12,0V112a6,6,0,0,1,12,0Zm-32,0v16a6,6,0,0,1-12,0V112a6,6,0,0,1,12,0Zm0,56v16a6,6,0,0,1-12,0V168a6,6,0,0,1,12,0Zm32,0v16a6,6,0,0,1-12,0V168a6,6,0,0,1,12,0Z"/></svg><span>Centros de costo</span></a></li><li><a href="#"  class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] text-ink-2 hover:text-ink hover:bg-paper-2/60">
+            <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,83.76l-56-56A6,6,0,0,0,152,26H56A14,14,0,0,0,42,40V216a14,14,0,0,0,14,14H200a14,14,0,0,0,14-14V88A6,6,0,0,0,212.24,83.76ZM158,46.48,193.52,82H158ZM200,218H56a2,2,0,0,1-2-2V40a2,2,0,0,1,2-2h90V88a6,6,0,0,0,6,6h50V216A2,2,0,0,1,200,218Zm-34-82a6,6,0,0,1-6,6H96a6,6,0,0,1,0-12h64A6,6,0,0,1,166,136Zm0,32a6,6,0,0,1-6,6H96a6,6,0,0,1,0-12h64A6,6,0,0,1,166,168Z"/></svg><span>Contratos</span></a></li><li><a href="#"  class="flex items-center gap-3 h-9 px-3 rounded-sm text-[14px] text-ink-2 hover:text-ink hover:bg-paper-2/60">
+            <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,202H214V40a6,6,0,0,0-6-6H152a6,6,0,0,0-6,6V82H96a6,6,0,0,0-6,6v42H48a6,6,0,0,0-6,6v66H32a6,6,0,0,0,0,12H224a6,6,0,0,0,0-12ZM158,46h44V202H158ZM102,94h44V202H102ZM54,142H90v60H54Z"/></svg><span>Reportes</span></a></li>
+      </ul>
+  </nav>
+</aside>
+  <div class="min-w-0 flex flex-col">
+    
+<header class="sticky top-0 z-20 bg-paper border-b border-rule">
+  <div class="h-[60px] px-4 md:px-10 flex items-center gap-2 md:gap-5">
+    <button class="lg:hidden size-9 -ml-1 grid place-items-center text-ink" aria-label="Abrir menú"><svg class="ic !size-6" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H40a6,6,0,0,1,0-12H216A6,6,0,0,1,222,128ZM40,70H216a6,6,0,0,0,0-12H40a6,6,0,0,0,0,12ZM216,186H40a6,6,0,0,0,0,12H216a6,6,0,0,0,0-12Z"/></svg></button>
+    <button class="inline-flex items-center gap-2 h-9 pl-3 pr-2 rounded-sm border border-rule bg-sheet hover:border-ink text-[13px] font-mono font-medium min-w-0" aria-label="Cambiar de espacio de trabajo">
+      <span class="size-2 rounded-full bg-forest flex-none"></span><span class="truncate">bruma-produccion</span><svg class="ic !size-4 text-ink-3" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M180.24,171.76a6,6,0,0,1,0,8.48l-48,48a6,6,0,0,1-8.48,0l-48-48a6,6,0,0,1,8.48-8.48L128,215.51l43.76-43.75A6,6,0,0,1,180.24,171.76Zm-96-87.52L128,40.49l43.76,43.75a6,6,0,0,0,8.48-8.48l-48-48a6,6,0,0,0-8.48,0l-48,48a6,6,0,0,0,8.48,8.48Z"/></svg>
+    </button>
+    <div class="flex-1"></div>
+    <button class="hidden md:flex items-center gap-3 h-9 w-[280px] px-3 rounded-sm border border-rule bg-sheet text-ink-3 text-[13px] hover:border-ink" aria-label="Buscar">
+      <svg class="ic !size-4" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.09,74.09,0,0,1,38,112Z"/></svg><span>Buscar</span><span class="ml-auto kbd">⌘K</span>
+    </button>
+    <button class="size-9 grid place-items-center text-ink-2 hover:text-ink" aria-label="Notificaciones"><svg class="ic !size-[1.3rem]" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M220.07,176.94C214.41,167.2,206,139.73,206,104a78,78,0,1,0-156,0c0,35.74-8.42,63.2-14.08,72.94A14,14,0,0,0,48,198H90.48a38,38,0,0,0,75,0H208a14,14,0,0,0,12.06-21.06ZM128,218a26,26,0,0,1-25.29-20h50.58A26,26,0,0,1,128,218Zm81.71-33a1.9,1.9,0,0,1-1.7,1H48a1.9,1.9,0,0,1-1.7-1,2,2,0,0,1,0-2C53.87,170,62,139.69,62,104a66,66,0,1,1,132,0c0,35.68,8.14,65.95,15.71,79A2,2,0,0,1,209.71,185Z"/></svg></button>
+    <button class="flex items-center gap-3 pl-1 md:pl-4 md:border-l border-rule h-9" aria-label="Menú de cuenta">
+      <span class="avatar bg-forest text-paper">MV</span>
+      <span class="hidden xl:block text-[13px] font-medium">Marcela Vidal</span>
+      <svg class="ic !size-4 text-ink-3 hidden md:block" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg>
+    </button>
+  </div>
+</header>
+    <main class="px-5 md:px-10 pt-8 md:pt-10 pb-16 w-full max-w-[1320px]">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div>
+      <p class="label">Organización</p>
+      <h1 class="serif text-[2.25rem] leading-[1.08] md:text-title mt-3 tracking-[-0.02em] font-light">Colaboradores</h1>
+      <p class="mt-3 text-ink-2"><span class="tnum">214</span> activos</p>
+    </div>
+    <div class="flex gap-2 flex-none"><button class="btn btn-ghost">Importar CSV</button><button class="btn btn-primary"><svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z"/></svg>Nuevo colaborador</button></div>
+  </div>
+
+  <nav class="mt-8 flex gap-6 border-b border-rule overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0" aria-label="Estado">
+    <a href="#" class="flex items-baseline gap-2 pb-3 -mb-px text-[14px] whitespace-nowrap font-medium border-b-2 border-ink">Todos<span class="tnum text-[12px] text-ink-2">223</span></a><a href="#" class="flex items-baseline gap-2 pb-3 -mb-px text-[14px] whitespace-nowrap text-ink-3 hover:text-ink">Activos<span class="tnum text-[12px] ">214</span></a><a href="#" class="flex items-baseline gap-2 pb-3 -mb-px text-[14px] whitespace-nowrap text-ink-3 hover:text-ink">En licencia<span class="tnum text-[12px] ">6</span></a><a href="#" class="flex items-baseline gap-2 pb-3 -mb-px text-[14px] whitespace-nowrap text-ink-3 hover:text-ink">Desvinculados<span class="tnum text-[12px] ">3</span></a>
+  </nav>
+
+  <div class="mt-5 flex flex-wrap items-center gap-2">
+    <label class="flex items-center gap-3 h-10 flex-1 min-w-[240px] md:max-w-[420px] px-3 rounded-sm border border-rule bg-sheet text-ink-3 focus-within:border-ink">
+      <svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.09,74.09,0,0,1,38,112Z"/></svg><input class="bg-transparent flex-1 min-w-0 text-[14px] text-ink placeholder:text-ink-3 outline-none" placeholder="Buscar nombre, RUT o cargo"><span class="kbd hidden md:inline">/</span>
+    </label>
+    <button class="hidden md:inline-flex items-center gap-2 h-10 px-3 rounded-sm border border-rule text-[13px] text-ink-2 hover:border-ink hover:text-ink">Centro de costo<svg class="ic !size-3.5" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg></button><button class="hidden md:inline-flex items-center gap-2 h-10 px-3 rounded-sm border border-rule text-[13px] text-ink-2 hover:border-ink hover:text-ink">Contrato<svg class="ic !size-3.5" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg></button><button class="hidden md:inline-flex items-center gap-2 h-10 px-3 rounded-sm border border-rule text-[13px] text-ink-2 hover:border-ink hover:text-ink">Cargo<svg class="ic !size-3.5" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg></button><button class="hidden md:inline-flex items-center gap-2 h-10 px-3 rounded-sm border border-rule text-[13px] text-ink-2 hover:border-ink hover:text-ink">Ingreso<svg class="ic !size-3.5" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg></button>
+    <div class="ml-auto flex gap-1"><button class="size-10 grid place-items-center text-ink-2 hover:text-ink" aria-label="Columnas"><svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M40,86H74.6a30,30,0,0,0,58.8,0H216a6,6,0,0,0,0-12H133.4a30,30,0,0,0-58.8,0H40a6,6,0,0,0,0,12Zm64-24A18,18,0,1,1,86,80,18,18,0,0,1,104,62ZM216,170H197.4a30,30,0,0,0-58.8,0H40a6,6,0,0,0,0,12h98.6a30,30,0,0,0,58.8,0H216a6,6,0,0,0,0-12Zm-48,24a18,18,0,1,1,18-18A18,18,0,0,1,168,194Z"/></svg></button><button class="size-10 grid place-items-center text-ink-2 hover:text-ink" aria-label="Ordenar"><svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M116.24,171.76a6,6,0,0,1,0,8.48l-32,32a6,6,0,0,1-8.48,0l-32-32a6,6,0,0,1,8.48-8.48L74,193.51V48a6,6,0,0,1,12,0V193.51l21.76-21.75A6,6,0,0,1,116.24,171.76Zm96-96-32-32a6,6,0,0,0-8.48,0l-32,32a6,6,0,0,0,8.48,8.48L170,62.49V208a6,6,0,0,0,12,0V62.49l21.76,21.75a6,6,0,0,0,8.48-8.48Z"/></svg></button></div>
+  </div>
+  <table class="ledger ledger-tight table-fixed md:table-auto mt-6">
+    <thead><tr>
+      <th class="!w-9 !pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar todos"></th>
+      <th>Colaborador</th><th class="hidden md:table-cell">RUT</th><th class="hidden lg:table-cell">Cargo</th><th class="hidden xl:table-cell">Centro de costo</th><th class="hidden lg:table-cell">Contrato</th><th class="r hidden md:table-cell">Sueldo base</th><th class="hidden md:table-cell">Estado</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Camila Andrade Rojas"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-moss text-forest">CA</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Camila Andrade Rojas</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">12.345.678-5</span><span class="hidden md:inline">camila.andrade@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-ok">Activo</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">12.345.678-5</td>
+        <td class="hidden lg:table-cell text-ink-2">Analista de Remuneraciones</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-100</span>Administración</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block ">Indefinido</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$1.250.000</td>
+        <td class="hidden md:table-cell"><span class="status status-ok">Activo</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Matías Fuentealba Soto"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-ochre-soft text-ochre">MF</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Matías Fuentealba Soto</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">16.482.905-7</span><span class="hidden md:inline">matias.fuentealba@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-ok">Activo</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">16.482.905-7</td>
+        <td class="hidden lg:table-cell text-ink-2">Ejecutivo Comercial Senior</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-210</span>Comercial</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block ">Indefinido</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$1.480.000</td>
+        <td class="hidden md:table-cell"><span class="status status-ok">Activo</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Javiera Palma Contreras"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-paper-2 text-ink-2">JP</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Javiera Palma Contreras</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">17.903.214-7</span><span class="hidden md:inline">javiera.palma@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-ok">Activo</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">17.903.214-7</td>
+        <td class="hidden lg:table-cell text-ink-2">Jefa de Operaciones</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-310</span>Operaciones</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block ">Indefinido</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$2.860.000</td>
+        <td class="hidden md:table-cell"><span class="status status-ok">Activo</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Sebastián Opazo Vera"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-brick-soft text-brick">SO</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Sebastián Opazo Vera</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">18.654.327-0</span><span class="hidden md:inline">sebastian.opazo@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-idle">De vacaciones</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">18.654.327-0</td>
+        <td class="hidden lg:table-cell text-ink-2">Desarrollador Backend</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-410</span>Tecnología</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block ">Indefinido</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$2.350.000</td>
+        <td class="hidden md:table-cell"><span class="status status-idle">De vacaciones</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Francisca Reyes Muñoz"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-moss text-forest">FR</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Francisca Reyes Muñoz</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">15.217.783-6</span><span class="hidden md:inline">francisca.reyes@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-ok">Activo</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">15.217.783-6</td>
+        <td class="hidden lg:table-cell text-ink-2">Contadora Senior</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-100</span>Administración</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block ">Indefinido</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$2.120.000</td>
+        <td class="hidden md:table-cell"><span class="status status-ok">Activo</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Ignacio Tapia Salazar"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-ochre-soft text-ochre">IT</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Ignacio Tapia Salazar</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">19.876.543-0</span><span class="hidden md:inline">ignacio.tapia@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-ok">Activo</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">19.876.543-0</td>
+        <td class="hidden lg:table-cell text-ink-2">Asistente de Bodega</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-510</span>Logística</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block font-medium text-ochre">Plazo fijo</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$612.000</td>
+        <td class="hidden md:table-cell"><span class="status status-ok">Activo</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Constanza Bravo Leiva"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-paper-2 text-ink-2">CB</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Constanza Bravo Leiva</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">17.110.928-0</span><span class="hidden md:inline">constanza.bravo@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-warn">Licencia médica</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">17.110.928-0</td>
+        <td class="hidden lg:table-cell text-ink-2">Diseñadora de Producto</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-410</span>Tecnología</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block ">Indefinido</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$1.980.000</td>
+        <td class="hidden md:table-cell"><span class="status status-warn">Licencia médica</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Valentina Henríquez Pizarro"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-brick-soft text-brick">VH</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Valentina Henríquez Pizarro</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">20.134.876-5</span><span class="hidden md:inline">valentina.henriquez@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-ok">Activo</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">20.134.876-5</td>
+        <td class="hidden lg:table-cell text-ink-2">Ejecutiva de Soporte</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-210</span>Comercial</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block font-medium text-ochre">Plazo fijo</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$780.000</td>
+        <td class="hidden md:table-cell"><span class="status status-ok">Activo</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Daniela Sepúlveda Cid"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-moss text-forest">DS</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Daniela Sepúlveda Cid</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">18.274.590-1</span><span class="hidden md:inline">daniela.sepulveda@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-ok">Activo</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">18.274.590-1</td>
+        <td class="hidden lg:table-cell text-ink-2">Coordinadora de RR.HH.</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-100</span>Administración</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block ">Indefinido</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$1.760.000</td>
+        <td class="hidden md:table-cell"><span class="status status-ok">Activo</span></td></tr><tr>
+        <td class="!pl-0"><input type="checkbox" class="size-4 accent-forest align-middle" aria-label="Seleccionar Felipe Carrasco Ibáñez"></td>
+        <td><div class="flex items-center gap-3 min-w-0"><span class="avatar bg-ochre-soft text-ochre">FC</span>
+          <span class="min-w-0 leading-tight"><span class="block font-medium truncate">Felipe Carrasco Ibáñez</span><span class="block text-[13px] text-ink-3 truncate"><span class="md:hidden">13.846.092-4</span><span class="hidden md:inline">felipe.carrasco@bruma.test</span></span><span class="md:hidden mt-1 block"><span class="status status-bad">Desvinculado</span></span></span></div></td>
+        <td class="hidden md:table-cell text-ink-2 whitespace-nowrap">13.846.092-4</td>
+        <td class="hidden lg:table-cell text-ink-2">Analista de Finanzas</td>
+        <td class="hidden xl:table-cell whitespace-nowrap"><span class="font-mono text-[12px] text-ink-3 mr-2">CC-100</span>Administración</td>
+        <td class="hidden lg:table-cell whitespace-nowrap"><span class="block font-medium text-ochre">Por obra</span></td>
+        <td class="r hidden md:table-cell whitespace-nowrap">$1.340.000</td>
+        <td class="hidden md:table-cell"><span class="status status-bad">Desvinculado</span></td></tr>
+    </tbody>
+  </table>
+  <div class="mt-4 flex items-center justify-between text-[13px] text-ink-2">
+    <p>Mostrando <span class="tnum">1–10</span> de <span class="tnum">223</span></p>
+    <div class="flex items-center gap-1 tnum">
+      <button class="size-9 grid place-items-center text-ink-3" aria-label="Anterior" disabled><svg class="ic !size-4 rotate-90" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg></button>
+      <span class="size-9 grid place-items-center font-medium border-b-2 border-ink">1</span><a href="#" class="size-9 grid place-items-center hover:bg-paper-2 rounded-sm">2</a><a href="#" class="size-9 grid place-items-center hover:bg-paper-2 rounded-sm">3</a><span class="px-1 text-ink-3">…</span><a href="#" class="size-9 grid place-items-center hover:bg-paper-2 rounded-sm">19</a>
+      <button class="size-9 grid place-items-center hover:text-ink" aria-label="Siguiente"><svg class="ic !size-4" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M180.24,132.24l-80,80a6,6,0,0,1-8.48-8.48L167.51,128,91.76,52.24a6,6,0,0,1,8.48-8.48l80,80A6,6,0,0,1,180.24,132.24Z"/></svg></button>
+    </div>
+  </div>
+</main>
+  </div>
+</div>
+</body></html>

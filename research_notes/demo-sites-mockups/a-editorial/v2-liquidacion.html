@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquidación octubre 2026 · Bruma Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300..700;1,400&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<style>html{background:#F3EEE3;color:#16140E}body{margin:0}</style>
+<style type="text/tailwindcss">
+@theme {
+  --color-paper: #F3EEE3;
+  --color-paper-2: #EAE3D3;
+  --color-sheet: #FBF8F1;
+  --color-ink: #16140E;
+  --color-ink-2: #454036;
+  --color-ink-3: #6E685C;
+  --color-rule: #D6CCB8;
+  --color-rule-2: #E4DCCB;
+  --color-forest: #1E4B38;
+  --color-forest-2: #2B6549;
+  --color-moss: #DAE4D3;
+  --color-ochre: #A85F12;
+  --color-ochre-soft: #F0DDB2;
+  --color-brick: #9A3626;
+  --color-brick-soft: #F1D9D0;
+  --font-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 1.2;
+  --text-title: 2.75rem;
+  --text-title--line-height: 1.04;
+  --text-fig: 2.75rem;
+  --text-fig--line-height: 1;
+  --text-fig-lg: 5.5rem;
+  --text-fig-lg--line-height: 0.95;
+}
+@layer base {
+  html { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body { font-size: 15px; line-height: 1.45; min-height: 100vh; }
+  ::selection { background: var(--color-moss); }
+  :focus-visible { outline: 2px solid var(--color-forest); outline-offset: 2px; border-radius: 2px; }
+  button { font: inherit; cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  a { color: inherit; text-decoration: none; }
+}
+@layer components {
+  .ic { width: 1.125rem; height: 1.125rem; flex: none; }
+  .label { font-size: .6875rem; line-height: 1rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 500; color: var(--color-ink-3); }
+  .fig { font-family: var(--font-serif); font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum", "lnum"; letter-spacing: -.02em; font-weight: 350; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .serif { font-family: var(--font-serif); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; height: 2.5rem; padding: 0 1.1rem; border-radius: var(--radius-sm); font-size: .875rem; font-weight: 500; white-space: nowrap; transition: background-color .15s, color .15s, border-color .15s, transform .1s; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--color-ink); color: var(--color-paper); }
+  .btn-primary:hover { background: var(--color-forest); }
+  .btn-ghost { border: 1px solid var(--color-ink); color: var(--color-ink); }
+  .btn-ghost:hover { background: var(--color-ink); color: var(--color-paper); }
+  .link { background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat; padding-bottom: 1px; transition: background-size .2s; }
+  .link:hover { background-size: 0 1px; }
+  .status { display: inline-flex; align-items: center; gap: .5rem; font-size: .8125rem; font-weight: 500; white-space: nowrap; }
+  .status::before { content: ""; width: .5rem; height: .5rem; border-radius: 99px; background: currentColor; }
+  .status-ok { color: var(--color-forest); }
+  .status-warn { color: var(--color-ochre); }
+  .status-bad { color: var(--color-brick); }
+  .status-idle { color: var(--color-ink-3); }
+  .status-idle::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+  .ledger { width: 100%; border-collapse: collapse; }
+  .ledger thead th { text-align: left; padding: .6rem .75rem; font-size: .6875rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 500; color: var(--color-ink-3); border-top: 3px double var(--color-ink); border-bottom: 1px solid var(--color-ink); white-space: nowrap; }
+  .ledger tbody td { padding: .85rem .75rem; border-bottom: 1px solid var(--color-rule); vertical-align: middle; font-variant-numeric: tabular-nums; }
+  .ledger tbody tr:hover td { background: var(--color-sheet); }
+  .ledger .r { text-align: right; }
+  .ledger-tight thead th, .ledger-tight tbody td { padding-left: .5rem; padding-right: .5rem; }
+  .ledger tr > :first-child { padding-left: 0; }
+  .ledger tr > :last-child { padding-right: 0; }
+  .avatar { width: 2rem; height: 2rem; border-radius: 99px; display: inline-grid; place-items: center; font-size: .6875rem; font-weight: 600; letter-spacing: .03em; flex: none; }
+  .tag { display: inline-flex; align-items: center; height: 1.25rem; padding: 0 .45rem; border-radius: var(--radius-xs); font-size: .6875rem; font-weight: 500; letter-spacing: .02em; }
+  .field { display: block; width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--color-ink); padding: .6rem 0; font-size: 1rem; color: var(--color-ink); border-radius: 0; }
+  .field::placeholder { color: color-mix(in srgb, var(--color-ink-3) 75%, transparent); }
+  .field:focus { outline: none; border-bottom-color: var(--color-forest); box-shadow: 0 1px 0 0 var(--color-forest); }
+  .kbd { font-family: var(--font-sans); font-size: .6875rem; font-weight: 500; padding: .1rem .35rem; border: 1px solid var(--color-rule); border-radius: var(--radius-xs); color: var(--color-ink-3); background: var(--color-sheet); }
+}
+</style>
+</head>
+<body class="bg-paper text-ink">
+
+<div class="bg-ochre-soft border-b border-ochre/30 text-[12px] text-ink" role="status">
+  <div class="mx-auto max-w-[1180px] px-5 md:px-10 h-8 flex items-center">
+    <span class="inline-flex items-center gap-2 h-6 px-3 rounded-full bg-ochre-soft border border-ochre/40 font-medium"><span class="size-1.5 rounded-full bg-ochre"></span>Entorno de pruebas</span>
+  </div>
+</div>
+<header class="border-b border-rule">
+  <div class="mx-auto max-w-[1180px] px-5 md:px-10 h-16 flex items-center gap-10">
+    <a href="v1-inicio.html">
+  <span class="inline-flex items-center gap-2.5">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#1E4B38"/><circle cx="16" cy="13.5" r="7" fill="#F3EEE3"/><rect x="7" y="14.6" width="18" height="1.5" fill="#1E4B38"/><rect x="7" y="17.9" width="18" height="1.5" fill="#1E4B38"/><rect x="8" y="23.6" width="16" height="1.8" rx=".9" fill="#F3EEE3" opacity=".55"/></svg>
+    <span class="font-serif text-[1.5rem] leading-none font-medium tracking-tight text-ink">Bruma</span>
+    <span class="label  pt-0.5">Portal</span>
+  </span></a>
+    <nav class="hidden md:flex items-stretch gap-7 h-full text-[14px]" aria-label="Principal">
+      <a href="v1-inicio.html"  class="flex items-center border-b-2 border-transparent text-ink-2 hover:text-ink">Inicio</a><a href="v2-liquidacion.html" aria-current="page" class="flex items-center border-b-2 border-forest font-medium">Liquidaciones</a><a href="#"  class="flex items-center border-b-2 border-transparent text-ink-2 hover:text-ink">Vacaciones</a><a href="#"  class="flex items-center border-b-2 border-transparent text-ink-2 hover:text-ink">Documentos</a><a href="#"  class="flex items-center border-b-2 border-transparent text-ink-2 hover:text-ink">Mis datos</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-4">
+      <button class="relative size-9 grid place-items-center text-ink-2 hover:text-ink" aria-label="Avisos"><svg class="ic !size-[1.3rem]" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M220.07,176.94C214.41,167.2,206,139.73,206,104a78,78,0,1,0-156,0c0,35.74-8.42,63.2-14.08,72.94A14,14,0,0,0,48,198H90.48a38,38,0,0,0,75,0H208a14,14,0,0,0,12.06-21.06ZM128,218a26,26,0,0,1-25.29-20h50.58A26,26,0,0,1,128,218Zm81.71-33a1.9,1.9,0,0,1-1.7,1H48a1.9,1.9,0,0,1-1.7-1,2,2,0,0,1,0-2C53.87,170,62,139.69,62,104a66,66,0,1,1,132,0c0,35.68,8.14,65.95,15.71,79A2,2,0,0,1,209.71,185Z"/></svg></button>
+      <button class="flex items-center gap-3" aria-label="Menú de cuenta"><span class="avatar bg-moss text-forest">CA</span><span class="hidden sm:block text-left leading-tight"><span class="block text-[13px] font-medium">Camila Andrade</span><span class="block text-[12px] text-ink-3">Colaboradora</span></span><svg class="ic !size-4 text-ink-3 hidden sm:block" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg></button>
+    </div>
+  </div>
+  <nav class="md:hidden flex gap-6 overflow-x-auto px-5 text-[14px] border-t border-rule-2" aria-label="Principal móvil">
+    <a href="v1-inicio.html" class="py-3 -mb-px whitespace-nowrap border-b-2 border-transparent text-ink-2">Inicio</a><a href="v2-liquidacion.html" class="py-3 -mb-px whitespace-nowrap border-b-2 border-forest font-medium">Liquidaciones</a><a href="#" class="py-3 -mb-px whitespace-nowrap border-b-2 border-transparent text-ink-2">Vacaciones</a><a href="#" class="py-3 -mb-px whitespace-nowrap border-b-2 border-transparent text-ink-2">Documentos</a><a href="#" class="py-3 -mb-px whitespace-nowrap border-b-2 border-transparent text-ink-2">Mis datos</a>
+  </nav>
+</header>
+<main class="mx-auto max-w-[1180px] px-5 md:px-10 pt-9 md:pt-12 pb-20">
+  <div class="flex items-center justify-between gap-4 text-[13px] text-ink-3">
+    <p class="whitespace-nowrap"><a href="#" class="link">Liquidaciones</a> <span class="mx-1.5">/</span> <span class="text-ink">Octubre 2026</span></p>
+    <p class="flex items-center gap-5 whitespace-nowrap"><a href="#" class="inline-flex items-center gap-1.5 hover:text-ink"><svg class="ic !size-3.5 rotate-90" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M212.24,100.24l-80,80a6,6,0,0,1-8.48,0l-80-80a6,6,0,0,1,8.48-8.48L128,167.51l75.76-75.75a6,6,0,0,1,8.48,8.48Z"/></svg><span class="hidden sm:inline">Septiembre</span></a><span class="inline-flex items-center gap-1.5 opacity-50"><span class="hidden sm:inline">Noviembre</span><svg class="ic !size-3.5" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M180.24,132.24l-80,80a6,6,0,0,1-8.48-8.48L167.51,128,91.76,52.24a6,6,0,0,1,8.48-8.48l80,80A6,6,0,0,1,180.24,132.24Z"/></svg></span></p>
+  </div>
+
+  <div class="mt-5 flex flex-wrap items-end justify-between gap-5">
+    <div>
+      <p class="label">Liquidación de sueldo</p>
+      <h1 class="serif text-[3rem] md:text-[4rem] leading-[.95] tracking-[-0.03em] font-light mt-2">Octubre <em class="text-forest">2026</em></h1>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-ghost"><svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M214.67,74H198V40a6,6,0,0,0-6-6H64a6,6,0,0,0-6,6V74H41.33C28.47,74,18,83.87,18,96v80a6,6,0,0,0,6,6H58v34a6,6,0,0,0,6,6H192a6,6,0,0,0,6-6V182h34a6,6,0,0,0,6-6V96C238,83.87,227.53,74,214.67,74ZM70,46H186V74H70ZM186,210H70V158H186Zm40-40H198V152a6,6,0,0,0-6-6H64a6,6,0,0,0-6,6v18H30V96c0-5.51,5.08-10,11.33-10H214.67C220.92,86,226,90.49,226,96Zm-28-54a10,10,0,1,1-10-10A10,10,0,0,1,198,116Z"/></svg>Imprimir</button>
+      <button class="btn btn-primary"><svg class="ic " viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M222,144v64a6,6,0,0,1-6,6H40a6,6,0,0,1-6-6V144a6,6,0,0,1,12,0v58H210V144a6,6,0,0,1,12,0Zm-98.24,4.24a6,6,0,0,0,8.48,0l40-40a6,6,0,0,0-8.48-8.48L134,129.51V32a6,6,0,0,0-12,0v97.51L92.24,99.76a6,6,0,0,0-8.48,8.48Z"/></svg>Descargar PDF</button>
+    </div>
+  </div>
+
+  <section class="mt-8 grid md:grid-cols-[1fr_1fr_1.75fr] border-t border-ink" aria-label="Resumen">
+    <div class="py-5 md:pr-6 border-b md:border-b-0 border-rule"><p class="label">Total haberes</p><p class="fig text-[2rem] md:text-[2.25rem] leading-none mt-3 whitespace-nowrap">$1.730.354</p></div>
+    <div class="py-5 md:px-6 md:border-l border-rule border-b md:border-b-0"><p class="label">Total descuentos</p><p class="fig text-[2rem] md:text-[2.25rem] leading-none mt-3 whitespace-nowrap">−$365.107</p></div>
+    <div class="py-5 md:pl-8 md:border-l border-rule"><p class="label !text-forest">Sueldo líquido</p><p class="fig text-[3.5rem] md:text-[4.5rem] leading-none mt-3 text-forest whitespace-nowrap">$1.365.247</p></div>
+  </section>
+
+  <dl class="grid grid-cols-2 lg:grid-cols-[1.3fr_.8fr_1.5fr_.8fr_.9fr] gap-y-4 border-y border-rule py-4 text-[14px]">
+    
+    <div class=""><dt class="label">Colaboradora</dt><dd class="mt-1 font-medium">Camila Andrade Rojas</dd></div>
+    <div class=""><dt class="label">RUT</dt><dd class="mt-1 font-medium">12.345.678-5</dd></div>
+    <div class="col-span-2 lg:col-span-1"><dt class="label">Cargo · centro de costo</dt><dd class="mt-1 font-medium">Analista de Remuneraciones · CC-100</dd></div>
+    <div class=""><dt class="label">Días trabajados</dt><dd class="mt-1 font-medium">30 de 31</dd></div>
+    <div class=""><dt class="label">Fecha de pago</dt><dd class="mt-1 font-medium">30 oct 2026</dd></div>
+  </dl>
+
+  <div class="mt-10 grid md:grid-cols-2 gap-x-16 gap-y-10">
+    <section aria-labelledby="h-haberes">
+      <h2 id="h-haberes" class="serif text-heading font-normal mb-4">Haberes</h2>
+      <div class="mt-7 first:mt-0"><p class="label pb-2 border-b border-ink">Imponibles</p><dl>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Sueldo base</dt>
+    <dd class="tnum whitespace-nowrap ">$1.250.000</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Gratificación legal</dt>
+    <dd class="tnum whitespace-nowrap ">$213.354</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Bono de desempeño</dt>
+    <dd class="tnum whitespace-nowrap ">$120.000</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-ink">
+    <dt class="font-medium">Subtotal imponible</dt>
+    <dd class="tnum whitespace-nowrap font-semibold">$1.583.354</dd>
+  </div></dl></div>
+      <div class="mt-7 first:mt-0"><p class="label pb-2 border-b border-ink">No imponibles</p><dl>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Asignación de colación</dt>
+    <dd class="tnum whitespace-nowrap ">$85.000</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Asignación de movilización</dt>
+    <dd class="tnum whitespace-nowrap ">$62.000</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-ink">
+    <dt class="font-medium">Subtotal no imponible</dt>
+    <dd class="tnum whitespace-nowrap font-semibold">$147.000</dd>
+  </div></dl></div>
+      <div class="mt-5 flex items-baseline justify-between"><span class="label !text-ink">Total haberes</span><span class="fig text-[1.5rem]">$1.730.354</span></div>
+    </section>
+    <section aria-labelledby="h-desc">
+      <h2 id="h-desc" class="serif text-heading font-normal mb-4">Descuentos</h2>
+      <div class="mt-7 first:mt-0"><p class="label pb-2 border-b border-ink">Legales</p><dl>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">AFP</dt>
+    <dd class="tnum whitespace-nowrap ">−$158.335</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">AFP · comisión</dt>
+    <dd class="tnum whitespace-nowrap ">−$22.800</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Fonasa</dt>
+    <dd class="tnum whitespace-nowrap ">−$110.835</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Seguro de cesantía</dt>
+    <dd class="tnum whitespace-nowrap ">−$9.500</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Impuesto único de segunda categoría</dt>
+    <dd class="tnum whitespace-nowrap ">−$13.637</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-ink">
+    <dt class="font-medium">Subtotal legales</dt>
+    <dd class="tnum whitespace-nowrap font-semibold">−$315.107</dd>
+  </div></dl></div>
+      <div class="mt-7 first:mt-0"><p class="label pb-2 border-b border-ink">Otros</p><dl>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-rule">
+    <dt class="text-ink-2">Ahorro previsional voluntario (APV)</dt>
+    <dd class="tnum whitespace-nowrap ">−$50.000</dd>
+  </div>
+  <div class="flex items-baseline justify-between gap-6 py-2.5 border-b border-ink">
+    <dt class="font-medium">Subtotal otros</dt>
+    <dd class="tnum whitespace-nowrap font-semibold">−$50.000</dd>
+  </div></dl></div>
+      <div class="mt-5 flex items-baseline justify-between"><span class="label !text-ink">Total descuentos</span><span class="fig text-[1.5rem]">−$365.107</span></div>
+    </section>
+  </div>
+
+  <section class="mt-12 pt-6 border-t-[3px] border-double border-ink grid md:grid-cols-[1fr_auto] gap-x-16 gap-y-3 items-start" aria-label="Pago">
+    <p class="md:text-right text-[14px] text-ink-2 md:pt-6">Transferido el 30 de octubre de 2026<br>a la cuenta vista ···· 4821.</p>
+  </section>
+</main>
+</body></html>
