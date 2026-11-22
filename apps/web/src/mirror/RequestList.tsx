@@ -1,7 +1,7 @@
 /**
  * Every request of a caught agent that Sentinel sends, newest first, in a fixed-height box that
  * scrolls smoothly. Only the visible rows are in the page (virtualized), so 200 rows cost the same as 10.
- * Interface: `<RequestList actions={detail.actions} />`.
+ * Interface: `<RequestList actions={detail.actions} answered? />`; `answered` names who answered (default the fake copy).
  * Paths, queries and bodies are attacker controlled; React renders them as text only.
  */
 import { memo, useCallback, useRef, useState } from "react";
@@ -13,7 +13,7 @@ import { numEs } from "./moments";
 const ROW = 44;
 const statusClass = (status: number) => (status >= 500 ? "s5" : status >= 400 ? "s4" : status >= 300 ? "s3" : "s2");
 
-const RequestRow = memo(function RequestRow({ a, open, onToggle }: { a: TrackAction; open: boolean; onToggle: (id: string) => void }) {
+const RequestRow = memo(function RequestRow({ a, open, onToggle, answered }: { a: TrackAction; open: boolean; onToggle: (id: string) => void; answered: string }) {
   return (
     <>
       <button type="button" className="rl-row" aria-expanded={open} onClick={() => onToggle(a.eventId)}>
@@ -30,7 +30,7 @@ const RequestRow = memo(function RequestRow({ a, open, onToggle }: { a: TrackAct
             <pre>{a.requestBody || "(vacío)"}</pre>
           </div>
           <div>
-            <div className="cap">Lo que respondió la copia falsa</div>
+            <div className="cap">{answered}</div>
             <pre>{a.responseBody || "(vacío)"}</pre>
           </div>
         </div>
@@ -39,7 +39,7 @@ const RequestRow = memo(function RequestRow({ a, open, onToggle }: { a: TrackAct
   );
 });
 
-export function RequestList({ actions }: { actions: TrackAction[] }) {
+export function RequestList({ actions, answered = "Lo que respondió la copia falsa" }: { actions: TrackAction[]; answered?: string }) {
   const box = useRef<HTMLDivElement>(null);
   // Open rows are kept here: a virtualized row unmounts when it scrolls away.
   const [openIds, setOpenIds] = useState<ReadonlySet<string>>(new Set());
@@ -60,7 +60,7 @@ export function RequestList({ actions }: { actions: TrackAction[] }) {
     overscan: 8,
   });
   return (
-    <section className="rl" aria-label="Solicitudes en la copia falsa">
+    <section className="rl" aria-label="Solicitudes del agente">
       <h3 className="rl-h">
         Solicitudes <span className="dim tnum">{numEs(actions.length)}</span>
       </h3>
@@ -73,7 +73,7 @@ export function RequestList({ actions }: { actions: TrackAction[] }) {
               ref={v.measureElement}
               style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${item.start}px)` }}
             >
-              <RequestRow a={actions[item.index]!} open={openIds.has(actions[item.index]!.eventId)} onToggle={toggle} />
+              <RequestRow a={actions[item.index]!} open={openIds.has(actions[item.index]!.eventId)} onToggle={toggle} answered={answered} />
             </div>
           ))}
         </div>

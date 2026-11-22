@@ -1,6 +1,7 @@
 /**
- * The attack path of one caught agent as a small graph (React Flow): agent -> Sentinel -> fake copy,
- * with the path to the real shop blocked. Interface: `<AttackGraph track moment shot decoys />`.
+ * The attack path of one caught agent as a small graph (React Flow): agent -> Centinela -> fake copy,
+ * with the path to the real shop blocked. Interface: `<AttackGraph track moment shot decoys story? />`.
+ * A lab agent passes `story`: agent -> Centinela -> the service, with the proof held back.
  * Each time `shot` changes, up to 5 requests travel to the fake copy and back (Motion), coloured by
  * what the agent got. Strings from the track render as text only.
  */
@@ -21,6 +22,7 @@ import {
 import { animate } from "motion";
 import { LockSimple, Robot, ShieldCheck, Storefront } from "@phosphor-icons/react";
 import type { Track } from "@sentinel/contracts";
+import type { GraphStory } from "../experiments/labTrack";
 import { cn } from "../ui";
 import { agentName, disguises, numEs, type Moment, type MomentKind } from "./moments";
 import "@xyflow/react/dist/style.css";
@@ -35,10 +37,10 @@ const reducedMotion = () => typeof matchMedia === "function" && matchMedia("(pre
 
 /* ------------------------------ nodes ------------------------------ */
 
-type CardData = { icon: "agent" | "sentinel" | "decoy" | "real"; title: string; sub: string; mono?: boolean; shot?: number };
+type CardData = { icon: "agent" | "sentinel" | "decoy" | "real" | "service" | "proof"; title: string; sub: string; mono?: boolean; shot?: number };
 type CardNode = Node<CardData, "card">;
 
-const ICONS = { agent: Robot, sentinel: ShieldCheck, decoy: Storefront, real: LockSimple };
+const ICONS = { agent: Robot, sentinel: ShieldCheck, decoy: Storefront, real: LockSimple, service: Storefront, proof: LockSimple };
 
 const CardNodeView = memo(function CardNodeView({ data }: NodeProps<CardNode>) {
   const Icon = ICONS[data.icon];
@@ -155,16 +157,28 @@ function FitOnResize() {
 const nodeTypes = { card: CardNodeView };
 const edgeTypes = { packet: PacketEdge, blocked: BlockedEdge };
 
-export function AttackGraph({ track, moment, shot, decoys }: { track: Track; moment: Moment | undefined; shot: number; decoys: number }) {
-  const disguise = disguises(track);
+/** The caught-agent story: Centinela sends the agent to a fake copy and keeps it off the real shop. */
+function mirrorStory(track: Track, decoys: number): GraphStory {
+  return {
+    label: "Ruta del ataque: el agente pasa por Centinela a la copia falsa; la tienda real está bloqueada.",
+    agent: { title: agentName(track.userAgent), sub: disguises(track) || "Agente atrapado" },
+    sentinel: { title: "Centinela", sub: "lo desvió" },
+    top: { icon: "decoy", title: "Copia falsa", sub: `${numEs(decoys)} respuestas falsas` },
+    bottom: { icon: "real", title: "Tienda real", sub: "0 visitas desde la captura" },
+  };
+}
+
+export function AttackGraph({ track, moment, shot, decoys, story }: { track: Track; moment: Moment | undefined; shot: number; decoys: number; story?: GraphStory }) {
+  const s = story ?? mirrorStory(track, decoys);
   const nodes = useMemo<CardNode[]>(
     () => [
-      { id: "agent", type: "card", position: { x: 0, y: 60 }, data: { icon: "agent", title: agentName(track.userAgent), sub: disguise || "Agente atrapado" } },
-      { id: "sentinel", type: "card", position: { x: 250, y: 60 }, data: { icon: "sentinel", title: "Reaper", sub: "lo desvió" } },
-      { id: "decoy", type: "card", position: { x: 500, y: 0 }, data: { icon: "decoy", title: "Copia falsa", sub: `${numEs(decoys)} respuestas falsas`, shot } },
-      { id: "real", type: "card", position: { x: 500, y: 125 }, data: { icon: "real", title: "Tienda real", sub: "0 visitas desde la captura" } },
+      { id: "agent", type: "card", position: { x: 0, y: 60 }, data: { icon: "agent", ...s.agent } },
+      { id: "sentinel", type: "card", position: { x: 250, y: 60 }, data: { icon: "sentinel", ...s.sentinel } },
+      { id: "decoy", type: "card", position: { x: 500, y: 0 }, data: { ...s.top, shot } },
+      { id: "real", type: "card", position: { x: 500, y: 125 }, data: s.bottom },
     ],
-    [track.userAgent, disguise, decoys, shot],
+    // The story is rebuilt each render; its words are what can change.
+    [s.agent.title, s.agent.sub, s.sentinel.sub, s.top.icon, s.top.title, s.top.sub, s.bottom.icon, s.bottom.title, s.bottom.sub, shot],
   );
   const back = moment ? KIND_COLOR[moment.kind] : "var(--color-text)";
   const count = moment?.count ?? 0;
@@ -177,7 +191,7 @@ export function AttackGraph({ track, moment, shot, decoys }: { track: Track; mom
     [shot, count, back],
   );
   return (
-    <div className="ag" role="img" aria-label="Ruta del ataque: el agente pasa por Sentinel a la copia falsa; la tienda real está bloqueada.">
+    <div className="ag" role="img" aria-label={s.label}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

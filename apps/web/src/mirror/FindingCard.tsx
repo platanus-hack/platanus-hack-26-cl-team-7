@@ -2,7 +2,8 @@
  * One confirmed vulnerability: severity, name, endpoint, weak point, and the trace from the catch to
  * the proof as a log, always open, and whether Sentinel already keeps the attack out of the real shop.
  * "Preguntar a la IA" asks the copilot about it.
- * Interface: `<FindingCard f track moments active />`.
+ * Interface: `<FindingCard f track moments active lab? />`. A lab finding passes `lab`: its weakness, whether the
+ * proof stayed behind, and the A/B steps that measured it, named after its project.
  * Request lines and evidence are attacker controlled; React renders them as text only.
  */
 import type { Finding, Track } from "@sentinel/contracts";
@@ -11,14 +12,15 @@ import { Orb, cn } from "../ui";
 import { useState } from "react";
 import { CaretDown, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { agentName, chainTo, contained, vulnOf, type Moment, type Step, type Vuln } from "./moments";
+import type { LabFinding } from "../experiments/labTrack";
 
 /** The finding as plain text, for the copilot question. */
-export function findingText(f: Finding, track: Track, v: Vuln, steps: Step[]): string {
+export function findingText(f: Finding, track: Track, v: Vuln, steps: Step[], agent = agentName(track.userAgent)): string {
   const lines = [
     `${v.severity.toUpperCase()} · ${v.name}`,
     `Endpoint: ${f.endpoint}`,
     `Punto débil: ${v.gap}`,
-    `Agente: ${agentName(track.userAgent)}`,
+    `Agente: ${agent}`,
     `Confirmada: ${new Date(f.ts).toISOString()}`,
     "",
     "Traza:",
@@ -48,9 +50,12 @@ function AskCopilot({ text }: { text: string }) {
   );
 }
 
-export function FindingCard({ f, track, moments, active }: { f: Finding; track: Track; moments: Moment[]; active: boolean }) {
-  const v = vulnOf(f);
-  const steps = chainTo(track, moments, f.findingId);
+export function FindingCard({ f, track, moments, active, lab }: {
+  f: Finding; track: Track; moments: Moment[]; active: boolean; lab?: LabFinding & { agent: string };
+}) {
+  const v = lab?.vuln ?? vulnOf(f);
+  const steps = lab?.steps ?? chainTo(track, moments, f.findingId);
+  const ok = lab ? lab.ok : contained(f);
   const [open, setOpen] = useState(false);
   return (
     <article className={cn("vc", v.severity === "Crítica" ? "crit" : "high", active && "on")} aria-label={`${v.severity}: ${v.name} en ${f.endpoint}`}>
@@ -60,15 +65,15 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
             <i aria-hidden />
             {v.severity}
           </span>
-          {contained(f) ? (
+          {ok ? (
             <span className="vc-state ok">
               <CheckCircle size={14} weight="fill" aria-hidden />
-              Neutralizada
+              {lab?.state ?? "Neutralizada"}
             </span>
           ) : (
             <span className="vc-state">
               <WarningCircle size={14} weight="fill" aria-hidden />
-              Sin contener
+              {lab?.state ?? "Sin contener"}
             </span>
           )}
         </div>
@@ -85,7 +90,7 @@ export function FindingCard({ f, track, moments, active }: { f: Finding; track: 
         ) : (
           <span />
         )}
-        <AskCopilot text={findingText(f, track, v, steps)} />
+        <AskCopilot text={findingText(f, track, v, steps, lab?.agent)} />
       </div>
       {open && steps.length > 0 && (
         <ol className="log">

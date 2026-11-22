@@ -27,12 +27,17 @@ bash scripts/stack_local.sh stop
 
 ## Sentinel evidence demo
 
-From the repository root, run `pnpm start` and open **Demo de evidencia** in Sentinel. The
-recorded mock-bank A/B and the synthetic detector replay have separate run IDs. The replay
-works without a proxy, a target service, or any provider credentials.
+From the repository root, run `pnpm start` and open Sentinel. It opens on **Actividad**: every
+vulnerability from caught agents and from the latest A/B run, and the agents of that run under
+**Agentes de prueba**. A lab agent opens with the same replay, attack graph and finding cards as a
+caught agent, built from the run's measured fixtures. **Ver la prueba completa** opens the run in
+**Pruebas y replays**, and **Ver el recorrido** there goes back to the agent. While a run is in
+progress, its agents update live.
 
-Sentinel opens on **Experimentos** with a saved run. Select a project to see its outcome,
-compare the two connected paths, or start an independent run with **Ejecutar proyecto A/B**.
+**Pruebas y replays** also holds the recorded mock-bank A/B and the synthetic detector replay
+(**Mock bank · Replay de referencia**), which work without a proxy, a target service, or any
+provider credentials. Select a project to see its outcome, compare the two connected paths, or
+start an independent run with **Ejecutar proyecto A/B**.
 Use **Ejecutar todos** for the full suite. On macOS, start the existing VM with `limactl start espejismo`.
 The VM needs Python 3, Go, a running Docker engine, and `envoyproxy/envoy:v1.36.2`. On
 Linux those dependencies run directly on the host. Sentinel needs a loopback bind for

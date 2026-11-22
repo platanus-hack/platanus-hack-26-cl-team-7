@@ -5,7 +5,7 @@ export type ExperimentProject = z.infer<typeof ExperimentProject>;
 export const experimentNames = { bruma: "Bruma Remuneraciones", litoral: "Litoral Freight", surco: "Surco Rooms", bank: "Banco Estero" } as const;
 const arm = z.enum(["A", "B"]);
 const natural = z.int().nonnegative();
-const receipt = z.object({ trace: z.string(), requestId: z.string().optional(), status: natural,
+const receipt = z.object({ trace: z.string(), requestId: z.string().optional(), path: z.string().max(256).optional(), status: natural,
   hits: natural, evidence: z.boolean(), detected: z.boolean().nullable(), decision: z.string().nullable(), rule: z.string().nullable(),
   operationId: z.string().nullable().optional(),
   approval: z.object({ requestedVersion: natural, approvedVersion: natural.nullable(), eligible: z.boolean() }).optional() });

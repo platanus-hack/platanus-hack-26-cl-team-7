@@ -130,7 +130,7 @@ function Evaluation({ result, openEvidence }: { result: EvidenceDemoEvaluation; 
   );
 }
 
-export function EvidenceDemo() {
+export function EvidenceDemo({ embedded = false }: { embedded?: boolean }) {
   const [bundle, setBundle] = useState<EvidenceDemoBundle>();
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -173,9 +173,9 @@ export function EvidenceDemo() {
     }
   }
   return (
-    <main className="ed-main" aria-labelledby="evidence-demo-title">
+    <section className={embedded ? "ed-embedded" : "ed-main"} aria-labelledby="evidence-demo-title">
       <div className="ed-content">
-        <h1 id="evidence-demo-title">Evidencia de mock bank</h1>
+        <h2 id="evidence-demo-title">Evidencia de mock bank</h2>
         {failed && <p role="alert">No se pudo cargar el replay. <button type="button" className="ed-button" onClick={() => { setFailed(false); setRetry(retry + 1); }}>Reintentar</button></p>}
         {!bundle && !failed && <p role="status">Cargando replay…</p>}
         {bundle && <>
@@ -189,6 +189,6 @@ export function EvidenceDemo() {
           {view === "bank" ? <RecordedEvidence run={bundle.runs[0]} /> : <DetectorEvidence run={evaluation?.detector ?? bundle.runs[1]} />}
         </>}
       </div>
-    </main>
+    </section>
   );
 }

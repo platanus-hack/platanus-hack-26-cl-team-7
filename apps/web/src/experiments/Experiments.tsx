@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { ExperimentEntry, ExperimentProject, ExperimentRun, experimentNames, type ExperimentDetail } from "@sentinel/contracts";
 import { api } from "../sentinel";
+import { EvidenceDemo } from "../evidence-demo/EvidenceDemo";
 import { ProjectEvidence } from "./ProjectEvidence";
+import { useLab } from "./lab";
 import "./experiments.css";
 
 const runLabel = { running: "En vivo", completed: "Completa", failed: "Con fallos", interrupted: "Interrumpida" } as const;
 const summaries = { stage: "Etapa", inputs: "Entradas", control: "Tráfico legítimo", fixture: "Fixture", baseline: "Resultado grabado", research: "Investigación", feedback: "Decisión del modelo" } as const;
 const initial = (key: string) => new URLSearchParams(window.location.search).get(key);
+const mockBank = "mock-bank-replay";
 
 function exportRun(detail: ExperimentDetail) {
   const url = URL.createObjectURL(new Blob([JSON.stringify(detail, null, 2)], { type: "application/json" }));
@@ -17,9 +20,10 @@ function exportRun(detail: ExperimentDetail) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function Experiments() {
+/** `openAgent` shows a project's run as its agent, with the replay, in the activity. */
+export function Experiments({ openAgent }: { openAgent: (runId: string, project: ExperimentProject) => void }) {
   const [runs, setRuns] = useState<ExperimentRun[]>([]);
-  const [selected, setSelected] = useState(() => initial("run") ?? "");
+  const [selected, setSelected] = useState(() => initial("view") === "evidence" ? mockBank : initial("run") ?? "");
   const [replay, setReplay] = useState(() => initial("replay") === "1");
   const [focus, setFocus] = useState(() => ExperimentProject.safeParse(initial("project")).data);
   const [detail, setDetail] = useState<ExperimentDetail>();
@@ -39,6 +43,7 @@ export function Experiments() {
     setFocus(project);
     setError("");
     const url = new URL(window.location.href);
+    url.searchParams.set("view", "experiments");
     url.searchParams.set("run", id);
     if (project) url.searchParams.set("project", project); else url.searchParams.delete("project");
     if (reproducing) url.searchParams.set("replay", "1"); else url.searchParams.delete("replay");
@@ -57,6 +62,7 @@ export function Experiments() {
     const load = () => void api.experiments(controller.signal).then(({ items }) => {
       if (controller.signal.aborted) return;
       setRuns(items);
+      if (desired.current === mockBank) return;
       if (!desired.current || !items.some((item) => item.id === desired.current)) {
         const defaultRun = items.find((item) => item.status === "running")
           ?? items.find((item) => item.mode === "live" && !item.project)
@@ -74,7 +80,7 @@ export function Experiments() {
   }, []);
 
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || selected === mockBank) return;
     const controller = new AbortController();
     let stream: EventSource | undefined;
     void api.experiment(selected, controller.signal).then((result) => {
@@ -113,6 +119,7 @@ export function Experiments() {
     setError("");
     try {
       const { id } = await api.startExperiment(project);
+      useLab.getState().refresh();
       select(id, false, project);
       setRuns((items) => [{ id, mode: "live", status: "running", started: null, finished: null, source: null, error: null, project }, ...items]);
     } catch (reason) {
@@ -128,10 +135,11 @@ export function Experiments() {
   const project = focus ?? projects[0] ?? "bruma";
   const isLive = starting || runs.some((run) => run.status === "running");
   const journal = visible.filter(({ event }) => !("project" in event) || event.project === project);
-  return <main className="xp-main" aria-labelledby="xp-title">
+  const archived = selected === mockBank;
+  return <section className="xp-main" aria-labelledby="xp-title">
     <div className="xp-content">
       <header className="xp-head">
-        <h1 id="xp-title">Experimentos</h1>
+        <h1 id="xp-title">Pruebas y replays</h1>
         <div className="xp-actions">
           <a className="xp-button" href="http://127.0.0.1:9120" target="_blank" rel="noreferrer">Abrir servicios</a>
           <button type="button" className="xp-button" disabled={isLive} onClick={() => void start()}>{starting ? "Comprobando entorno…" : "Ejecutar todos"}</button>
@@ -139,11 +147,15 @@ export function Experiments() {
       </header>
       {error && <p className="xp-alert" role="alert">{error}</p>}
       <div className="xp-runbar">
-      {runs.length > 0 && <label className="xp-picker">Ejecución
-        <select value={selected} onChange={(event) => select(event.target.value)}>{runs.map((run) => <option key={run.id} value={run.id}>
+      <label className="xp-picker">Ejecución o replay
+        <select value={selected} onChange={(event) => select(event.target.value)}>
+          {!selected && <option value="" disabled>Selecciona una grabación</option>}
+          {runs.length > 0 && <optgroup label="Corridas A/B">{runs.map((run) => <option key={run.id} value={run.id}>
           {run.mode === "recorded" ? "Resultados grabados" : `${run.project ? experimentNames[run.project] : "Varios proyectos"} · ${runLabel[run.status]} · ${run.started?.slice(0, 16).replace("T", " ") ?? run.id}`}
-        </option>)}</select>
-      </label>}
+          </option>)}</optgroup>}
+          <optgroup label="Pruebas guardadas"><option value={mockBank}>Mock bank · Replay de referencia</option></optgroup>
+        </select>
+      </label>
       {detail && <>
         <div className="xp-run"><strong>{replay ? "Replay" : detail.run.mode === "recorded" ? "Resultados grabados" : runLabel[detail.run.status]}</strong>
           {detail.run.status !== "running" && <button type="button" className="xp-button" onClick={() => select(detail.run.id, !replay)}>{replay ? "Salir del replay" : "Reproducir"}</button>}
@@ -151,6 +163,7 @@ export function Experiments() {
         </div>
       </>}
       </div>
+      {archived && <EvidenceDemo embedded />}
       {detail && <>
         {detail.run.error && <p className="xp-alert" role="status">{detail.run.error}</p>}
         {replay && <div className="xp-playback">
@@ -159,16 +172,18 @@ export function Experiments() {
           <output>{cursor}/{length}</output>
         </div>}
       </>}
-      <div className="xp-workbench">
-        <aside className="xp-sidebar" aria-label="Proyectos">
-          <h2>Proyectos</h2>
-          {ExperimentProject.options.map((item) => <button key={item} type="button" aria-pressed={item === project} onClick={() => selectProject(item)}>
-            {experimentNames[item]}{detail && !projects.includes(item) && <small>Sin datos en esta ejecución</small>}
-          </button>)}
-        </aside>
+      {!archived && <div>
+        {detail && <label className="xp-picker xp-project-picker">Proyecto
+          <select value={project} onChange={(event) => selectProject(ExperimentProject.parse(event.target.value))}>
+            {ExperimentProject.options.map((item) => <option key={item} value={item}>
+              {experimentNames[item]}{!projects.includes(item) ? " · Sin datos en esta ejecución" : ""}
+            </option>)}
+          </select>
+        </label>}
         <div className="xp-workbench-main">
           {detail ? <ProjectEvidence key={`${detail.run.id}:${project}`} project={project} events={events} running={isLive}
-            live={detail.run.status === "running"} runProject={() => void start(project)} />
+            live={detail.run.status === "running"} runProject={() => void start(project)}
+            openAgent={detail.run.mode === "live" ? () => openAgent(detail.run.id, project) : undefined} />
             : <p className="xp-empty" role="status">{error ? "Selecciona una ejecución para ver los resultados." : "Cargando resultados…"}</p>}
           {detail && <details className="xp-detail xp-journal">
             <summary>Registro de la ejecución</summary>
@@ -176,7 +191,7 @@ export function Experiments() {
             {journal.length > 0 && detail.run.mode === "live" && <ol className="xp-choices">{journal.map(({ seq, at, event }) => <li key={seq}><code>#{seq} {at ?? ""}</code> {summaries[event.kind]} {"project" in event ? `· ${event.project}` : ""}</li>)}</ol>}
           </details>}
         </div>
-      </div>
+      </div>}
     </div>
-  </main>;
+  </section>;
 }

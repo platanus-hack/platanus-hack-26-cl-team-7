@@ -113,6 +113,98 @@
   font-size: 13px;
   color: var(--color-mid);
 }
+/* Lab agents: an A/B run shown with the same replay as a caught agent. */
+.mirror-side {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.lab-side {
+  border-top: 1px solid var(--color-line);
+  padding-bottom: 8px;
+}
+.side-empty {
+  margin: 4px 14px;
+  font-size: 12px;
+  color: var(--color-mid);
+}
+.mirror-main .dot.ok {
+  background: var(--c-ok);
+}
+.mirror-main .dot.live {
+  background: var(--c-info);
+  animation: lab-pulse 1.4s ease-in-out infinite;
+}
+@keyframes lab-pulse {
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mirror-main .dot.live { animation: none; }
+}
+.lab-live {
+  color: var(--c-info);
+}
+.lab-body {
+  padding: 18px 32px 0;
+}
+.lab-outcome {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-ash);
+}
+.lab-outcome strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+.lab-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px 0 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-elev);
+}
+.lab-summary h2,
+.lab-spot-head h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 550;
+}
+.lab-spot {
+  margin-top: 22px;
+  max-width: 960px;
+}
+.lab-spot-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.lab-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lab-spot .rp { padding: 12px 0; }
+.lab-spot .ag { height: clamp(220px, 38vw, 360px); }
+.lab-empty {
+  margin: 22px 0 0;
+  max-width: 640px;
+  color: var(--color-mid);
+}
+.ov-tag {
+  margin-right: 8px;
+  padding: 1px 6px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--c-info);
+}
+@media (max-width: 720px) {
+  .lab-summary, .lab-spot-head { flex-direction: column; align-items: stretch; }
+}
 .ov-list {
   list-style: none;
   margin: 12px 0 0;

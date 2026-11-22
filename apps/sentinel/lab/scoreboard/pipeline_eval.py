@@ -71,7 +71,7 @@ def receipt(service, port, journal, arm, path, actor, token, headers, form=None)
     events = [e for e in read_events(journal) if e.get("trace_id") == trace] if request else []
     response = next((e for e in events if e["kind"] == "response"), None)
     result = {
-        "trace": trace, "requestId": observed["fixture_id"],
+        "trace": trace, "requestId": observed["fixture_id"], "path": path,
         "status": observed["status"], "hits": observed["upstream_hits"],
         "evidence": observed["evidence_in_body"] or observed["evidence_in_headers"],
         "detected": bool(request["symbol"] in ("probe", "exploit", "confirm") or (response and

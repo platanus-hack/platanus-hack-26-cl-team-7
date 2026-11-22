@@ -1,20 +1,13 @@
 import { useState } from "react";
 import { experimentNames, type ExperimentEvent, type ExperimentProject, type FixtureResult } from "@sentinel/contracts";
 import { ProjectFlow } from "./ProjectFlow";
+import { fixtureName } from "./labTrack";
 
 const count = (events: readonly unknown[], total: number) => total ? `${events.length}/${total}` : "—";
 const yes = (value: boolean | null) => value === null ? "No aplica" : value ? "Sí" : "No";
 const stages = { inputs: "Entradas", traffic: "Tráfico legítimo", fixtures: "Fixtures", detection: "Detección", containment: "Contención", research: "Firecrawl", feedback: "OpenRouter A/B" } as const;
 const researchLabel = { retrieved: "Guía consultada", unavailable: "Consulta no disponible", unconfigured: "Sin configurar", no_finding: "Sin hallazgo confirmado" } as const;
 
-const fixtureNames: Record<string, string> = {
-  "receipt-body": "Referencia en el cuerpo de la respuesta", "receipt-body-variant": "Variante de referencia en el cuerpo",
-  "receipt-header": "Referencia en una cabecera", "duplicate-header": "Cabecera duplicada", "receipt-record": "Registro interno",
-  "unlabelled-record": "Registro sin marcador", "bank-stale-approval": "Aprobación de una versión anterior",
-  "bank-missing-approval": "Reembolso sin aprobación", "bank-reapproved": "Reembolso aprobado de nuevo",
-  "path-indicator": "Señal de ruta", "script-indicator": "Señal de script", "middleware-indicator": "Señal de middleware",
-};
-const fixtureName = (id: string) => fixtureNames[id] ?? id;
 
 function Fixture({ fixture: f }: { fixture: FixtureResult }) {
   return (
@@ -70,12 +63,14 @@ function FeedbackEvidence({ feedback }: { feedback: Feedback[] }) {
   </div>;
 }
 
-export function ProjectEvidence({ project, events, running, live, runProject }: {
+export function ProjectEvidence({ project, events, running, live, runProject, openAgent }: {
   project: ExperimentProject;
   events: ExperimentEvent[];
   running: boolean;
   live: boolean;
   runProject: () => void;
+  /** Opens this project's run as its agent, with the replay; absent for aggregated recordings. */
+  openAgent?: () => void;
 }) {
   const [selected, setSelected] = useState("");
   const records = events.filter((event) => "project" in event && event.project === project);
@@ -101,6 +96,7 @@ export function ProjectEvidence({ project, events, running, live, runProject }: 
   return <article className="xp-card">
     <header className="xp-project-head"><h2>{experimentNames[project]}</h2><div className="xp-actions">
       <a className="xp-service-link" href={`http://127.0.0.1:9120/${project}/`} target="_blank" rel="noreferrer">Abrir el servicio <span aria-hidden="true">↗</span></a>
+      {openAgent && fixtures.length > 0 && <button type="button" className="xp-button" onClick={openAgent}>Ver el recorrido</button>}
       <button type="button" className="xp-button xp-primary" disabled={running} onClick={runProject}>Ejecutar proyecto A/B</button>
     </div></header>
     {inProgress && <p className="xp-progress" role="status">En curso · {inProgress}</p>}
