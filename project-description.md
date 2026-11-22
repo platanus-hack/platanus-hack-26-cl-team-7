@@ -21,7 +21,7 @@ Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelv
 - **Por qué hay que mirar desde afuera (Espejismo, 95 corridas con 8 modelos):** un agente con un objetivo oculto neutralizó a su vigilante 9 de 18 veces y no lo reportó en ninguna de las 8 en que creyó llevarse las credenciales. Explóralo: https://espejismo-demo.haroldmedrano33.workers.dev/explorar
 
 ## En qué se diferencia
-Cloudflare lanzó el 21/10/2026 una protección que retiene la respuesta de un ataque exitoso ([anuncio](https://blog.cloudflare.com/full-transaction-waf/)), solo para el tráfico que pasa por su red y todavía sin reglas sobre el cuerpo de la respuesta. Centinela es abierto, corre delante de tus propios servidores y no se queda en bloquear: responde algo falso y creíble, y te explica el recorrido del agente.
+Cloudflare lanzó el 21/10/2026 una protección que retiene la respuesta de un ataque exitoso ([anuncio](https://blog.cloudflare.com/full-transaction-waf/)), solo para el tráfico que pasa por su red y todavía sin reglas sobre el cuerpo de la respuesta. La idea de mandar al atacante a una copia falsa también está publicada este mes en un trabajo académico ([Gingerbread House](https://arxiv.org/abs/2611.07611)), sin código abierto. Centinela es abierto, corre delante de tus propios servidores y no se queda en bloquear: responde algo falso y creíble, y te explica el recorrido del agente.
 
 ## Límites, dichos de frente
 - Negar la confirmación no evita el daño: en nuestras pruebas el ataque igual se ejecutó en el servidor.
