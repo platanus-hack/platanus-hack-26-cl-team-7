@@ -28,8 +28,8 @@ class Business:
 
 
 ORIGINAL_BUSINESSES = (
-    Business("bruma", "Bruma Print Works", "Print studio", "Short-run editions for galleries and independent publishers.",
-             "Exhibition proof", "A colour proof on uncoated stock. Collect at the studio after 15:00.",
+    Business("bruma", "Bruma Remuneraciones", "Recursos humanos", "Liquidaciones de sueldo y contratos para pymes.",
+             "Liquidación de sueldo", "La liquidación del mes queda disponible para el trabajador desde el día 30.",
              "BP-425", "PROOF-6408", "#735039", "body"),
     Business("litoral", "Litoral Freight", "Coastal logistics", "Scheduled cold-chain deliveries for independent food producers.",
              "Chilled pallet collection", "Tuesday and Thursday collections. Book the Valparaíso loading bay by noon.",
