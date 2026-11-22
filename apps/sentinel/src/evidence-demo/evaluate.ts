@@ -20,7 +20,7 @@ const extract = z.object({ success: z.literal(true), data: z.object({ json: z.ob
 type Plan = Pick<EvidenceDemoEvaluation, "planner" | "first">;
 type Research = EvidenceDemoEvaluation["research"];
 
-async function post(url: string, key: string, body: object, timeoutMs: number): Promise<unknown> {
+export async function post(url: string, key: string, body: object, timeoutMs: number): Promise<unknown> {
   const response = await fetch(url, {
     method: "POST", redirect: "error", signal: AbortSignal.timeout(timeoutMs),
     headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },

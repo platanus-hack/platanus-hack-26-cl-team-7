@@ -86,7 +86,7 @@ export function RecordedEvidence({ run }: { run: RecordedBankRun }) {
     <Section title="A/B grabado de Último Paso">
       <p className="ed-note">Las respuestas se muestran en el orden guardado. El registro no incluye rutas, IDs de solicitud, horas por solicitud ni decisiones individuales del proxy.</p>
       <div className="ed-columns"><ArmEvidence run={run} arm="direct" /><ArmEvidence run={run} arm="protected" /></div>
-      <p className="ed-source">Fuente <code>ultimo-paso/scoreboard/results/mock-bank.json</code></p>
+      <p className="ed-source">Fuente <code>related_experiments/ultimo-paso/scoreboard/results/mock-bank.json</code></p>
     </Section>
   );
 }

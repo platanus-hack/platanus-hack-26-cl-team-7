@@ -10,6 +10,7 @@
     "dev": "concurrently -k -n sentinel,sim,web -c blue,gray,green \"pnpm --filter @sentinel/server dev\" \"pnpm --filter @sentinel/simulator dev\" \"pnpm --filter @sentinel/web dev\"",
     "build": "pnpm --filter @sentinel/web build",
     "start": "pnpm build && pnpm --filter @sentinel/server start",
+    "services": "cd apps/sentinel/lab && python3 -m targets.businesses.service",
     "simulate": "pnpm --filter @sentinel/simulator dev",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",

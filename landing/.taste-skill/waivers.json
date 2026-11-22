@@ -1,0 +1,22 @@
+[
+  {
+    "check": "moment-none",
+    "target": "(the page)",
+    "reason": "El cliente pidió un momento propio: «El mismo agente, dos respuestas» en #demo, reproducible con un botón y con una traza real del repo; un momento del kit sumaría movimiento sin evidencia."
+  },
+  {
+    "check": "copy-headings",
+    "target": "article.card.card--row:nth-of-type(1) > h3",
+    "reason": "Página en español: el léxico del verificador es inglés; los títulos nombran partes de Centinela (pasos, servidor, copia falsa, confirmación, arreglo)."
+  },
+  {
+    "check": "no-visual",
+    "target": "section#cifras",
+    "reason": "Sección de cifras con su límite y su fuente al lado: la honestidad visible es el contenido; una imagen sería decorativa y no hay foto real que sume."
+  },
+  {
+    "check": "no-visual",
+    "target": "section#demo",
+    "reason": "El visual de #demo son los dos paneles con la traza real pedido por pedido (role=img); a 390 ocupan menos superficie porque la sección crece con el texto."
+  }
+]

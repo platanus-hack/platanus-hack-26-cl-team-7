@@ -1,0 +1,8 @@
+wrangler.jsonc
+.assetsignore
+README.md
+.wrangler
+panel
+.taste-skill
+shots
+img/*.png

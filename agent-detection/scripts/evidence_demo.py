@@ -14,7 +14,7 @@ from engine.models import Request
 from engine.routes import RouteTable
 
 ROOT = Path(__file__).resolve().parents[2]
-BANK_ARTIFACT = ROOT / "ultimo-paso/scoreboard/results/mock-bank.json"
+BANK_ARTIFACT = ROOT / "related_experiments/ultimo-paso/scoreboard/results/mock-bank.json"
 BUNDLE_PATH = ROOT / "apps/sentinel/src/evidence-demo/bundle.json"
 BANK_RUN = "mock-bank-recorded"
 DETECTOR_RUN = "mock-bank-detector-synthetic"

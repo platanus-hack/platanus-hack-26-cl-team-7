@@ -83,6 +83,31 @@ textarea:focus-visible {
   border-bottom: 1px solid var(--color-line);
   background: var(--color-canvas);
 }
+.sentinel-views {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sentinel-views a { text-decoration: none; }
+@media (max-width: 720px) {
+  .shell:has(.sentinel-bar) { grid-template-rows: auto minmax(0, 1fr); }
+  .sentinel-bar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    padding: 8px 12px;
+  }
+  .sentinel-bar .sentinel-views {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-left: 0;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .sentinel-views .ask { padding-inline: 8px; }
+  .sentinel-copilot { grid-column: 3; grid-row: 1; }
+}
 .mark {
   display: flex;
   align-items: center;
