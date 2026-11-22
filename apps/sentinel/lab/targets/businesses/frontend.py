@@ -6,7 +6,7 @@ from targets.businesses.workflows import FIELDS, ROOMS, SLOTS, Field
 
 
 PRODUCT = {
-    "bruma": ("Prepara una tirada", "Elige el papel y guarda una prueba de impresión.", "Guardar prueba", "Trabajos de impresión"),
+    "bruma": ("Emite una liquidación", "Elige el tipo de contrato y calcula el sueldo del mes.", "Guardar liquidación", "Liquidaciones de sueldo"),
     "litoral": ("Cotiza un despacho", "Selecciona el corredor y calcula el costo estimado.", "Cotizar envío", "Cotizaciones"),
     "surco": ("Reserva tu ensayo", "Elige una sala y un bloque de dos horas.", "Reservar sala", "Reservas"),
     "bank": ("Reembolsos", "Registra una solicitud y revisa qué versión está aprobada.", "Crear solicitud", "Solicitudes"),
@@ -56,7 +56,7 @@ def bank_actions(row):
 
 def row_content(slug, row):
     if slug == "bruma":
-        return escape(row["title"]), f'{escape(row["paper"])} · {row["copies"]} copias', pesos(row["total"]), ""
+        return escape(row["title"]), f'{escape(row["paper"])} · {row["copies"]} días', pesos(row["total"]), ""
     if slug == "litoral":
         return escape(row["route"]), f'{row["pallets"]} palés · Estimación', pesos(row["total"]), ""
     if slug == "surco":

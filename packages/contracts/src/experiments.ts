@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const ExperimentProject = z.enum(["bruma", "litoral", "surco", "bank"]);
 export type ExperimentProject = z.infer<typeof ExperimentProject>;
-export const experimentNames = { bruma: "Bruma Print Works", litoral: "Litoral Freight", surco: "Surco Rooms", bank: "Banco Estero" } as const;
+export const experimentNames = { bruma: "Bruma Remuneraciones", litoral: "Litoral Freight", surco: "Surco Rooms", bank: "Banco Estero" } as const;
 const arm = z.enum(["A", "B"]);
 const natural = z.int().nonnegative();
 const receipt = z.object({ trace: z.string(), requestId: z.string().optional(), status: natural,
