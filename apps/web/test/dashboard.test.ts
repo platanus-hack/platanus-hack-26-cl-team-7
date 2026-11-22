@@ -127,7 +127,7 @@ describe("event updates for events the client does not hold", () => {
 });
 
 describe("epochs", () => {
-  it("asks for a reload when a batch comes from another Sentinel process", () => {
+  it("asks for a reload when a batch comes from another Reaper process", () => {
     const d = fromSnapshot(snap());
     expect(isStaleEpoch(d, "E1")).toBe(false);
     expect(isStaleEpoch(d, "E2")).toBe(true);

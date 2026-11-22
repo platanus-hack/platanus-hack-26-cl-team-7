@@ -1,4 +1,4 @@
-/* Conventional status colours for this screen: red = vulnerability, yellow = high, green = safe, blue = Sentinel. */
+/* Conventional status colours for this screen: red = vulnerability, yellow = high, green = safe, blue = Reaper. */
 .main.mirror-main {
   --c-danger: #ef4444;
   --c-warn: #eab308;
@@ -8,7 +8,7 @@
 .mirror-main .dot.hot {
   background: var(--c-danger);
 }
-/* Sentinel's one screen. Reuses the shell, section and row styles of index.css, which loads
+/* Reaper's one screen. Reuses the shell, section and row styles of index.css, which loads
    after this file: selectors that change those styles name both classes. */
 .mirror-left {
   display: flex;

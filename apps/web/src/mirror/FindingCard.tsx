@@ -1,6 +1,6 @@
 /**
  * One confirmed vulnerability: severity, name, endpoint, weak point, and the trace from the catch to
- * the proof as a log, always open, and whether Sentinel already keeps the attack out of the real shop.
+ * the proof as a log, always open, and whether Reaper already keeps the attack out of the real shop.
  * "Preguntar a la IA" asks the copilot about it.
  * Interface: `<FindingCard f track moments active />`.
  * Request lines and evidence are attacker controlled; React renders them as text only.

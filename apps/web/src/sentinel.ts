@@ -1,11 +1,11 @@
 /**
- * The Sentinel client: the one module that talks to the server.
+ * The Reaper client: the one module that talks to the server.
  * JSON requests with timeouts and the error envelope, plus an SSE reader for streams.
  */
 import { Report, ReportSummary, type AttackerDetail, type Block, type DecisionRequest, type FindingPage, type Health, type Range, type Snapshot, type TrackDetail, type TrackPage } from "@sentinel/contracts";
 import { EvidenceDemoBundle, EvidenceDemoEvaluation, ExperimentDetail, ExperimentList, ExperimentStarted, type ExperimentProject } from "@sentinel/contracts";
 
-/** Same origin by default: Sentinel serves this app in production and Vite proxies /v1 in development. */
+/** Same origin by default: Reaper serves this app in production and Vite proxies /v1 in development. */
 export const BASE_URL: string = (import.meta.env.VITE_SENTINEL_URL as string | undefined) ?? "";
 
 export class ApiRequestError extends Error {
@@ -45,7 +45,7 @@ async function request<T>(path: string, init?: RequestInit & { timeoutMs?: numbe
 /** Parses a response with a contract schema. A body that does not match is a server fault, not a crash. */
 function parseWith<T>(schema: { safeParse(value: unknown): { success: true; data: T } | { success: false } }, body: unknown): T {
   const out = schema.safeParse(body);
-  if (!out.success) throw new ApiRequestError(502, "bad_response", "Sentinel sent a reply this dashboard cannot read.");
+  if (!out.success) throw new ApiRequestError(502, "bad_response", "Reaper sent a reply this dashboard cannot read.");
   return out.data;
 }
 
@@ -62,7 +62,7 @@ export async function getReport(id: string, signal?: AbortSignal): Promise<Repor
 export async function listReports(ip?: string, signal?: AbortSignal): Promise<ReportSummary[]> {
   const query = ip === undefined ? "" : `?ip=${encodeURIComponent(ip)}`;
   const body = await request<{ items?: unknown } | null>(`/v1/reports${query}`, { signal });
-  if (!Array.isArray(body?.items)) throw new ApiRequestError(502, "bad_response", "Sentinel sent a reply this dashboard cannot read.");
+  if (!Array.isArray(body?.items)) throw new ApiRequestError(502, "bad_response", "Reaper sent a reply this dashboard cannot read.");
   return body.items.map((item) => parseWith(ReportSummary, item));
 }
 

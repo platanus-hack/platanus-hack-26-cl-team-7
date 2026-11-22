@@ -15,7 +15,7 @@ export class ExperimentStore {
   constructor(db: DatabaseSync) {
     this.db = db;
     db.prepare("UPDATE experiment_runs SET status='interrupted', finished=?, error=? WHERE status='running'")
-      .run(new Date().toISOString(), "Sentinel se reinició durante la ejecución.");
+      .run(new Date().toISOString(), "Reaper se reinició durante la ejecución.");
     db.exec("BEGIN IMMEDIATE");
     try {
       const inserted = db.prepare("INSERT OR IGNORE INTO experiment_runs (id, mode, status, source) VALUES (?, 'recorded', 'completed', ?)")

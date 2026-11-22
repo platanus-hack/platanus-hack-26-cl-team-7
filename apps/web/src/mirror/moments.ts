@@ -229,7 +229,7 @@ const BLOCKED = "Blocked for every client";
 const LOGIN_PATHS = new Set(["/login", "/login/", "/api/session", "/api/session/"]);
 
 /**
- * Whether Sentinel already keeps this attack out of the real shop, for any client. The tap marks it:
+ * Whether Reaper already keeps this attack out of the real shop, for any client. The tap marks it:
  * the router and the virtual patch read the URI, and the login check reads a login POST's body;
  * a body signature anywhere else is not caught. Findings stored before that mark are judged from
  * the request they quote: a signature with no body, or on a login POST, was caught.
@@ -272,7 +272,7 @@ export function chainTo(track: Pick<Track, "rule" | "reason" | "openedAt" | "act
   const before = moments.slice(0, at);
   const shown = before.slice(-STEPS_BEFORE);
   const steps: Step[] = [{ ts: track.openedAt, text: "Detectado y desviado a la copia falsa", note: caughtFor(track), kind: "caught", cat: null, code: null }];
-  // Sentinel sends some requests, not all: say so instead of counting only the ones we hold.
+  // Reaper sends some requests, not all: say so instead of counting only the ones we hold.
   const loaded = moments.reduce((s, m) => s + (m.id === m.finding?.findingId ? 0 : m.count), 0);
   const unseen = track.actions > loaded;
   if (before.length > shown.length || unseen) {
@@ -288,7 +288,7 @@ export function chainTo(track: Pick<Track, "rule" | "reason" | "openedAt" | "act
 
 /**
  * The browser or tool identities (user agents) seen for this agent, as words; "" for just one.
- * Each is a different user agent the router linked to this agent; Sentinel keeps 64 keys at most
+ * Each is a different user agent the router linked to this agent; Reaper keeps 64 keys at most
  * (apps/sentinel/src/deception.ts), so a full list means there were more.
  */
 export function disguises(track: Pick<Track, "keys">, maxKeys = 64): string {

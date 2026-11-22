@@ -57,7 +57,7 @@ describe("POST /v1/reports", () => {
     await expectError(await app.request("/v1/reports", json({})), 400, "BAD_INPUT");
   });
 
-  it("answers 404 NOT_FOUND for an attacker Sentinel has not seen", async () => {
+  it("answers 404 NOT_FOUND for an attacker Reaper has not seen", async () => {
     const { app } = withService();
     await expectError(await app.request("/v1/reports", json({ ip: "192.0.2.200" })), 404, "NOT_FOUND");
   });

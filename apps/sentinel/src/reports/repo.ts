@@ -58,7 +58,7 @@ interface RevisionRecord {
 const json = (v: unknown) => JSON.stringify(v);
 const orNull = <T>(text: string | null, schema: z.ZodType<T>): T | null => (text === null ? null : schema.parse(JSON.parse(text)));
 
-/** Reports live in their own tables in the Sentinel database. Rows are parsed with the contract schemas on the way out. */
+/** Reports live in their own tables in the Reaper database. Rows are parsed with the contract schemas on the way out. */
 export class ReportRepo {
   private readonly db: DatabaseSync;
 
@@ -166,7 +166,7 @@ export class ReportRepo {
   /** A run that was mid-flight when the process stopped cannot continue. */
   failInterrupted(now: number): void {
     this.db
-      .prepare("UPDATE report_runs SET status = 'failed', error = 'Sentinel restarted while this report was running.', updated_at = ? WHERE status IN ('investigating', 'revising')")
+      .prepare("UPDATE report_runs SET status = 'failed', error = 'Reaper restarted while this report was running.', updated_at = ? WHERE status IN ('investigating', 'revising')")
       .run(now);
   }
 }

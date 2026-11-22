@@ -74,7 +74,7 @@ function AiOff() {
           <Sparkles size={12} />
           Incident report
         </div>
-        <p className="!text-mid">AI unavailable. Set ANTHROPIC_API_KEY for Sentinel to get reports.</p>
+        <p className="!text-mid">AI unavailable. Set ANTHROPIC_API_KEY for Reaper to get reports.</p>
       </div>
     </div>
   );
