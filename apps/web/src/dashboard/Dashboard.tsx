@@ -2,14 +2,15 @@
  * The dashboard window. Interface: `<Dashboard sidebarOverlay={…} />`.
  * One screen: the title bar and the caught agents (../mirror/MirrorPanel).
  */
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useDashboard } from "./store";
 import { MirrorPanel } from "../mirror/MirrorPanel";
+import { EvidenceDemo } from "../evidence-demo/EvidenceDemo";
 import { Orb } from "../ui";
 
 const preloadCopilot = () => void import("../copilot/CopilotPanel");
 
-function TitleBar() {
+function TitleBar({ showEvidence, toggleEvidence }: { showEvidence: boolean; toggleEvidence: () => void }) {
   const conn = useDashboard((s) => s.conn);
   const open = useDashboard((s) => s.copilotOpen);
   const toggle = useDashboard((s) => s.toggleCopilot);
@@ -35,11 +36,12 @@ function TitleBar() {
           Sentinel está desconectado
         </span>
       )}
-      <button type="button" className="ask ml-auto" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
+      <button type="button" className="ask ml-auto" aria-pressed={showEvidence} onClick={toggleEvidence}>Demo de evidencia</button>
+      {!showEvidence && <button type="button" className="ask" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
         <Orb size={20} />
         Copilot
         <kbd className="kbd">⌘K</kbd>
-      </button>
+      </button>}
     </header>
   );
 }
@@ -47,11 +49,12 @@ function TitleBar() {
 /** The whole dashboard window. `sidebarOverlay` (the copilot) covers the right column when given. */
 export function Dashboard({ sidebarOverlay }: { sidebarOverlay?: ReactNode }) {
   const error = useDashboard((s) => s.error);
+  const [showEvidence, setShowEvidence] = useState(false);
   return (
     <div className="shell">
-      <TitleBar />
-      <MirrorPanel sidebarOverlay={sidebarOverlay} />
-      {error && (
+      <TitleBar showEvidence={showEvidence} toggleEvidence={() => setShowEvidence(!showEvidence)} />
+      {showEvidence ? <EvidenceDemo /> : <MirrorPanel sidebarOverlay={sidebarOverlay} />}
+      {error && !showEvidence && (
         <div role="alert" className="fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl border border-line bg-elev px-4 py-2 text-sm text-ash shadow-2xl">
           {error}
         </div>

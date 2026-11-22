@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
+import { parseEnv } from "node:util";
 import Anthropic from "@anthropic-ai/sdk";
 import { serve } from "@hono/node-server";
 import { DEFAULT_PORT } from "@sentinel/contracts";
@@ -9,6 +10,7 @@ import { Ai } from "./ai.ts";
 import { createApp } from "./app.ts";
 import { Bus } from "./bus.ts";
 import { DeceptionStore } from "./deception.ts";
+import { createEvidenceEvaluator } from "./evidence-demo/evaluate.ts";
 import { GeoResolver } from "./enrich.ts";
 import { FixProposer } from "./fixes.ts";
 import { createMastraReportModel } from "./reports/mastra.ts";
@@ -31,8 +33,12 @@ const accessLogPath = resolve(process.env.SENTINEL_ACCESS_LOG || resolve(repoRoo
 const verdictsDbPath = resolve(process.env.SENTINEL_VERDICTS_DB || resolve(repoRoot, "agent-detection/run/verdicts.db"));
 
 mkdirSync(dirname(dbPath), { recursive: true });
-// The SDK resolves ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN. Without either, AI stays off.
-const client = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN ? new Anthropic() : null;
+
+const localEnv = resolve(repoRoot, ".env");
+const local = existsSync(localEnv) ? parseEnv(readFileSync(localEnv, "utf8")) : {};
+const setting = (name: string) => (process.env[name] ?? local[name])?.trim();
+const anthropicKey = setting("ANTHROPIC_API_KEY");
+const client = anthropicKey || process.env.ANTHROPIC_AUTH_TOKEN ? new Anthropic({ apiKey: anthropicKey }) : null;
 
 const db = new DatabaseSync(dbPath);
 const bus = new Bus();
@@ -48,12 +54,15 @@ bus.subscribe((b) => {
 });
 
 // Incident reports need ANTHROPIC_API_KEY (a bearer token alone is not enough for the Mastra client). Missing files are fine: that log store reports STORE_DOWN.
-const reportModel = createMastraReportModel({ apiKey: process.env.ANTHROPIC_API_KEY });
+const reportModel = createMastraReportModel({ apiKey: anthropicKey });
 const reports = reportModel
   ? new ReportService({ store, db, model: reportModel, sources: { sen: sentinelSource(store), acc: accessLogSource(accessLogPath), eng: engineSource(verdictsDbPath) } })
   : null;
 
-const app = createApp({ store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports });
+const evaluateEvidence = ["127.0.0.1", "localhost", "::1"].includes(host) ? createEvidenceEvaluator(repoRoot, {
+  openrouter: setting("OPENROUTER_API_KEY"), model: setting("ULTIMO_PASO_PROBE_MODEL"), firecrawl: setting("FIRECRAWL_API_KEY"),
+}) : undefined;
+const app = createApp({ store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
   console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);

@@ -3,6 +3,7 @@
  * JSON requests with timeouts and the error envelope, plus an SSE reader for streams.
  */
 import { Report, ReportSummary, type AttackerDetail, type Block, type DecisionRequest, type FindingPage, type Health, type Range, type Snapshot, type TrackDetail, type TrackPage } from "@sentinel/contracts";
+import { EvidenceDemoBundle, EvidenceDemoEvaluation } from "@sentinel/contracts";
 
 /** Same origin by default: Sentinel serves this app in production and Vite proxies /v1 in development. */
 export const BASE_URL: string = (import.meta.env.VITE_SENTINEL_URL as string | undefined) ?? "";
@@ -84,6 +85,10 @@ function pageQuery({ range, limit, cursor }: PageParams): string {
 }
 
 export const api = {
+  evidenceDemo: async (signal?: AbortSignal) => parseWith(EvidenceDemoBundle, await request<unknown>("/v1/evidence-demo", { signal })),
+  evaluateEvidence: async () => parseWith(EvidenceDemoEvaluation, await request<unknown>("/v1/evidence-demo/evaluate", {
+    method: "POST", body: "{}", timeoutMs: 50_000,
+  })),
   health: (signal?: AbortSignal) => request<Health>("/v1/health", { signal, timeoutMs: 3000 }),
   snapshot: (range: Range, signal?: AbortSignal) => request<Snapshot>(`/v1/snapshot?range=${range}`, { signal }),
   attacker: (ip: string, signal?: AbortSignal) => request<AttackerDetail>(`/v1/attackers/${encodeURIComponent(ip)}`, { signal }),

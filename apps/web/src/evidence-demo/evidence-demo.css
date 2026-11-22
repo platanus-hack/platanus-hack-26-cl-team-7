@@ -1,0 +1,27 @@
+.ed-main { overflow: auto; user-select: text; }
+.ed-content { width: min(1100px, 100%); margin: 0 auto; padding: 32px clamp(16px, 4vw, 48px); }
+.ed-content h1 { margin: 0 0 12px; font-size: clamp(24px, 3vw, 36px); font-weight: 600; letter-spacing: -0.035em; }
+.ed-note, .ed-source { color: var(--color-mid); }
+.ed-source { overflow-wrap: anywhere; }
+.ed-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 26px; }
+.ed-button { border: 1px solid var(--color-line); border-radius: 8px; padding: 5px 12px; color: var(--color-ash); }
+.ed-button:hover, .ed-button[aria-pressed="true"] { background: var(--color-elev); color: var(--color-text); }
+.ed-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ed-card { min-width: 0; border: 1px solid var(--color-line); background: var(--color-side); border-radius: 12px; padding: 16px; }
+.ed-card h3 { font-size: 16px; font-weight: 550; margin-bottom: 12px; }
+.ed-metrics { margin: 0 0 16px; }
+.ed-metrics div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding-block: 5px; }
+.ed-metrics dt { color: var(--color-ash); }
+.ed-metrics dd { font-family: var(--font-mono); white-space: nowrap; }
+.ed-trial { border-top: 1px solid var(--color-line); }
+.ed-trial > summary { padding: 8px 0; }
+.ed-timeline { list-style: none; margin: 8px 0; padding-left: 12px; border-left: 1px solid var(--color-iron); }
+.ed-timeline summary { padding: 5px 0; overflow-wrap: anywhere; }
+.ed-timeline summary small { color: var(--color-mid); margin-left: 8px; }
+.ed-content summary { cursor: pointer; }
+.ed-content summary:focus-visible { outline: 1px solid var(--color-ash); outline-offset: 2px; }
+.ed-alert { color: var(--color-ember); }
+.ed-fields { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 6px 0 12px; font-size: 12px; }
+.ed-fields dt { color: var(--color-mid); }
+.ed-fields dd { overflow-wrap: anywhere; }
+@media (max-width: 700px) { .ed-columns { grid-template-columns: minmax(0, 1fr); } }

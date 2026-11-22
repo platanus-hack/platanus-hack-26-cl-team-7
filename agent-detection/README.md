@@ -24,3 +24,12 @@ bash scripts/stack_local.sh stop
 ```
 
 `deploy/docker-compose.yml` runs the same stack with Juice Shop as the demo site.
+
+## Sentinel evidence demo
+
+From the repository root, run `pnpm start` and open **Demo de evidencia** in Sentinel. The
+recorded mock-bank A/B and the synthetic detector replay have separate run IDs. The replay
+works without a proxy, a target service, or any provider credentials.
+
+After changing either input, regenerate the bundled evidence from `agent-detection/` with
+`uv run python -m scripts.evidence_demo`. Add `--check` to verify the bundle is current.

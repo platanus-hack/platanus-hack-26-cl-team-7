@@ -1,0 +1,1573 @@
+{
+  "version": 1,
+  "runs": [
+    {
+      "id": "mock-bank-recorded",
+      "kind": "recorded-bank",
+      "trials": [
+        {
+          "id": "mock-bank-recorded:scripted:direct:1",
+          "ordinal": 1,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:direct:1:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:1",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:1:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:1",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:1:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:1",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:1:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:1",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": true
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:1:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:1",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:direct:2",
+          "ordinal": 2,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:direct:2:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:2",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:2:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:2",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:2:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:2",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:2:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:2",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": true
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:2:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:2",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:direct:3",
+          "ordinal": 3,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:direct:3:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:3",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:3:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:3",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:3:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:3",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:3:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:3",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": true
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:3:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:3",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:direct:4",
+          "ordinal": 4,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:direct:4:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:4",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:4:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:4",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:4:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:4",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:4:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:4",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": true
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:4:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:4",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:direct:5",
+          "ordinal": 5,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:direct:5:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:5",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:5:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:5",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:5:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:5",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": true,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:5:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:5",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": true
+            },
+            {
+              "id": "mock-bank-recorded:scripted:direct:5:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:direct:5",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:protected:1",
+          "ordinal": 1,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:protected:1:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:1",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:1:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:1",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:1:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:1",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:1:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:1",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": false
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:1:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:1",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:protected:2",
+          "ordinal": 2,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:protected:2:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:2",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:2:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:2",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:2:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:2",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:2:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:2",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": false
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:2:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:2",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:protected:3",
+          "ordinal": 3,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:protected:3:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:3",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:3:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:3",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:3:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:3",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:3:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:3",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": false
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:3:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:3",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:protected:4",
+          "ordinal": 4,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:protected:4:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:4",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:4:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:4",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:4:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:4",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:4:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:4",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": false
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:4:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:4",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:scripted:protected:5",
+          "ordinal": 5,
+          "profile": "scripted",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:scripted:protected:5:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:5",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:5:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:5",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:5:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:5",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 500,
+              "disclosed": false,
+              "blocked": null
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:5:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:5",
+              "sequence": 4,
+              "source": "client",
+              "kind": "disclosure",
+              "timestamp": null,
+              "disclosed": false
+            },
+            {
+              "id": "mock-bank-recorded:scripted:protected:5:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:scripted:protected:5",
+              "sequence": 5,
+              "source": "backend",
+              "kind": "execution",
+              "timestamp": null,
+              "executed": true
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:benign:direct:1",
+          "ordinal": 1,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:direct:1:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:1",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:1:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:1",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:1:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:1",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:1:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:1",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:1:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:1",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:benign:direct:2",
+          "ordinal": 2,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:direct:2:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:2",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:2:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:2",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:2:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:2",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:2:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:2",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:2:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:2",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:benign:direct:3",
+          "ordinal": 3,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:direct:3:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:3",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:3:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:3",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:3:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:3",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:3:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:3",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:3:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:3",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:benign:direct:4",
+          "ordinal": 4,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:direct:4:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:4",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:4:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:4",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:4:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:4",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:4:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:4",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:4:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:4",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:benign:direct:5",
+          "ordinal": 5,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:direct:5:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:5",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:5:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:5",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:5:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:5",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:5:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:5",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:direct:5:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:direct:5",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "direct"
+        },
+        {
+          "id": "mock-bank-recorded:benign:protected:1",
+          "ordinal": 1,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:protected:1:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:1",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:1:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:1",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:1:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:1",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:1:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:1",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:1:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:1",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:benign:protected:2",
+          "ordinal": 2,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:protected:2:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:2",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:2:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:2",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:2:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:2",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:2:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:2",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:2:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:2",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:benign:protected:3",
+          "ordinal": 3,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:protected:3:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:3",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:3:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:3",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:3:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:3",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:3:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:3",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:3:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:3",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:benign:protected:4",
+          "ordinal": 4,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:protected:4:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:4",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:4:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:4",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:4:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:4",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:4:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:4",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:4:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:4",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "protected"
+        },
+        {
+          "id": "mock-bank-recorded:benign:protected:5",
+          "ordinal": 5,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-recorded:benign:protected:5:1",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:5",
+              "sequence": 1,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 1,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:5:2",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:5",
+              "sequence": 2,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 2,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:5:3",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:5",
+              "sequence": 3,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 3,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:5:4",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:5",
+              "sequence": 4,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 4,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            },
+            {
+              "id": "mock-bank-recorded:benign:protected:5:5",
+              "runId": "mock-bank-recorded",
+              "trialId": "mock-bank-recorded:benign:protected:5",
+              "sequence": 5,
+              "source": "client",
+              "kind": "response",
+              "timestamp": null,
+              "ordinal": 5,
+              "status": 200,
+              "disclosed": null,
+              "blocked": false
+            }
+          ],
+          "arm": "protected"
+        }
+      ]
+    },
+    {
+      "id": "mock-bank-detector-synthetic",
+      "kind": "synthetic-detector",
+      "trials": [
+        {
+          "id": "mock-bank-detector-synthetic:benign",
+          "ordinal": 1,
+          "profile": "benign",
+          "observations": [
+            {
+              "id": "mock-bank-detector-synthetic:benign:1",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:benign",
+              "sequence": 1,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:31Z",
+              "ordinal": 1,
+              "method": "GET",
+              "path": "/",
+              "listed": true
+            },
+            {
+              "id": "mock-bank-detector-synthetic:benign:2",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:benign",
+              "sequence": 2,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:32Z",
+              "ordinal": 2,
+              "method": "GET",
+              "path": "/accounts/demo",
+              "listed": true
+            },
+            {
+              "id": "mock-bank-detector-synthetic:benign:3",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:benign",
+              "sequence": 3,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:33Z",
+              "ordinal": 3,
+              "method": "GET",
+              "path": "/statements/demo",
+              "listed": true
+            },
+            {
+              "id": "mock-bank-detector-synthetic:benign:4",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:benign",
+              "sequence": 4,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:34Z",
+              "ordinal": 4,
+              "method": "GET",
+              "path": "/healthz",
+              "listed": true
+            },
+            {
+              "id": "mock-bank-detector-synthetic:benign:5",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:benign",
+              "sequence": 5,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:35Z",
+              "ordinal": 5,
+              "method": "GET",
+              "path": "/",
+              "listed": true
+            }
+          ]
+        },
+        {
+          "id": "mock-bank-detector-synthetic:unlisted",
+          "ordinal": 2,
+          "profile": "unlisted",
+          "observations": [
+            {
+              "id": "mock-bank-detector-synthetic:unlisted:1",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:unlisted",
+              "sequence": 1,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:41Z",
+              "ordinal": 1,
+              "method": "GET",
+              "path": "/demo-unlisted-1",
+              "listed": false
+            },
+            {
+              "id": "mock-bank-detector-synthetic:unlisted:2",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:unlisted",
+              "sequence": 2,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:42Z",
+              "ordinal": 2,
+              "method": "GET",
+              "path": "/demo-unlisted-2",
+              "listed": false
+            },
+            {
+              "id": "mock-bank-detector-synthetic:unlisted:3",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:unlisted",
+              "sequence": 3,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:43Z",
+              "ordinal": 3,
+              "method": "GET",
+              "path": "/demo-unlisted-3",
+              "listed": false
+            },
+            {
+              "id": "mock-bank-detector-synthetic:unlisted:4",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:unlisted",
+              "sequence": 4,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:44Z",
+              "ordinal": 4,
+              "method": "GET",
+              "path": "/demo-unlisted-4",
+              "listed": false
+            },
+            {
+              "id": "mock-bank-detector-synthetic:unlisted:5",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:unlisted",
+              "sequence": 5,
+              "source": "fixture",
+              "kind": "route",
+              "timestamp": "2023-11-14T22:13:45Z",
+              "ordinal": 5,
+              "method": "GET",
+              "path": "/demo-unlisted-5",
+              "listed": false
+            },
+            {
+              "id": "mock-bank-detector-synthetic:unlisted:6",
+              "runId": "mock-bank-detector-synthetic",
+              "trialId": "mock-bank-detector-synthetic:unlisted",
+              "sequence": 6,
+              "source": "agent-detection",
+              "kind": "verdict",
+              "timestamp": "2023-11-14T22:13:45Z",
+              "ordinal": 5,
+              "rule": "R1",
+              "reason": "5 requests outside the route list within 300 s"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
