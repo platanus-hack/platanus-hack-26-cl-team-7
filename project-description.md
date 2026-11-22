@@ -2,12 +2,14 @@
 
 ### Si a un agente de IA que te ataca le niegas la prueba de que su ataque funcionó, se queda sin rumbo. Lo medimos, y Reaper es la versión abierta de esa idea.
 
+**Míralo funcionando, sin instalar nada:** [el panel en línea](https://neowaf.paoloose.site) (botón «Modo demo») · [la web](https://reaper.haroldmedrano33.workers.dev) · [las láminas](https://reaper.haroldmedrano33.workers.dev/pitch)
+
 > **El hallazgo:** los mismos ataques, con dos modelos de IA atacando. La prueba del ataque le llegó al atacante en 20 de 20 corridas sin defensa, en 20 de 20 por la protección por defecto de Cloudflare, y en **0 de 20** con nuestra pieza. Sin esa prueba, ningún agente declaró haber tenido éxito, y gastaron entre 3 y 11 veces más peticiones.
 
 Bloquear a un agente le avisa que lo vieron, y aprende. Reaper controla lo que el agente ve y cree que pasó: lo detecta, le responde con una copia falsa, le niega la confirmación y te muestra qué buscaba.
 
 ## El problema
-Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelven a probar, a velocidad de máquina. En julio de 2026, durante una evaluación, agentes de OpenAI entraron a sistemas de Hugging Face y nadie lo vio a tiempo ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). Quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.
+Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelven a probar, a velocidad de máquina. En julio de 2026, modelos de OpenAI que estaban en una evaluación interna salieron de su entorno y entraron a sistemas de Hugging Face ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). Quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.
 
 ## Por qué importa
 - **En la web ya hay más máquinas que personas.** El tráfico automatizado superó al humano en mayo de 2026, empujado por agentes y crawlers de IA ([Cloudflare, 27/09/2026](https://blog.cloudflare.com/cloudflares-2026-annual-founders-letter/)).
@@ -21,8 +23,8 @@ Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelv
 |---|---|---|
 | Detectar | Reglas sobre el tráfico: quién sondea rutas que no existen, quién recorre demasiadas, quién pide archivos sensibles | `agent-detection/` |
 | Engañar | A la sesión sospechosa le responde una copia falsa del sitio | `agent-detection/mirror` |
-| Negar la confirmación | Si la respuesta trae la prueba de que el ataque funcionó, no se la entrega, y aplica una regla temporal | `ultimo-paso/` |
-| Mostrar y arreglar | Un panel con los agentes atrapados, su recorrido, la falla que usaron y un arreglo propuesto que una persona aprueba o rechaza | `apps/sentinel`, `apps/web` |
+| Negar la confirmación | Si la respuesta trae la prueba de que el ataque funcionó, no se la entrega, y aplica una regla temporal | `apps/sentinel/lab` |
+| Mostrar y arreglar | Un panel con el recorrido del ataque, la falla que se usó y el arreglo propuesto con su fuente. Con una clave de modelo, un agente escribe el parche (hasta tres reemplazos exactos), lo prueba en una copia del servicio y repite el ataque; una persona decide aplicarlo | `apps/sentinel`, `apps/web` |
 
 ## Lo que medimos
 - **Negar la confirmación (Último Paso):** la prueba del ataque dejó de llegarle al atacante en 5 de 5 intentos contra un banco de prueba y en 3 de 3 contra una falla real de Langflow; con un agente de IA atacando, en 2 de 2. No bloqueó ninguno de 34 pedidos legítimos.
@@ -50,4 +52,4 @@ Cloudflare lanzó el 21/10/2026 una protección que retiene la respuesta de un a
 - La web y las láminas: https://reaper.haroldmedrano33.workers.dev
 - Las 95 corridas reales de Espejismo, lo que cada agente reportó contra lo que registró el sistema: https://espejismo-demo.haroldmedrano33.workers.dev/explorar
 - Videos: [la propuesta](https://espejismo-demo.haroldmedrano33.workers.dev/video/propuesta.mp4) · [lo dicho contra lo registrado](https://espejismo-demo.haroldmedrano33.workers.dev/video/dicho-vs-hecho.mp4)
-- El panel de Reaper corre en local con `pnpm install && pnpm start` (modo de repetición, sin credenciales).
+- El panel de Reaper corre en local con `pnpm install && pnpm start` (modo de repetición, sin credenciales). La grabación incluida no trae el paso del parche automático: ese paso necesita una clave de modelo.
