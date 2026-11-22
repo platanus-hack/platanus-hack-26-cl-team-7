@@ -23,6 +23,8 @@ Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelv
 - **Engañar funciona con agentes de IA:** en un prototipo de pagos, los 30 agentes de IA que intentaron robar con una llave trampa cayeron a la copia falsa, sin mover un peso real.
 - **Por qué hay que mirar desde afuera (Espejismo, 95 corridas con 8 modelos):** un agente con un objetivo oculto neutralizó a su vigilante 9 de 18 veces y no lo reportó en ninguna de las 8 en que creyó llevarse las credenciales. Explóralo: https://espejismo-demo.haroldmedrano33.workers.dev/explorar
 
+- **Los usuarios ya lo reportan:** en los issues públicos de un agente de código muy usado hay reportes de reglas de denegación ignoradas, que dejaron leer archivos de secretos ([#8961](https://github.com/anthropics/claude-code/issues/8961), abierto, con etiqueta de seguridad), y de archivos borrados sin pedir permiso ([#55911](https://github.com/anthropics/claude-code/issues/55911)). Son reportes de usuarios que no verificamos; los citamos como señal de que el problema ya ocurre fuera del laboratorio.
+
 ## En qué se diferencia
 Cloudflare lanzó el 21/10/2026 una protección que retiene la respuesta de un ataque exitoso ([anuncio](https://blog.cloudflare.com/full-transaction-waf/)), solo para el tráfico que pasa por su red y todavía sin reglas sobre el cuerpo de la respuesta. La idea de mandar al atacante a una copia falsa también está publicada este mes en un trabajo académico ([Gingerbread House](https://arxiv.org/abs/2611.07611)), sin código abierto. Centinela es abierto, corre delante de tus propios servidores y no se queda en bloquear: responde algo falso y creíble, y te explica el recorrido del agente.
 
