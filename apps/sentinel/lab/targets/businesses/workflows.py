@@ -33,14 +33,14 @@ class Field:
         return value
 
 
-PAPERS = ("Algodón mate", "Couché satinado", "Reciclado natural")
+PAPERS = ("Indefinido", "Plazo fijo", "Honorarios")  # tipos de contrato; el nombre se conserva por las pruebas
 ROUTES = ("Valparaíso → Santiago", "San Antonio → Rancagua", "Santiago → La Serena")
 ROOMS = ("Sala Mirador", "Sala Norte")
 SLOTS = ("10:00–12:00", "14:00–16:00", "18:00–20:00", "20:00–22:00")
 AMOUNT = Field("amount", "Monto en CLP", "number", low=100, high=1_000_000)
 FIELDS = {
-    "bruma": (Field("title", "Nombre del trabajo"), Field("paper", "Papel", options=PAPERS),
-              Field("copies", "Copias", "number", low=10, high=500)),
+    "bruma": (Field("title", "Nombre del trabajador"), Field("paper", "Tipo de contrato", options=PAPERS),
+              Field("copies", "Días trabajados", "number", low=1, high=30)),
     "litoral": (Field("route", "Ruta", options=ROUTES), Field("pallets", "Palés", "number", high=24)),
     "surco": (Field("title", "Nombre del grupo"), Field("room", "Sala", options=ROOMS),
               Field("slot", "Horario", options=SLOTS)),
@@ -79,7 +79,7 @@ class Workspace:
                 raise InvalidOperation("Se alcanzó el límite de registros de la demo.")
             row = {field.name: field.read(data) for field in FIELDS[slug]}
             if slug == "bruma":
-                row["total"] = row["copies"] * (900, 650, 780)[PAPERS.index(row["paper"])]
+                row["total"] = row["copies"] * (32_000, 28_000, 35_000)[PAPERS.index(row["paper"])]
             elif slug == "litoral":
                 row["total"] = (42_000, 51_000, 69_000)[ROUTES.index(row["route"])] + 16_000 * row["pallets"]
             elif slug == "surco" and any(r["slot"] == row["slot"] and r["room"] == row["room"] for r in book.values()):
