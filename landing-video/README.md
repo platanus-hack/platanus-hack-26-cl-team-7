@@ -1,6 +1,6 @@
-# Centinela explicado (v2, 75,6 s, 1920x1080)
+# Centinela explicado (v3, 75,6 s, 1920x1080)
 
-Video para entender Centinela de un vistazo (equipo, mentores, jurado). Orden de la v2 (encuadre de Harold, 22/11 01:00): **primero el hallazgo, después el producto**. Metáfora de punta a punta: un ladrón (un agente de IA atacante) prueba puertas y ventanas de una casa (tu sitio).
+Video para entender Centinela de un vistazo (equipo, mentores, jurado). Orden desde la v2 (encuadre de Harold, 22/11 01:00): **primero el hallazgo, después el producto**. Metáfora de punta a punta: un ladrón (un agente de IA atacante) prueba puertas y ventanas de una casa (tu sitio).
 
 | Escena | Tiempo | Qué muestra |
 |---|---|---|
@@ -11,9 +11,15 @@ Video para entender Centinela de un vistazo (equipo, mentores, jurado). Orden de
 | 4 · Los límites | 60–68 s | Una sola app de prueba, reglas por defecto, sin confirmar en el panel de Cloudflare, el ataque igual se ejecuta; y el límite de la detección |
 | 5 · Cierre | 68–76 s | «Bloquear le avisa. Centinela controla lo que el agente cree que pasó.» |
 
-La v1 (78,8 s; sin el hallazgo, con «lo que medimos» en tres cartas y Espejismo) quedó en `~/Downloads/centinela-explicado-v1.mp4` y en el commit `635f482`.
+## Estilo (v3, dirección de Harold del 22/11)
 
-Hecho con HyperFrames en un solo `index.html`; estilo, tipografías, música y utilidades de `related_experiments/espejismo/vault/espejismo-propuesta/`. Cada línea de `narracion.txt` es un subtítulo.
+Minimalista, de producto agéntico: fondo claro casi monocromo, un solo acento, líneas finas, píldoras y mucho aire (referencia de tono y ritmo: elevenlabs.io, visto en el navegador; no se copió marca, textos ni maquetación). Sans para las frases y monoespaciada para todo lo de «máquina». La protagonista es la **traza del agente** (petición → respuesta → siguiente intento): reemplaza a los dibujos de la casa y el ladrón, que siguen en la voz y en dos rótulos («ladrón = agente de IA», «casa = tu sitio»). Las trazas son ilustraciones y lo dicen en su cabecera.
+
+**Marca:** `landing/marca/` todavía no existía en `centinela-web` (commit `98bcf59`). Colores (modo claro), fuentes (Reddit Sans, JetBrains Mono) y logo salen de la landing actual de esa rama. Cuando exista `landing/marca/`: cambiar los tokens de `:root` en `index.html`, los dos `.woff2` de `assets/fonts/` y el SVG del ojo, y renderizar.
+
+Versiones anteriores: v2 (mismo guion y voz, estilo oscuro con dibujos) en `~/Downloads/centinela-explicado-v2.mp4` y commit `6073084`. La v1 (78,8 s; sin el hallazgo, con «lo que medimos» en tres cartas y Espejismo) en `~/Downloads/centinela-explicado-v1.mp4` y commit `635f482`.
+
+Hecho con HyperFrames en un solo `index.html`; música, efectos y utilidades (`voz.sh`, `sincronizar.py`) de `related_experiments/espejismo/vault/espejismo-propuesta/`. Cada línea de `narracion.txt` es un subtítulo.
 
 ## Cambiar algo
 
@@ -36,6 +42,6 @@ Hecho con HyperFrames en un solo `index.html`; estilo, tipografías, música y u
 
 - Respeta la lista «No decir» de `gtm-centinela.md`: no dice «somos los primeros», «detecta agentes de IA» (dice «detecta a quien prueba puertas»), «evita el ataque», «mejor que Cloudflare» ni «Sentinel». Las barras llevan su límite en la misma pantalla.
 - El hallazgo dura 18 s, no los 10 pedidos: decir el dato completo (tres caminos y el «3 a 11 veces») no entra en menos.
-- **Paso 4:** `assets/panel/panel.png` es la captura real `landing/img/arreglo-propuesto.png` de la rama `centinela-web` (panel en local con un sondeo de prueba, según su README), recortada sin la barra superior y con un recuadro negro sobre una palabra: el nombre «Sentinel» del nodo central. Los aros y rótulos turquesa son del video, no del panel. La captura no muestra el botón de aprobar; «que una persona aprueba» sale de `project-description.md`.
+- **Paso 4:** `assets/panel/panel.png` es la captura real `landing/img/arreglo-propuesto.png` de la rama `centinela-web` (panel en local con un sondeo de prueba, según su README), recortada sin la barra superior y con un recuadro negro sobre una palabra: el nombre «Sentinel» del nodo central. Los aros y rótulos turquesa son del video, no del panel. Las rutas de las trazas (`/admin`, `/.env`, `/api/pagos`…) son ilustrativas, no datos medidos. La captura no muestra el botón de aprobar; «que una persona aprueba» sale de `project-description.md`.
 - Para dar lugar al hallazgo salieron de la v1 las cifras 5 de 5, 0 de 34, 30 de 30 y Espejismo (9 de 18).
 - **Voz:** Javier (ElevenLabs, `eleven_multilingual_v2`, velocidad 1,2; 71,7 s). Transcrita con Whisper (`medium`, es): dice el guion completo y todas las cifras; Whisper escribe «Sentinela», que suena igual que «Centinela». En la v1 se comparó con Nico, que se comió dos palabras. **Nadie la escuchó entera antes de entregar: conviene oírla.**
