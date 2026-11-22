@@ -5,6 +5,10 @@ judges check 1 and 3b once the whole run is over.
 Client A is 127.0.0.1 with one User-Agent. After the flag every request from 127.0.0.1 (the R3 ip
 key) must reach the twin, and so must a twin-issued session cookie sent from ::1 with a new
 User-Agent. The router is restarted once in the middle: the keys must survive it.
+
+Copy on flag writes a masked account (demo.own): on the twin the copied session is signed in under
+a masked name, and the real password is refused, because the twin holds none. The twin-issued
+session comes from the shop's planted login flaw (TWIN_BYPASS), as an attacker would get one.
 """
 
 from __future__ import annotations
@@ -17,6 +21,7 @@ from .context import (
     DEMO_USER,
     REAL_DB,
     RECORD_LIMIT,
+    TWIN_BYPASS,
     V4,
     V6,
     Ctx,
@@ -48,7 +53,8 @@ def run(ctx: Ctx) -> None:
     ctx.lags.append(("GET /.env (the flag)", ctx.wait_action(flag) if ctx.track else None))
     copied = ctx.to_track(a, "GET", "/api/session")
     account = ctx.to_track(a, "GET", "/account")
-    twin_login = ctx.to_track(a, "POST", "/login", DEMO_LOGIN)
+    refused = ctx.to_track(a, "POST", "/login", DEMO_LOGIN)
+    twin_login = ctx.to_track(a, "POST", "/login", TWIN_BYPASS)
     ctx.twin_cookie = session_of(twin_login.reply)
     b = ctx.client(V6, "follow", cookie=ctx.twin_cookie, tracked=True)
     followed = ctx.to_track(b, "GET", "/api/session")
@@ -67,18 +73,22 @@ def run(ctx: Ctx) -> None:
         ctx.to_track(a, "GET", "/api/session"),
     ]
     restarted = [f"{s.method} {s.path} {in_logs(s)} {s.reply.status}" for s in after]
-    survived = all(in_logs(s) == (0, 1) for s in after) and user_of(after[1].reply) == DEMO_USER
+    masked, twin_user = user_of(copied.reply), user_of(followed.reply)
+    survived = all(in_logs(s) == (0, 1) for s in after) and user_of(after[1].reply) == twin_user
     follow = [
         ("real cookie on real before flag", user_of(real_user.reply) == DEMO_USER
          and in_logs(real_user) == (1, 0)),
-        ("same real cookie on twin after flag (copy on flag)", user_of(copied.reply) == DEMO_USER
-         and in_logs(copied) == (0, 1)),
-        ("twin account page signed in", account.reply.status == 200
-         and f"Signed in as {DEMO_USER}" in account.reply.text()),
+        ("same real cookie signed in on twin under a masked name (copy on flag)",
+         _is_name(masked) and masked != DEMO_USER and in_logs(copied) == (0, 1)),
+        ("twin account page signed in, masked", account.reply.status == 200
+         and f"Signed in as {masked}" in account.reply.text()
+         and f"Signed in as {DEMO_USER}" not in account.reply.text()),
+        ("real password refused on twin (it holds none)", refused.reply.status == 401
+         and not session_of(refused.reply) and in_logs(refused) == (0, 1)),
         ("twin issued its own session", bool(ctx.twin_cookie)
          and ctx.twin_cookie != ctx.real_cookie and twin_login.reply.status == 303),
-        ("twin cookie from ::1 + new UA -> twin", user_of(followed.reply) == DEMO_USER
-         and in_logs(followed) == (0, 1)),
+        ("twin cookie from ::1 + new UA -> twin", _is_name(twin_user)
+         and twin_user != DEMO_USER and in_logs(followed) == (0, 1)),
         ("same IP, other UA -> twin (ip key)", in_logs(other_agent) == (0, 1)),
         (f"after router restart (pid {pid}) every key still routes to twin", survived),
     ]
@@ -88,6 +98,10 @@ def run(ctx: Ctx) -> None:
     after_digest = stack.digest(REAL_DB)
     ctx.check("3a real data untouched (flag through router restart)",
               after_digest == ctx.before, _digest_evidence(ctx.before, after_digest))
+
+
+def _is_name(user: object) -> bool:
+    return isinstance(user, str) and bool(user) and not user.startswith("HTTP ")
 
 
 def _recording(ctx: Ctx, track_lag: float | None, routed: int) -> None:

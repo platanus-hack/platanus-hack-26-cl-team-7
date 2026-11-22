@@ -23,6 +23,9 @@ BROWSER = (
 )
 DEMO_LOGIN = "username=alice&password=wonderland"  # demo.seed's documented demo customer
 DEMO_USER = "alice"
+# The shop's planted login flaw (demo.auth): it signs in as the first user without a password. On
+# the twin this is how an attacker gets a session, since the twin holds no real password.
+TWIN_BYPASS = "username=%27+OR+1%3D1+--&password=anything"
 REAL_DB = RUN / "real.db"
 V4, V6 = "127.0.0.1", "::1"
 
