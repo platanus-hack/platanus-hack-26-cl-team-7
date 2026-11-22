@@ -7,7 +7,7 @@ from typing import Any
 
 from demo import db
 from demo.auth import now_iso
-from demo.web import Shop
+from demo.web import CART_COOKIE, Call, Shop
 
 CENTS = 100
 MAX_CART_LINES = 20
@@ -104,6 +104,15 @@ def parse_cart(raw: str) -> dict[int, int]:
 
 def format_cart(cart: dict[int, int]) -> str:
     return ",".join(f"{key}:{count}" for key, count in sorted(cart.items()))
+
+
+def cart_of(call: Call) -> dict[int, int]:
+    """The cart in the request's cart cookie."""
+    return parse_cart(call.cookies.get(CART_COOKIE, ""))
+
+
+def cart_cookie(cart: dict[int, int]) -> str:
+    return f"{CART_COOKIE}={format_cart(cart)}; Path=/; SameSite=Lax"
 
 
 def add_to_cart(cart: dict[int, int], raw_id: str, raw_quantity: str) -> dict[int, int]:

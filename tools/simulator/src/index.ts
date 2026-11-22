@@ -9,6 +9,10 @@ import { API_PREFIX, DEFAULT_PORT, type IngestEvent } from "@sentinel/contracts"
 const BASE = process.env.SENTINEL_URL ?? `http://127.0.0.1:${DEFAULT_PORT}`;
 const RATE = Number(process.env.SIM_RATE ?? 6); // events per second, on average
 const TICK_MS = 250;
+const HEADERS = {
+  "Content-Type": "application/json",
+  ...(process.env.SENTINEL_INGEST_TOKEN ? { Authorization: `Bearer ${process.env.SENTINEL_INGEST_TOKEN}` } : {}),
+};
 
 interface Actor {
   ip: string;
@@ -105,10 +109,7 @@ async function tick(): Promise<void> {
   try {
     const res = await fetch(`${BASE}${API_PREFIX}/events`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(process.env.SENTINEL_INGEST_TOKEN ? { Authorization: `Bearer ${process.env.SENTINEL_INGEST_TOKEN}` } : {}),
-      },
+      headers: HEADERS,
       body: JSON.stringify(batch),
       signal: AbortSignal.timeout(2000),
     });
@@ -123,4 +124,6 @@ async function tick(): Promise<void> {
 
 console.log(`[sim] sending about ${RATE} events/s to ${BASE}`);
 setInterval(() => void tick(), TICK_MS);
-setInterval(() => sent && console.log(`[sim] ${sent} events sent`), 30_000).unref();
+setInterval(() => {
+  if (sent) console.log(`[sim] ${sent} events sent`);
+}, 30_000).unref();

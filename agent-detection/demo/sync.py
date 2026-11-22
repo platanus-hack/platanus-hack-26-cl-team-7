@@ -9,8 +9,8 @@ twin's file; the twin never connects to it.
   agent stays signed in there. 200 {"userId", "orders"}; 400 for a bad body; 404 for an unknown
   session.
 - POST /real-values {"values": ["<text>", ...]} answers 200 {"real": [...]}: the values the real
-  database holds as a username, email or session token (demo.identities). The router binds a
-  value the twin gave out to a track only when it is not in that list.
+  database holds as a username, email or session token (demo.replica.Syncer.real_values). The
+  router binds a value the twin gave out to a track only when it is not in that list.
 """
 
 from __future__ import annotations
@@ -25,9 +25,7 @@ from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Any
 
-from demo.identities import real_values
-from demo.mask import DEFAULT_POLICY
-from demo.masking import load_policy
+from demo.masking import DEFAULT_POLICY, load_policy
 from demo.replica import Syncer
 from demo.web import JSON
 from mirror.session_copy import COPY_PATH, MAX_VALUE_CHARS, VALUES_PATH
@@ -46,6 +44,8 @@ class SyncServer(UnixHTTPServer):
 
 
 class SyncHandler(BaseHTTPRequestHandler):
+    server: SyncServer
+
     def read_json(self, limit: int) -> object:
         """The JSON body, or None when it is missing, longer than `limit` or not JSON. The body
         is read before any answer, so the caller can finish sending it."""
@@ -61,7 +61,7 @@ class SyncHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         data = self.read_json(MAX_VALUES_BODY if self.path == VALUES_PATH else MAX_COPY_BODY)
-        if self.path not in (COPY_PATH, VALUES_PATH) or not isinstance(self.server, SyncServer):
+        if self.path not in (COPY_PATH, VALUES_PATH):
             return self.reply(404, {"error": "not found"})
         try:
             if self.path == VALUES_PATH:
@@ -84,7 +84,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             return self.reply(400, {"error": 'expected {"values": ["<text>", ...]}'})
         if len(values) > MAX_VALUES or any(len(v) > MAX_VALUE_CHARS for v in values):
             return self.reply(400, {"error": f"at most {MAX_VALUES} values of {MAX_VALUE_CHARS}"})
-        return self.reply(200, {"real": real_values(syncer.real, values)})
+        return self.reply(200, {"real": syncer.real_values(values)})
 
     def do_GET(self) -> None:
         self.reply(404, {"error": "not found"})
