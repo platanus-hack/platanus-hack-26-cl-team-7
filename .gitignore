@@ -1,4 +1,4 @@
-.env*
+n.env*
 *.env
 .venv/
 __pycache__/
@@ -29,9 +29,8 @@ coverage/
 apps/sentinel/data/
 
 # Espejismo
-espejismo/controller/ca/*.key
-espejismo/controller/ca/*.pem
-espejismo/sandbox/ca.pem
+*.key
+*.pem
 
 # Ultimo Paso build artifacts
 ultimo-paso/bin/
