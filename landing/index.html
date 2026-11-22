@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Centinela: seguridad contra agentes de IA para equipos con servidores propios</title>
+<title>Centinela: sin la prueba de su ataque, un agente de IA pierde el rumbo</title>
 <meta name="description" content="Centinela detecta sondeos, le responde al atacante con una copia falsa, le niega la prueba de que su ataque funcionó y te muestra qué buscaba.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Centinela: atrapa a los agentes de IA que atacan tu sitio">
-<meta property="og:description" content="Le responde al atacante con una copia falsa y le niega la prueba de que su ataque funcionó.">
+<meta property="og:title" content="Centinela: sin la prueba, un agente de IA pierde el rumbo">
+<meta property="og:description" content="La prueba del ataque le llegó al atacante 20 de 20 veces sin defensa, 20 de 20 por la protección por defecto de Cloudflare y 0 de 20 con Centinela.">
 <meta property="og:image" content="https://centinela.haroldmedrano33.workers.dev/share.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -71,6 +71,34 @@
   .note code, .duel code { font-family: var(--font-mono); font-size: .92em; }
   @media (max-width: 1023px) { .hero__art .shot img { width: 900px; } }
   @media (max-width: 639px) { .hero__art .shot img { width: 640px; } }
+  /* héroe: el hallazgo en tres barras */
+  .bars { position: absolute; inset: 0; margin: 0; padding: var(--s-8); display: flex; flex-direction: column; justify-content: center; gap: var(--s-6); color: var(--ground-ink); }
+  .bars__q { margin: 0; font-family: var(--font-display); font-size: var(--t-card); font-weight: 500; max-width: 28ch; }
+  .bar { display: grid; grid-template-columns: 1fr auto; gap: var(--s-2) var(--s-4); align-items: center; }
+  .bar__name { grid-column: 1 / -1; font-size: 16px; color: var(--ground-muted); }
+  .bar__track { height: 28px; border-radius: 4px; background: color-mix(in oklab, var(--ground-ink) 10%, transparent); overflow: hidden; }
+  .bar__track i { display: block; height: 100%; width: calc(var(--v) * 100%); background: var(--bad); transform-origin: left; animation: bar-grow .9s cubic-bezier(.2,.7,.2,1) both .3s; }
+  .bar b { font-family: var(--font-mono); font-weight: 500; font-size: 18px; font-variant-numeric: tabular-nums; min-width: 9ch; text-align: right; }
+  .bar--us .bar__name, .bar--us b { color: var(--ok); }
+  .bar--us .bar__track { outline: 2px dashed color-mix(in oklab, var(--ok) 60%, transparent); outline-offset: -2px; }
+  .bars__note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ground-muted); }
+  @keyframes bar-grow { from { transform: scaleX(0); } }
+  @media (prefers-reduced-motion: reduce) { .bar__track i { animation: none; } }
+  @media (max-width: 1023px) { .bars { position: static; padding: var(--s-6); gap: var(--s-4); } }
+  .bars__note--short { display: none; }
+  @media (max-width: 359px) { .nav__actions { display: none; } }
+  @media (max-width: 639px) {
+    .hero__proof { display: none; }
+    .hero__art { margin-top: var(--s-4) !important; }
+    .bars { padding: var(--s-4); gap: var(--s-2); }
+    .bars__q { font-size: 16px; max-width: none; }
+    .bar { grid-template-columns: 1fr auto; gap: 2px var(--s-3); }
+    .bar__name { font-size: 14px; }
+    .bar__track { height: 14px; }
+    .bar b { font-size: 14px; min-width: 7ch; }
+    .bars__note--long { display: none; }
+    .bars__note--short { display: block; }
+  }
   /* el momento: dos trazas reales, pedido por pedido */
   .duel .card { display: flex; flex-direction: column; }
   .duel__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); }
@@ -87,6 +115,7 @@
   .duel__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); margin-top: var(--s-5); }
   .duel__foot .btn { order: 2; }
   @media (max-width: 639px) { .duel__foot { flex-direction: column; align-items: stretch; gap: var(--s-3); } }
+  @media (min-width: 640px) { .duel__dl { display: none !important; } }
   .duel__legend { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); margin: var(--s-4) 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
   .duel__legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
   /* las cifras: grande, con su límite al lado */
@@ -157,44 +186,41 @@
   <section class="hero hero--collage" data-enter aria-labelledby="hero-h">
     <div class="wrap"><div class="hero-text grid hero__grid">
       <div class="hero__text span-5">
-        <h1 id="hero-h">Atrapa a los agentes de IA que atacan tu sitio</h1>
-        <p class="hero__lead">Centinela le responde al atacante con una copia falsa, le niega la prueba de que su ataque funcionó y te muestra qué buscaba.</p>
-        <div class="btn-row"><a class="btn btn--primary" href="#demo">Ver cómo atrapa a un agente<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a></div>
-        <p class="hero__proof">Con dos modelos de IA atacando, la prueba no les llegó en ninguna de 20 corridas.</p>
+        <h1 id="hero-h">Sin la prueba, un agente de IA pierde el rumbo</h1>
+        <p class="hero__lead">Si a un agente de IA que te ataca le niegas la prueba de que su ataque funcionó, no declara éxito y gasta de 3 a 11 veces más peticiones. Lo medimos.</p>
+        <div class="btn-row"><a class="btn btn--primary" href="#demo">Ver las dos respuestas<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a></div>
+        <p class="hero__proof">Centinela es la versión abierta de esa idea, delante de tus propios servidores.</p>
       </div>
-      <div class="hero__art span-6 start-7" role="img" aria-label="Panel de Centinela: el atacante pasó por Centinela, fue desviado a la copia falsa y la tienda real no recibió visitas suyas">
-        <div class="ly-piece ly-piece--main shot" aria-hidden="true">
-          <picture>
-            <source type="image/avif" srcset="img/agente-recorrido-1600.avif">
-            <img src="img/agente-recorrido-1600.webp" srcset="img/agente-recorrido-800.webp 800w, img/agente-recorrido-1600.webp 1600w" sizes="1100px" width="1600" height="1000" alt="" fetchpriority="high">
-          </picture>
-        </div>
-        <div class="ly-piece note" aria-hidden="true" data-ly-steps="700">
-          <h3>Sesión marcada</h3>
-          <p data-step><i>01</i><span>Pidió <code>/.env</code></span></p>
-          <p data-step><i>02</i><span>Desviada a la copia falsa</span></p>
-          <p data-step><i>03</i><span>Tienda real: 0 visitas suyas</span></p>
-        </div>
+      <div class="hero__art span-6 start-7">
+        <figure class="bars" role="img" aria-label="La prueba del ataque le llegó al atacante en 20 de 20 corridas sin defensa, en 20 de 20 por la protección por defecto de Cloudflare y en 0 de 20 con Centinela">
+          <p class="bars__q">¿Le llegó al atacante la prueba de que su ataque funcionó?</p>
+          <div class="bar"><span class="bar__name">Sin defensa</span><span class="bar__track"><i style="--v:1"></i></span><b>20 de 20</b></div>
+          <div class="bar"><span class="bar__name">Cloudflare, protección por defecto</span><span class="bar__track"><i style="--v:1"></i></span><b>20 de 20</b></div>
+          <div class="bar bar--us"><span class="bar__name">Centinela</span><span class="bar__track"><i style="--v:0"></i></span><b>0 de 20</b></div>
+          <p class="bars__note bars__note--short">Dos modelos de IA, 10 corridas cada uno. Límite: una app de prueba y reglas por defecto; el ataque se ejecutó igual.</p>
+          <p class="bars__note bars__note--long">Mismos ataques, dos modelos de IA, 10 corridas cada uno (22/11/2026). Límite: una sola app de prueba, plan gratuito de Cloudflare con reglas por defecto, sin confirmar en su panel que la protección de respuestas estuviera activa. El ataque se ejecutó en el servidor en los tres.</p>
+        </figure>
       </div>
     </div></div>
   </section>
 
-  <section class="section" id="demo" aria-labelledby="demo-h">
+  <section class="section" id="demo" style="--hm: 2" aria-labelledby="demo-h">
     <div class="wrap">
       <div class="section-head">
-        <h2 id="demo-h">El mismo agente de IA, dos respuestas. <span class="muted">Prueba, lee la respuesta y ajusta.</span></h2>
+        <h2 id="demo-h">El mismo agente de IA, dos respuestas.</h2>
+        <p class="measure" style="margin-top:var(--s-3)">Los atacantes ya usan agentes de IA que prueban, leen la respuesta y ajustan. En julio de 2026, agentes de OpenAI entraron a sistemas de Hugging Face y nadie lo vio a tiempo (<a class="link" href="https://openai.com/index/hugging-face-model-evaluation-security-incident/">comunicado</a>).</p>
       </div>
       <div class="grid duel" data-duel>
         <article class="card span-6" data-side="sin">
-          <div class="duel__head"><h3>Sin Centinela</h3><span class="t-label muted">corrida 2 de 2</span></div>
+          <div class="duel__head"><h3>Sin Centinela</h3><span class="t-label muted">32 pedidos</span></div>
           <div class="panel duel__panel"><div class="duel__ticks" role="img" aria-label="32 pedidos; en el 4, el 27 y el 32 le llegó la prueba"></div></div>
-          <dl><dt>Pedidos</dt><dd>32</dd><dt>¿Recibió la prueba?</dt><dd>Sí</dd></dl>
+          <dl class="duel__dl"><dt>Pedidos</dt><dd>32</dd><dt>¿Recibió la prueba?</dt><dd>Sí</dd></dl>
           <p class="duel__verdict">En el pedido 4 recibió el archivo. Al final declaró que su ataque funcionó.</p>
         </article>
         <article class="card span-6" data-side="con">
-          <div class="duel__head"><h3>Con Centinela</h3><span class="t-label muted">corrida 1 de 2</span></div>
+          <div class="duel__head"><h3>Con Centinela</h3><span class="t-label muted">41 pedidos</span></div>
           <div class="panel duel__panel"><div class="duel__ticks" role="img" aria-label="41 pedidos; Centinela retuvo la respuesta o aplicó su regla en 36 y nunca le llegó la prueba"></div></div>
-          <dl><dt>Pedidos</dt><dd>41</dd><dt>¿Recibió la prueba?</dt><dd>No</dd></dl>
+          <dl class="duel__dl"><dt>Pedidos</dt><dd>41</dd><dt>¿Recibió la prueba?</dt><dd>No</dd></dl>
           <p class="duel__verdict">Recibió errores creíbles, siguió probando y nunca obtuvo la prueba. Cada pedido quedó registrado.</p>
         </article>
       </div>
@@ -212,12 +238,12 @@
     <div class="wrap">
       <div class="group">
         <div class="section-head">
-          <h2 id="pasos-h">Cuatro pasos delante de tu servidor. <span class="muted">Capturas del panel real, con un sondeo de prueba nuestro.</span></h2>
+          <h2 id="pasos-h">Cómo lo hace Centinela, en cuatro pasos. <span class="muted">Para equipos chicos con su app en servidores propios.</span></h2>
         </div>
         <div class="grid">
           <article class="card card--row card--open span-6">
             <h3>Detectar sondeos</h3>
-            <p>Quien pide rutas que no existen o archivos sensibles queda marcado. Aquí bastó pedir <code>/.env</code>.</p>
+            <p>Quien pide rutas que no existen o archivos sensibles queda marcado. En el panel real, nuestro sondeo pidió <code>/.env</code>.</p>
             <div class="panel"><picture><source type="image/avif" srcset="img/agentes-atrapados-1600.avif"><img class="frame__img" src="img/agentes-atrapados-1600.webp" srcset="img/agentes-atrapados-800.webp 800w, img/agentes-atrapados-1600.webp 1600w" sizes="(max-width: 639px) 342px, 628px" width="1600" height="1000" alt="Panel con la lista de agentes atrapados y dos fallas críticas" loading="lazy"></picture></div>
           </article>
           <article class="card card--row card--open span-6">

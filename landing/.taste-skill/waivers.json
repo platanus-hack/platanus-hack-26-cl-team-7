@@ -6,7 +6,7 @@
   },
   {
     "check": "copy-headings",
-    "target": "h2#pasos-h",
+    "target": "article.card.card--row:nth-of-type(1) > h3",
     "reason": "Página en español: el léxico del verificador es inglés; los títulos nombran partes de Centinela (pasos, servidor, copia falsa, confirmación, arreglo)."
   },
   {

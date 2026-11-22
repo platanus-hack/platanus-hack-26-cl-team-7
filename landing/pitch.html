@@ -79,6 +79,14 @@
   .vs h3 { font-size:34px; margin:0 0 12px; }
   .vs p { font-size:31px; line-height:1.35; }
   .qa { display:none; }
+  .barras { display:grid; gap:26px; max-width:1500px; }
+  .barra { display:grid; grid-template-columns:560px 1fr 220px; align-items:center; gap:32px; font-size:36px; }
+  .barra i { height:44px; border-radius:8px; background:#e9ecef; position:relative; overflow:hidden; }
+  .barra i::after { content:""; position:absolute; inset:0; width:calc(var(--v) * 100%); background:var(--alerta); }
+  .barra b { font-variant-numeric:tabular-nums; text-align:right; }
+  .barra.nuestra span, .barra.nuestra b { color:var(--real); font-weight:700; }
+  .barra.nuestra i { outline:3px dashed var(--real); outline-offset:-3px; }
+
   /* Notas del orador: tecla N */
   #notas { display:none; position:fixed; left:0; right:0; bottom:0; max-height:42vh; overflow:auto; background:#111; color:#f2f2f2; font-size:22px; line-height:1.45; padding:18px 28px; border-top:3px solid var(--alerta); z-index:10; }
   #notas.ver { display:block; }
@@ -96,20 +104,27 @@
 <body>
 <div id="lienzo">
 
-<section class="lamina" data-t="0:20">
-  <p class="etiqueta">Julio de 2026</p>
-  <p class="caso">Durante una evaluación, agentes de IA de OpenAI entraron a sistemas de Hugging Face. <b>Nadie lo vio a tiempo.</b></p>
-  <p class="pregunta">Si un agente de IA ataca tu sitio, ¿te darías cuenta?</p>
-  <p class="fuente">Fuente: comunicado de OpenAI del 21/07/2026 (openai.com/index/hugging-face-model-evaluation-security-incident).</p>
-  <div class="nota">«En julio de este año, durante una evaluación, agentes de IA de OpenAI entraron a sistemas de Hugging Face. Y nadie lo vio a tiempo. Lo contó la propia OpenAI. Si eso le pasa a Hugging Face, la pregunta para cualquier equipo es: si un agente de IA ataca tu sitio, ¿te darías cuenta?»</div>
+<section class="lamina" data-t="0:25">
+  <p class="etiqueta">Lo que medimos · 22/11/2026</p>
+  <p class="caso" style="margin-bottom:48px">Si a un agente de IA que te ataca le niegas la prueba de que su ataque funcionó, <b>se queda sin rumbo</b>.</p>
+  <div class="barras">
+    <div class="barra"><span>Sin defensa</span><i style="--v:1"></i><b>20 de 20</b></div>
+    <div class="barra"><span>Cloudflare, protección por defecto</span><i style="--v:1"></i><b>20 de 20</b></div>
+    <div class="barra nuestra"><span>Nuestra pieza</span><i style="--v:0"></i><b>0 de 20</b></div>
+  </div>
+  <p class="medio" style="margin-top:40px">Sin la prueba, ningún agente declaró éxito y gastó de <b>3 a 11 veces</b> más peticiones.</p>
+  <p class="fuente" style="margin-top:28px">¿Le llegó la prueba al atacante? Mismos ataques, dos modelos de IA, 10 corridas cada uno. Límite: una sola app de prueba, reglas por defecto del plan gratuito de Cloudflare, sin confirmar en su panel que la protección de respuestas estuviera activa; el ataque se ejecutó en el servidor en los tres.</p>
+  <div class="nota">«Si a un agente de IA que te ataca le niegas la prueba de que su ataque funcionó, se queda sin rumbo. Lo medimos: los mismos ataques, con dos modelos de IA atacando, 10 corridas cada uno. Sin defensa, la prueba le llegó 20 de 20 veces. Con la protección por defecto de Cloudflare, también 20 de 20. Con nuestra pieza, 0 de 20. Y sin esa prueba, ningún agente declaró éxito, y gastaron de 3 a 11 veces más peticiones.»</div>
 </section>
 
 <section class="lamina" data-t="0:20">
   <p class="etiqueta">El problema</p>
   <h2>Un agente prueba, lee la respuesta, ajusta y vuelve a probar.</h2>
   <p class="grande" style="max-width:1640px;margin-bottom:48px">A velocidad de máquina. Y si lo bloqueas, le avisas que lo viste: <span class="alerta">aprende y cambia</span>.</p>
+  <p class="medio" style="max-width:1640px;margin-bottom:28px">En julio de 2026, agentes de OpenAI entraron a sistemas de Hugging Face y nadie lo vio a tiempo.</p>
   <p class="medio suave" style="max-width:1640px">Quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.</p>
-  <div class="nota">«Un agente atacante trabaja así: prueba algo, lee la respuesta del servidor, ajusta y vuelve a probar. A velocidad de máquina. Y la defensa típica, bloquear, le dice que lo vieron: aprende y cambia. Mientras tanto, quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.»</div>
+  <p class="fuente" style="margin-top:32px">Fuente: comunicado de OpenAI del 21/07/2026.</p>
+  <div class="nota">«¿Por qué importa? En julio, agentes de OpenAI entraron a sistemas de Hugging Face durante una evaluación y nadie lo vio a tiempo. Un agente atacante trabaja así: prueba algo, lee la respuesta del servidor, ajusta y vuelve a probar. A velocidad de máquina. Y la defensa típica, bloquear, le dice que lo vieron: aprende y cambia. Mientras tanto, quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.»</div>
 </section>
 
 <section class="lamina" data-t="0:15">
@@ -150,19 +165,19 @@
   <div class="nota">[Demo en vivo: panel en http://127.0.0.1:8787, ya con el sondeo cargado.] «Esto es el panel. Un atacante pidió /.env y quedó marcado. Desde ahí todo lo que pidió lo respondió la copia falsa: aquí pidió el archivo de usuarios del servidor, /etc/passwd, y le llegó uno falso. Creyó que funcionó. Abajo están las dos fallas que encontró, y si le pregunto a la IA, me dice por qué es grave y los pasos para arreglarla.» Abrir la falla «Acceso a archivos fuera de la carpeta» → Preguntar a la IA. Si no hay panel: mostrar esta captura y la del arreglo (landing, paso 4). Este sondeo lo hicimos nosotros con curl, no un agente de IA: decirlo si preguntan.</div>
 </section>
 
-<section class="lamina" data-t="0:35">
+<section class="lamina" data-t="0:30">
   <p class="etiqueta">Lo que medimos</p>
   <div class="ab">
     <div class="cifra"><b>5/5 → 0/5</b><p>la prueba del ataque dejó de llegar, banco de prueba</p></div>
     <div class="cifra"><b>3/3 → 0/3</b><p>contra una falla real de Langflow</p></div>
-    <div class="cifra"><b>20/20 → 0/20</b><p>con dos modelos de IA atacando</p></div>
+    <div class="cifra"><b>3 a 11×</b><p>más peticiones gastó el agente sin la prueba</p></div>
     <div class="cifra"><b>0 de 34</b><p>pedidos legítimos bloqueados en el banco y Langflow</p></div>
   </div>
   <div class="vs">
     <div><h3>Cloudflare, 21/10/2026</h3><p>Solo para el tráfico de su red. En nuestro benchmark, la prueba le llegó al atacante <b>20 de 20</b> veces por Cloudflare (reglas por defecto, plan gratuito).</p></div>
     <div><h3 class="real">Centinela</h3><p>Abierto, delante de tus servidores: <b>0 de 20</b>. Responde algo falso y creíble, y te explica el recorrido.</p></div>
   </div>
-  <div class="nota">«Lo medimos. La prueba del ataque dejó de llegarle al atacante: 5 de 5 a 0 de 5 en un banco de prueba, 3 de 3 a 0 de 3 contra una falla real de Langflow, sin bloquear ninguno de 34 pedidos legítimos. Y lo comparamos con lo que lanzó Cloudflare hace un mes: mismos ataques, dos modelos de IA atacando, 10 corridas cada uno. La prueba llegó 20 de 20 sin defensa, 20 de 20 por Cloudflare con sus reglas por defecto, y 0 de 20 por Centinela. Sin esa prueba ningún agente declaró éxito, y gastaron de 3 a 11 veces más peticiones.»</div>
+  <div class="nota">«Y no es solo el benchmark. La prueba del ataque dejó de llegarle al atacante 5 de 5 a 0 de 5 en un banco de prueba y 3 de 3 a 0 de 3 contra una falla real de Langflow, sin bloquear ninguno de 34 pedidos legítimos; sin la prueba, el agente gastó de 3 a 11 veces más peticiones. Cloudflare protege solo lo que pasa por su red; Centinela es abierto, corre delante de tus servidores, responde algo falso y te explica el recorrido.»</div>
 </section>
 
 <section class="lamina" data-t="0:20">
