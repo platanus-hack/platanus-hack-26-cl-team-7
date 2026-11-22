@@ -18,7 +18,7 @@ function CopilotFallback() {
   );
 }
 
-/** App lifecycle: connect to Sentinel for the copilot, keep health fresh, ⌘K / Esc for the copilot. */
+/** App lifecycle: connect to Reaper for the copilot, keep health fresh, ⌘K / Esc for the copilot. */
 export function App() {
   return <SentinelApp />;
 }

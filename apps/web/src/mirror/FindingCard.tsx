@@ -1,6 +1,6 @@
 /**
  * One confirmed vulnerability: severity, name, endpoint, weak point, and the trace from the catch to
- * the proof as a log, always open, and whether Sentinel already keeps the attack out of the real shop.
+ * the proof as a log, always open, and whether Reaper already keeps the attack out of the real shop.
  * "Preguntar a la IA" asks the copilot about it.
  * Interface: `<FindingCard f track moments active lab? />`. A lab finding passes `lab`: its weakness, whether the
  * proof stayed behind, and the A/B steps that measured it, named after its project.

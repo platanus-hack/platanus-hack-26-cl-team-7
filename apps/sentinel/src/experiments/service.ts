@@ -64,12 +64,12 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
   }
 
   async function start(project?: ExperimentProject): Promise<StartResult> {
-    if (!worker || stopped) return { error: "La ejecución en vivo requiere Sentinel en loopback.", status: 503 } as const;
+    if (!worker || stopped) return { error: "La ejecución en vivo requiere Reaper en loopback.", status: 503 } as const;
     if (starting || active) return { error: "Ya hay una ejecución A/B en curso.", status: 409 } as const;
     starting = true;
     try {
       const issue = await worker.readiness();
-      if (issue || stopped) return { error: issue ?? "Sentinel se está cerrando.", status: 503 } as const;
+      if (issue || stopped) return { error: issue ?? "Reaper se está cerrando.", status: 503 } as const;
       const id = `pipeline-${randomUUID().replaceAll("-", "").slice(0, 24)}`;
       const controller = new AbortController();
       store.start(id);
@@ -85,7 +85,7 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
     stopped = true;
     if (!active) return;
     active.controller.abort();
-    store.finish(active.id, "interrupted", "Sentinel se cerró durante la ejecución.");
+    store.finish(active.id, "interrupted", "Reaper se cerró durante la ejecución.");
   }
 
   return { start, stop };

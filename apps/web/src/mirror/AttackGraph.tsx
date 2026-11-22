@@ -157,7 +157,7 @@ function FitOnResize() {
 const nodeTypes = { card: CardNodeView };
 const edgeTypes = { packet: PacketEdge, blocked: BlockedEdge };
 
-/** The caught-agent story: Centinela sends the agent to a fake copy and keeps it off the real shop. */
+/** The caught-agent story: Reaper sends the agent to a fake copy and keeps it off the real shop. */
 function mirrorStory(track: Track, decoys: number): GraphStory {
   return {
     label: "Ruta del ataque: el agente pasa por Reaper a la copia falsa; la tienda real está bloqueada.",

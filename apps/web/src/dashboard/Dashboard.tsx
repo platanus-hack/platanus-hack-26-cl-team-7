@@ -26,19 +26,9 @@ function TitleBar() {
         <img src="/presentacion/logo.svg" width={24} height={24} alt="" />
         Reaper
       </div>
-      {conn === "reconnecting" && (
-        <span className="conn" role="status">
-          <i />
-          Reconectando…
-        </span>
-      )}
-      {conn === "offline" && (
-        <span className="conn" role="status">
-          <i />
-          Reaper está desconectado
-        </span>
-      )}
-      <button type="button" className="ask sentinel-copilot ml-auto" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
+      {error && <span className="conn" role="status"><i />{error}</span>}
+      <a className="ask ml-auto" href="/presentacion/" target="_blank" rel="noreferrer">Presentación <ArrowSquareOut size={12} aria-hidden /></a>
+      <button type="button" className="ask sentinel-copilot" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
         <Orb size={20} />
         Copilot
         <kbd className="kbd">⌘K</kbd>

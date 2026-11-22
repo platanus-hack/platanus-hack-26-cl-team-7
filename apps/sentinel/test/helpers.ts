@@ -18,7 +18,7 @@ export interface FakeTurn {
   final: { stop_reason: string; content: unknown[]; model?: string };
 }
 
-/** Minimal stand-in for the parts of the SDK client that Sentinel calls. */
+/** Minimal stand-in for the parts of the SDK client that Reaper calls. */
 export function fakeClient(opts: { parse?: (params: unknown) => unknown; turns?: FakeTurn[] }) {
   const calls: { parse: unknown[]; stream: unknown[] } = { parse: [], stream: [] };
   let turn = 0;

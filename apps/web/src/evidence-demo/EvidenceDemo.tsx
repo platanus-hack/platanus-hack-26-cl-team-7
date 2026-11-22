@@ -83,7 +83,7 @@ function ArmEvidence({ run, arm }: { run: RecordedBankRun; arm: keyof typeof arm
 
 export function RecordedEvidence({ run }: { run: RecordedBankRun }) {
   return (
-    <Section title="A/B grabado de Último Paso">
+    <Section title="A/B grabado de Reaper">
       <p className="ed-note">Las respuestas se muestran en el orden guardado. El registro no incluye rutas, IDs de solicitud, horas por solicitud ni decisiones individuales del proxy.</p>
       <div className="ed-columns"><ArmEvidence run={run} arm="direct" /><ArmEvidence run={run} arm="protected" /></div>
       <p className="ed-source">Fuente <code>related_experiments/ultimo-paso/scoreboard/results/mock-bank.json</code></p>

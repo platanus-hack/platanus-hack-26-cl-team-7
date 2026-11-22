@@ -48,7 +48,7 @@ function isoOf(ms: number): string | null {
   return Number.isFinite(ms) && Math.abs(ms) <= 8.64e15 ? new Date(ms).toISOString() : null;
 }
 
-/* ----------------------- Sentinel events (sen) ----------------------- */
+/* ----------------------- Reaper events (sen) ----------------------- */
 
 export function sentinelSource(store: Store): LogSource {
   const toRow = (e: AttackEvent): RequestRow => ({

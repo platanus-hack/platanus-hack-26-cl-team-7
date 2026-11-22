@@ -1,4 +1,4 @@
-"""Loopback demo services for Sentinel's customer and evidence workflows."""
+"""Loopback demo services for Reaper's customer and evidence workflows."""
 from collections import Counter
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -197,5 +197,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=9120)
     with Service(parser.parse_args().port) as server:
-        print(f"Servicios de Sentinel en http://127.0.0.1:{server.server_port}", flush=True)
+        print(f"Servicios de Reaper en http://127.0.0.1:{server.server_port}", flush=True)
         server.serve_forever()

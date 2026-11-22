@@ -111,7 +111,7 @@ describe("loadMirror", () => {
     expect(urls[0]).toBe("/v1/tracks?range=24h&limit=200");
   });
 
-  it("shows an error when Sentinel cannot answer", async () => {
+  it("shows an error when Reaper cannot answer", async () => {
     vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ error: { code: "internal", message: "boom" } }), { status: 500 }));
     await loadMirror();
     expect(useMirror.getState()).toMatchObject({ loading: false, error: "boom" });
@@ -227,7 +227,7 @@ describe("track detail", () => {
     expect(useMirror.getState().detail).toEqual(newer);
   });
 
-  it("says the track could not load when Sentinel fails, and drops a late answer for a track no longer open", async () => {
+  it("says the track could not load when Reaper fails, and drops a late answer for a track no longer open", async () => {
     stubFetch([]);
     useMirror.setState({ selected: null, detail: null, error: null });
     useMirror.getState().select(`trk_${hex(7)}`);

@@ -14,7 +14,7 @@ export class ExperimentStore {
   constructor(db: DatabaseSync, readRecording = () => readFileSync(recording, "utf8")) {
     this.db = db;
     db.prepare("UPDATE experiment_runs SET status='interrupted', finished=?, error=? WHERE status='running'")
-      .run(new Date().toISOString(), "Sentinel se reinició durante la ejecución.");
+      .run(new Date().toISOString(), "Reaper se reinició durante la ejecución.");
     db.exec("BEGIN IMMEDIATE");
     try {
       db.prepare("DELETE FROM experiment_entries WHERE run_id=?").run(legacyBaselineId);

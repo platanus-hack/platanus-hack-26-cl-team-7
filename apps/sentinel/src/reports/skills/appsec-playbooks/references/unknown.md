@@ -1,6 +1,6 @@
 # Unknown attack type
 
-No Sentinel rule matched, so decide from the evidence. Do not force a playbook that does not fit.
+No Reaper rule matched, so decide from the evidence. Do not force a playbook that does not fit.
 
 ## Method
 1. Read the payload and path in the evidence rows. Name what the attacker tried: a changed id, a hidden path, a header, a large body, a repeated call.
