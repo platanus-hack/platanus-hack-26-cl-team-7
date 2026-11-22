@@ -6,7 +6,7 @@
 import type { LabAgent } from "../experiments/labTrack";
 import type { TrafficFocus } from "./Traffic";
 
-export type SectionId = "header" | "result" | "replay" | "traffic" | "cve";
+export type SectionId = "header" | "result" | "replay" | "traffic" | "cve" | "patch";
 
 export interface DemoStep {
   section: SectionId;
@@ -48,6 +48,14 @@ export const DEMO_STEPS: DemoStep[] = [
   },
   {
     section: "cve", title: "La falla y su arreglo",
-    text: () => "Reaper consultó el aviso de la CVE y propone el arreglo. Una persona decide aplicarlo; retener la prueba no reemplaza parchar.",
+    text: () => "Reaper consultó el aviso de la CVE con Firecrawl y el agente usa ese arreglo como punto de partida.",
+  },
+  {
+    section: "patch", title: "El parche",
+    text: (s) => {
+      const replay = s.patch?.replay;
+      if (s.patch?.status === "verified" && replay) return `El agente escribió un parche, lo aplicó en una copia y repitió el ataque: ${replay.attacks.yes} de ${replay.attacks.total} casos traen el dato.`;
+      return s.patch ? "El agente intentó parchar; el panel muestra el resultado tal cual." : "El panel muestra el paso del parche cuando el agente lo entrega.";
+    },
   },
 ];

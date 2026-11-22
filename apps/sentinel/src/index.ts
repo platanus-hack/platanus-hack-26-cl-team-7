@@ -11,6 +11,7 @@ import { createApp } from "./app.ts";
 import { Bus } from "./bus.ts";
 import { DeceptionStore } from "./deception.ts";
 import { createEvidenceEvaluator } from "./evidence-demo/evaluate.ts";
+import { createMastraPatchModel, createPatcher } from "./experiments/patch.ts";
 import { createExperimentProviders } from "./experiments/providers.ts";
 import { createExperimentService } from "./experiments/service.ts";
 import { ExperimentStore } from "./experiments/store.ts";
@@ -70,14 +71,19 @@ const providers = {
 const evaluateEvidence = localOnly ? createEvidenceEvaluator(repoRoot, providers) : undefined;
 const experimentStore = new ExperimentStore(db);
 const experimentLab = resolve(here, "../lab");
-const experimentService = createExperimentService(experimentStore, localOnly ? createWorker(experimentLab, setting("ULTIMO_PASO_LIMA_VM") || "espejismo") : undefined,
-  createExperimentProviders(experimentLab, providers));
+const experimentWorker = localOnly ? createWorker(experimentLab, setting("ULTIMO_PASO_LIMA_VM") || "espejismo") : undefined;
+// The patch step needs ANTHROPIC_API_KEY for the agent and runs the verifier on the host, so it exists only in loopback mode.
+const patchModel = createMastraPatchModel({ apiKey: anthropicKey });
+const patcher = experimentWorker && createPatcher({ root: experimentLab, model: patchModel, verify: experimentWorker.verify, now: Date.now });
+const experimentService = createExperimentService(experimentStore, experimentWorker, createExperimentProviders(experimentLab, providers), patcher);
 const app = createApp({ store, bus, ai, deception, webRoot, presentationRoot: resolve(repoRoot, "landing"), allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence,
   experiments: [experimentStore, experimentService] });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
-  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
+  console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}  patch=${patcher && patchModel ? "on" : "off"}`);
 });
+const recorded = experimentStore.list().find((run) => run.mode === "recorded");
+if (patcher && patchModel && recorded) void experimentService.backfill(recorded.id);
 
 function shutdown() {
   experimentService.stop();

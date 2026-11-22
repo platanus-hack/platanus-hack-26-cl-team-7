@@ -2,11 +2,12 @@
  * One A/B run as the sites Reaper protects. Pure functions, no React.
  * Interface: `labAgents(detail)` turns a run into one site per project: its CVE case, the replay
  * (TrackDetail, Moment, Finding, the shapes the replay components use), every request as raw HTTP
- * side by side (without Reaper | with Reaper | retry), the legitimate traffic, and the researched fix.
+ * side by side (without Reaper | with Reaper | retry), the legitimate traffic, the researched fix, the
+ * agent's patch, and the stage strip (detection, containment, research, patch) read from the stage events.
  * Only cases modelled on a published CVE are kept. Nothing here is synthetic: every row is one
  * recorded observation of the run, and every sentence states what that observation measured.
  */
-import { experimentNames, type ExperimentDetail, type ExperimentEvent, type ExperimentProject, type Finding, type FixtureResult, type Track, type TrackAction, type TrackDetail } from "@sentinel/contracts";
+import { experimentNames, type ExperimentDetail, type ExperimentEvent, type ExperimentProject, type ExperimentStage, type Finding, type FixtureResult, type PatchEdit, type PatchResult, type Track, type TrackAction, type TrackDetail } from "@sentinel/contracts";
 import type { CatKey, Moment, MomentKind, Step, Vuln } from "../mirror/moments";
 
 export const fixtureNames: Record<string, string> = {
@@ -112,6 +113,19 @@ export interface LabResearch {
   source: string | null;
 }
 
+type StageStatus = Extract<ExperimentEvent, { kind: "stage" }>["status"];
+/** The stages the panel shows for a project, in pipeline order, with the words of each. */
+const STRIP = [["detection", "Detección"], ["containment", "Contención"], ["research", "Aviso"], ["patch", "Parche"]] as const satisfies readonly (readonly [ExperimentStage, string])[];
+export type LabStepStage = (typeof STRIP)[number][0];
+export interface LabStep {
+  stage: LabStepStage;
+  label: string;
+  /** "pending" until the run emits a stage event for it; then the latest stage event's status. */
+  status: "pending" | StageStatus;
+  /** Milliseconds from the stage's running event to its terminal event, when the run recorded it. */
+  elapsedMs: number | null;
+}
+
 export interface LabAgent {
   project: ExperimentProject;
   runId: string;
@@ -126,6 +140,10 @@ export interface LabAgent {
   legit: { A: { passed: number; total: number }; B: { passed: number; total: number } };
   traffic: TrafficRow[];
   research: LabResearch | null;
+  /** The latest patch event of the project: the AppSec agent's patch, applied to a copy and replayed. */
+  patch: PatchResult | null;
+  /** detection, containment, research and patch, derived only from the project's stage events. */
+  steps: LabStep[];
   graph: GraphStory;
 }
 
@@ -179,18 +197,29 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
   const start = Date.parse(run.started ?? "") || 0;
   const fixtures: { f: FixtureResult; ts: number }[] = [];
   const controls: Extract<ExperimentEvent, { kind: "control" }>[] = [];
-  const stages = new Map<string, string>();
+  const stages = new Map<ExperimentStage, { status: StageStatus; elapsedMs: number | null }>();
   let research: LabResearch | null = null;
+  let patch: PatchResult | null = null;
   for (const { seq, at, event } of detail.entries) {
     if (!("project" in event) || event.project !== project) continue;
-    if (event.kind === "stage") stages.set(event.stage, event.status);
+    if (event.kind === "stage") stages.set(event.stage, { status: event.status, elapsedMs: event.elapsedMs ?? null });
     // Only the cases modelled on a published CVE: deliberate controls of older runs are left out.
     if (event.kind === "fixture" && event.cve) fixtures.push({ f: event, ts: Date.parse(at ?? "") || start + seq * 1000 });
     if (event.kind === "control") controls.push(event);
     if (event.kind === "research") research = { status: event.status, fixes: event.fixes, source: event.source };
+    if (event.kind === "patch") patch = event;
   }
   if (fixtures.length === 0) return null;
-  const live = run.status === "running" && [...stages.values()].some((status) => status === "running");
+  const anyRunning = [...stages.values()].some(({ status }) => status === "running");
+  // The patch step can keep running after the run finished (the recorded run is patched at startup).
+  const live = (run.status === "running" && anyRunning) || (run.patching === true && stages.get("patch")?.status === "running");
+  // A run that is over and never had a patch step is an older run: the strip has no patch step to wait for.
+  const inProgress = run.status === "running" || run.patching === true;
+  const steps = STRIP.flatMap(([stage, label]): LabStep[] => {
+    const seen = stages.get(stage);
+    if (!seen && stage === "patch" && !inProgress) return [];
+    return [{ stage, label, status: seen?.status ?? "pending", elapsedMs: seen?.elapsedMs ?? null }];
+  });
 
   const trackId = `trk_${hex16(`${run.id}:${project}`)}`;
   const actions: TrackAction[] = [];
@@ -263,7 +292,7 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
     openedAt: fixtures[0]!.ts, lastSeen: fixtures.at(-1)!.ts + 1, actions: actions.length, findings: findings.length,
   };
   return {
-    project, runId: run.id, name, live, moments, findings, outcome, traffic, research,
+    project, runId: run.id, name, live, moments, findings, outcome, traffic, research, patch, steps,
     cve: { id: cveId, source: research?.source ?? CVE_SOURCES[cveId] ?? null },
     legit: { A: count(byArm.A), B: count(byArm.B) },
     detail: { track, actions, findings: findings.map((x) => x.finding) },
@@ -283,6 +312,23 @@ export function labAgents(detail: ExperimentDetail | null | undefined): LabAgent
   const order: ExperimentProject[] = [];
   for (const { event } of detail.entries) if (event.kind === "fixture" && event.cve && !order.includes(event.project)) order.push(event.project);
   return order.flatMap((project) => agentFor(detail, project) ?? []);
+}
+
+/** Milliseconds as seconds with a decimal comma: "1,2 s". */
+export function seconds(ms: number): string {
+  return `${(ms / 1000).toFixed(1).replace(".", ",")} s`;
+}
+
+export interface DiffLine {
+  sign: "-" | "+";
+  text: string;
+}
+
+/** The lines an edit removes ("-") and adds ("+"). An empty `new` only removes. */
+export function diffLines(edit: Pick<PatchEdit, "old" | "new">): DiffLine[] {
+  const lines = (text: string, sign: DiffLine["sign"]): DiffLine[] =>
+    text === "" ? [] : text.replace(/\n$/, "").split("\n").map((line) => ({ sign, text: line }));
+  return [...lines(edit.old, "-"), ...lines(edit.new, "+")];
 }
 
 /** A raw request as a curl command line, for copying. */

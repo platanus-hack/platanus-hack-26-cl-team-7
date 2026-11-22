@@ -10,6 +10,8 @@ export const recordedSource = "apps/sentinel/src/experiments/recorded-run.json";
 
 export class ExperimentStore {
   private readonly db: DatabaseSync;
+  /** Finished runs that the patch step is still adding events to. */
+  private readonly patching = new Set<string>();
 
   constructor(db: DatabaseSync, readRecording = () => readFileSync(recording, "utf8")) {
     this.db = db;
@@ -35,12 +37,17 @@ export class ExperimentStore {
     return this.db.prepare(`SELECT r.*, (SELECT CASE WHEN COUNT(DISTINCT json_extract(e.event, '$.project')) = 1
         THEN MIN(json_extract(e.event, '$.project')) END
       FROM experiment_entries AS e WHERE e.run_id = r.id) AS project
-      FROM experiment_runs AS r ORDER BY r.rowid DESC LIMIT 100`).all().map((row) => ExperimentRun.parse(row));
+      FROM experiment_runs AS r ORDER BY r.rowid DESC LIMIT 100`).all().map((row) => this.withPatching(ExperimentRun.parse(row)));
   }
 
   get(id: string) {
     const row = this.db.prepare("SELECT * FROM experiment_runs WHERE id=?").get(id);
-    return row && ExperimentRun.parse(row);
+    return row && this.withPatching(ExperimentRun.parse(row));
+  }
+
+  setPatching(id: string, on: boolean) {
+    if (on) this.patching.add(id);
+    else this.patching.delete(id);
   }
 
   entries(id: string, after = 0): ExperimentEntry[] {
@@ -55,12 +62,16 @@ export class ExperimentStore {
   }
 
   append(id: string, event: ExperimentEvent) {
-    if (this.get(id)?.status === "running") this.write(id, event, new Date().toISOString());
+    if (this.patching.has(id) || this.get(id)?.status === "running") this.write(id, event, new Date().toISOString());
   }
 
   finish(id: string, status: "completed" | "failed" | "interrupted", error: string | null = null) {
     this.db.prepare("UPDATE experiment_runs SET status=?, finished=?, error=? WHERE id=? AND status='running'")
       .run(status, new Date().toISOString(), error, id);
+  }
+
+  private withPatching(run: ExperimentRun): ExperimentRun {
+    return this.patching.has(run.id) ? { ...run, patching: true } : run;
   }
 
   private write(id: string, event: ExperimentEvent, at: string | null) {

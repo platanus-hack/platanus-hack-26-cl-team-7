@@ -40,7 +40,7 @@ export function experimentRoutes(store: ExperimentStore, service: ReturnType<typ
           await stream.writeSSE({ id: String(entry.seq), event: "entry", data: JSON.stringify(entry) });
           position = entry.seq;
         }
-        if (!run || run.status !== "running") {
+        if (!run || (run.status !== "running" && !run.patching)) {
           await stream.writeSSE({ event: "done", data: JSON.stringify(run) });
           break;
         }

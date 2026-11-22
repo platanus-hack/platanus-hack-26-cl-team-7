@@ -357,6 +357,164 @@
   color: #fff;
 }
 
+/* ---------- step strip ---------- */
+/* One element per stage, restyled from data-status: the events change attributes and these transitions animate them. */
+.ss { margin-top: 20px; }
+.ss-list {
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  padding: 2px 0 4px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.ss-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ss-step:first-child { flex: 0 0 auto; }
+.ss-link {
+  position: relative;
+  flex: 1 1 16px;
+  min-width: 16px;
+  height: 2px;
+  margin: 7px 8px 0 0;
+  border-radius: 2px;
+  background: var(--color-iron);
+  overflow: hidden;
+}
+.ss-link i {
+  position: absolute;
+  inset: 0;
+  background: var(--color-mid);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+.ss-step[data-link] .ss-link i { transform: scaleX(1); }
+.ss-step[data-link="passed"] .ss-link i { background: var(--c-ok); }
+.ss-step[data-link="failed"] .ss-link i { background: var(--c-danger); }
+.ss-step[data-link="degraded"] .ss-link i { background: var(--c-warn); }
+.ss-node {
+  flex: none;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-iron);
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.ss-step[data-status="running"] .ss-node {
+  border-color: var(--c-info);
+  background: color-mix(in srgb, var(--c-info) 30%, transparent);
+  animation: ss-pulse 1.4s ease-in-out infinite;
+}
+.ss-step[data-status="passed"] .ss-node { border-color: var(--c-ok); background: var(--c-ok); }
+.ss-step[data-status="failed"] .ss-node { border-color: var(--c-danger); background: var(--c-danger); }
+.ss-step[data-status="degraded"] .ss-node { border-color: var(--c-warn); background: var(--c-warn); }
+.ss-step[data-status="skipped"] .ss-node { border-color: var(--color-mid); background: var(--color-mid); }
+@keyframes ss-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-info) 50%, transparent); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+.ss-text {
+  display: grid;
+  gap: 1px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.ss-label { font-size: 13px; font-weight: 550; }
+.ss-meta { font-size: 12px; color: var(--color-mid); }
+.ss-state {
+  display: inline-block;
+  min-width: 9ch;
+  transition: color 0.3s ease;
+}
+.ss-step[data-status="running"] .ss-state { color: var(--c-info); }
+.ss-step[data-status="passed"] .ss-state { color: var(--c-ok); }
+.ss-step[data-status="failed"] .ss-state { color: var(--c-danger); }
+.ss-step[data-status="degraded"] .ss-state { color: var(--c-warn); }
+.ss-time { display: inline-block; min-width: 8ch; }
+.ss-time:not(:empty) { animation: ss-in 0.3s ease; }
+.ss-time:not(:empty)::before { content: "· "; }
+@keyframes ss-in { from { opacity: 0; } }
+.ss-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- agent patch ---------- */
+.pb {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+.pb-chip {
+  padding: 3px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--color-ash);
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+.pb-chip[data-tone="ok"] { color: var(--c-ok); border-color: color-mix(in srgb, var(--c-ok) 45%, transparent); background: color-mix(in srgb, var(--c-ok) 12%, transparent); }
+.pb-chip[data-tone="bad"] { color: var(--c-danger); border-color: color-mix(in srgb, var(--c-danger) 45%, transparent); background: color-mix(in srgb, var(--c-danger) 12%, transparent); }
+.pb-chip[data-tone="warn"] { color: var(--c-warn); border-color: color-mix(in srgb, var(--c-warn) 45%, transparent); background: color-mix(in srgb, var(--c-warn) 12%, transparent); }
+.pb-chip[data-tone="info"] { color: var(--c-info); border-color: color-mix(in srgb, var(--c-info) 45%, transparent); background: color-mix(in srgb, var(--c-info) 12%, transparent); animation: pb-breathe 1.4s ease-in-out infinite; }
+@keyframes pb-breathe { 50% { opacity: 0.55; } }
+.pb-body {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  animation: pb-in 0.3s ease;
+}
+@keyframes pb-in { from { opacity: 0; transform: translateY(6px); } }
+.pb-body p, .pb-note { margin: 0; }
+.pb-note { color: var(--color-mid); font-size: 14px; }
+.pb-why { color: var(--color-ash); font-size: 14px; }
+.pb-body code { padding: 0 4px; border-radius: 4px; background: var(--color-elev); font-size: 12px; color: var(--color-text); }
+.pb-edit { margin: 0; min-width: 0; }
+.pb-edit figcaption { margin-bottom: 4px; font-size: 12px; color: var(--color-mid); }
+.pb-diff {
+  margin: 0;
+  padding: 10px 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--color-elev);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-ash);
+  user-select: text;
+}
+.pb-diff span {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding: 0 12px;
+}
+.pb-del { background: color-mix(in srgb, var(--c-danger) 14%, transparent); color: var(--color-text); }
+.pb-add { background: color-mix(in srgb, var(--c-ok) 14%, transparent); color: var(--color-text); }
+.pb-facts li[data-tone="ok"] b { color: var(--c-ok); }
+.pb-facts li[data-tone="bad"] b { color: var(--c-danger); }
+/* !important: the state rules above are more specific than any selector that could switch them off. */
+@media (prefers-reduced-motion: reduce) {
+  .ss *, .pb * { transition: none !important; animation: none !important; }
+}
+
 /* ---------- guided demo ---------- */
 .db {
   position: fixed;

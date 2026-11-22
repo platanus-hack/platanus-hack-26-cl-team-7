@@ -1,0 +1,116 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { ExperimentDetail, type ExperimentEvent, type ExperimentRun, type PatchResult } from "@sentinel/contracts";
+import { diffLines, labAgents, seconds } from "../src/experiments/labTrack";
+
+const recorded = ExperimentDetail.parse(JSON.parse(readFileSync(new URL("../../sentinel/src/experiments/recorded-run.json", import.meta.url), "utf8")));
+
+type Stage = Extract<ExperimentEvent, { kind: "stage" }>;
+const stage = (s: Stage["stage"], status: Stage["status"], elapsedMs?: number): ExperimentEvent => ({ kind: "stage", project: "bruma", stage: s, status, ...(elapsedMs === undefined ? {} : { elapsedMs }) });
+const patchEvent = (status: PatchResult["status"]): PatchResult => ({
+  kind: "patch", project: "bruma", status, model: "claude-test", attempts: 1,
+  edits: [{ file: "targets/businesses/service.py", old: "return secret\n", new: "return None\n" }],
+  explanation: "Deja de devolver la referencia privada.", cwe: "CWE-200",
+  replay: { attacks: { yes: 0, total: 3 }, legit: { yes: 2, total: 2 } }, timings: { agentMs: 3400, verifyMs: 800 }, tokens: { input: 10, output: 5 }, error: null,
+});
+
+/** The recording with bruma's stage events replaced by `stages`, so each test says exactly what the run emitted. */
+function detailWith(stages: ExperimentEvent[], run: Partial<ExperimentRun> = { status: "running" }): ExperimentDetail {
+  const kept = recorded.entries.filter(({ event }) => !(event.kind === "stage" && event.project === "bruma" && ["detection", "containment", "research", "feedback"].includes(event.stage)));
+  const last = Math.max(...kept.map((e) => e.seq));
+  const entries = [...kept, ...stages.map((event, i) => ({ seq: last + 1 + i, at: null, event }))];
+  return ExperimentDetail.parse({ run: { ...recorded.run, ...run }, entries });
+}
+const bruma = (detail: ExperimentDetail) => labAgents(detail).find((s) => s.project === "bruma")!;
+const summary = (detail: ExperimentDetail) => bruma(detail).steps.map((s) => [s.stage, s.status, s.elapsedMs]);
+
+describe("labAgents steps", () => {
+  it("shows the stages of a run without a patch step as they were recorded, with no patch", () => {
+    for (const site of labAgents(recorded)) {
+      expect(site.steps.map((s) => [s.label, s.status, s.elapsedMs])).toEqual([["Detección", "passed", null], ["Contención", "passed", null], ["Aviso", "passed", null]]);
+      expect(site.patch).toBeNull();
+    }
+  });
+
+  it("waits on every step while the run has emitted nothing, patch included", () => {
+    expect(summary(detailWith([]))).toEqual([["detection", "pending", null], ["containment", "pending", null], ["research", "pending", null], ["patch", "pending", null]]);
+  });
+
+  it("follows the events of one project in order, with each elapsed time", () => {
+    const events = [stage("detection", "passed", 120), stage("containment", "passed", 250), stage("research", "running")];
+    expect(summary(detailWith(events))).toEqual([["detection", "passed", 120], ["containment", "passed", 250], ["research", "running", null], ["patch", "pending", null]]);
+    events.push(stage("research", "passed", 1700), stage("patch", "running"));
+    expect(summary(detailWith(events))).toEqual([["detection", "passed", 120], ["containment", "passed", 250], ["research", "passed", 1700], ["patch", "running", null]]);
+    events.push(patchEvent("verified"), stage("patch", "passed", 4200));
+    const done = bruma(detailWith(events));
+    expect(done.steps.map((s) => [s.stage, s.status, s.elapsedMs])).toEqual([["detection", "passed", 120], ["containment", "passed", 250], ["research", "passed", 1700], ["patch", "passed", 4200]]);
+    expect(done.patch).toMatchObject({ status: "verified", cwe: "CWE-200" });
+  });
+
+  it("lets the latest stage event win and keeps other projects out of the strip", () => {
+    const events = [stage("research", "running"), stage("research", "degraded", 900), { ...stage("patch", "failed", 10), project: "litoral" as const }];
+    const detail = detailWith(events);
+    expect(summary(detail).find(([name]) => name === "research")).toEqual(["research", "degraded", 900]);
+    expect(bruma(detail).steps.find((s) => s.stage === "patch")?.status).toBe("pending");
+    expect(labAgents(detail).find((s) => s.project === "litoral")?.steps.find((s) => s.stage === "patch")?.status).toBe("failed");
+  });
+
+  it("keeps the latest patch event of the project", () => {
+    const detail = detailWith([stage("patch", "running"), patchEvent("failed"), patchEvent("verified"), stage("patch", "passed", 5)]);
+    expect(bruma(detail).patch?.status).toBe("verified");
+    expect(labAgents(detail).filter((s) => s.project !== "bruma").every((s) => s.patch === null)).toBe(true);
+  });
+
+  it("keeps a patch step that ran, and drops one that never started, once the run is over", () => {
+    const patched = detailWith([stage("patch", "running"), patchEvent("unavailable"), stage("patch", "degraded", 30)], { status: "completed" });
+    expect(bruma(patched).steps.map((s) => s.stage)).toEqual(["detection", "containment", "research", "patch"]);
+    expect(bruma(patched).steps.at(-1)).toMatchObject({ stage: "patch", status: "degraded", elapsedMs: 30 });
+    expect(bruma(detailWith([], { status: "completed" })).steps.map((s) => s.stage)).toEqual(["detection", "containment", "research"]);
+    expect(bruma(detailWith([], { status: "failed" })).steps.some((s) => s.stage === "patch")).toBe(false);
+  });
+});
+
+describe("labAgents while patching a finished run", () => {
+  const base = [stage("detection", "passed"), stage("containment", "passed"), stage("research", "passed", 1500)];
+  const patching = { status: "completed", patching: true } as const;
+
+  it("waits for the patch step, then runs it, then settles when the server says done", () => {
+    const waiting = bruma(detailWith(base, patching));
+    expect(waiting.steps.at(-1)).toMatchObject({ stage: "patch", status: "pending" });
+    expect(waiting.live).toBe(false);
+
+    const running = bruma(detailWith([...base, stage("patch", "running")], patching));
+    expect(running.steps.at(-1)).toMatchObject({ stage: "patch", status: "running" });
+    expect(running.live).toBe(true);
+
+    const events = [...base, stage("patch", "running"), patchEvent("verified"), stage("patch", "passed", 2000)];
+    expect(bruma(detailWith(events, patching)).live).toBe(false);
+    expect(bruma(detailWith(events, { status: "completed" })).live).toBe(false);
+  });
+
+  it("is not live for a finished run whose patch step still reads running", () => {
+    expect(bruma(detailWith([...base, stage("patch", "running")], { status: "completed" })).live).toBe(false);
+  });
+
+  it("is live for a run in progress while any stage runs", () => {
+    expect(bruma(detailWith([stage("research", "running")])).live).toBe(true);
+    expect(bruma(detailWith(base)).live).toBe(false);
+  });
+});
+
+describe("patch text helpers", () => {
+  it("writes seconds with a decimal comma", () => {
+    expect([0, 1234, 1250, 59_999, 150_000].map(seconds)).toEqual(["0,0 s", "1,2 s", "1,3 s", "60,0 s", "150,0 s"]);
+  });
+
+  it("lists the removed lines, then the added lines", () => {
+    expect(diffLines({ old: "a = 1\nb = 2\n", new: "a = 1\nb = safe(2)\nc = 3" })).toEqual([
+      { sign: "-", text: "a = 1" }, { sign: "-", text: "b = 2" },
+      { sign: "+", text: "a = 1" }, { sign: "+", text: "b = safe(2)" }, { sign: "+", text: "c = 3" },
+    ]);
+  });
+
+  it("adds nothing when an edit only removes", () => {
+    expect(diffLines({ old: "return secret", new: "" })).toEqual([{ sign: "-", text: "return secret" }]);
+  });
+});

@@ -1,6 +1,7 @@
 /**
- * One site's analysis, top to bottom: the site and its CVE case, the result, the replay of the attack,
- * the raw traffic, the vulnerability with its proposed fix, and the honest limit.
+ * One site's analysis, top to bottom: the site and its CVE case with the run's stages, the result, the
+ * replay of the attack, the raw traffic, the vulnerability with its proposed fix, the agent's patch,
+ * and the honest limit.
  * Interface: `<SitePage site run demoStep />`. During the guided demo, the step's section is marked
  * and scrolled into view, and the traffic opens the step's row and column.
  */
@@ -12,6 +13,8 @@ import { Replay } from "../mirror/Replay";
 import { cn } from "../ui";
 import { LAB_LEGEND, type LabAgent } from "../experiments/labTrack";
 import { DEMO_STEPS, type SectionId } from "./demo";
+import { PatchBlock } from "./PatchBlock";
+import { StepStrip } from "./StepStrip";
 import { Traffic } from "./Traffic";
 import "../mirror/replay.css";
 
@@ -77,6 +80,7 @@ export function SitePage({ site, run, demoStep }: { site: LabAgent; run: Experim
           </div>
           <a className="ask" href={`http://127.0.0.1:9120/${site.project}/`} target="_blank" rel="noreferrer">Abrir el sitio <ArrowSquareOut size={12} aria-hidden /></a>
         </div>
+        <StepStrip steps={site.steps} />
       </Section>
 
       <Section id="result" active={on("result")} title="Resultado">
@@ -126,7 +130,15 @@ export function SitePage({ site, run, demoStep }: { site: LabAgent; run: Experim
         </div>
       </Section>
 
-      <p className="st-limit">Retener la prueba no evita el daño: en estas pruebas el servicio igual ejecutó cada solicitud. Parchar es lo único que lo evita.</p>
+      <Section id="patch" active={on("patch")} title="Parche del agente">
+        <PatchBlock site={site} />
+      </Section>
+
+      <p className="st-limit">
+        {site.patch?.status === "verified"
+          ? "El agente parchó una copia del servicio y repitió el ataque: el dato ya no sale. Llevar el parche al servicio real sigue siendo una decisión humana."
+          : "Retener la prueba no evita el daño: en estas pruebas el servicio igual ejecutó cada solicitud. Parchar es lo único que lo evita."}
+      </p>
     </div>
   );
 }
