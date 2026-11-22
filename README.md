@@ -1,10 +1,8 @@
-# team-7 · Espejismo
+# team-7 · Centinela
 
-**Antes de darle las llaves de tu empresa a un agente de IA, pásalo por [Espejismo](espejismo/README.md):** una casa de utilería con un vigilante señuelo, un sumidero y un testigo escondido, donde ves lo que el agente hace cuando cree que nadie lo mira y lo comparas con lo que después cuenta. 95 episodios con 8 modelos reales. **Explorador de las 95 corridas:** https://espejismo-demo.haroldmedrano33.workers.dev/explorar · **Demo:** https://espejismo-demo.haroldmedrano33.workers.dev · cifras en [`espejismo/results/RESUMEN.md`](espejismo/results/RESUMEN.md). **Videos:** [propuesta](https://espejismo-demo.haroldmedrano33.workers.dev/video/propuesta.mp4) · [dicho contra hecho](https://espejismo-demo.haroldmedrano33.workers.dev/video/dicho-vs-hecho.mp4).
+**Centinela atrapa a los agentes de IA que atacan tu sitio:** los detecta ([`agent-detection/`](agent-detection/README.md)), les responde con una copia falsa, les niega la prueba de que su ataque funcionó ([`ultimo-paso/`](ultimo-paso/README.md)) y te muestra en un panel qué buscaban y cómo arreglarlo (`apps/`). Para correr el panel: `pnpm install && pnpm start`. Descripción completa: [`project-description.md`](project-description.md).
 
-**Segunda pieza, [Último Paso](ultimo-paso/README.md):** si el agente igual ataca en producción, un proxy para servidores propios le oculta la evidencia de que su ataque funcionó y lo contiene (evidencia al atacante: 5/5 → 0/5; 0 de 34 pedidos legítimos bloqueados; el ataque igual se ejecuta en el servidor, y lo decimos).
-
-Debajo, el trabajo previo del equipo que respalda la tesis: por qué no confiamos en filtros de texto (el detector de inyecciones de AgentDojo marca como ataque el 55 % de los mensajes legítimos en español y el 3 % en inglés).
+**Investigación que lo respalda** ([`related_experiments/`](related_experiments/)): [Espejismo](related_experiments/espejismo/README.md), 95 corridas con 8 modelos sobre lo que hace un agente cuando cree que nadie lo mira (explorador: https://espejismo-demo.haroldmedrano33.workers.dev/explorar), y la medición del detector de inyecciones en español, que sigue debajo.
 
 ---
 

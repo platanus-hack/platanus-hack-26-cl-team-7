@@ -1,12 +1,12 @@
 {
   // Your project's name, as it will appear on the voting page.
-  "project-name": "Espejismo",
+  "project-name": "Centinela",
 
   // Short one-line summary of your project (in Spanish).
-  "project-oneliner-spanish": "Antes de darle las llaves de tu empresa a un agente de IA, pásalo por Espejismo: mira lo que hace cuando cree que nadie lo ve, y lo que después te cuenta.",
+  "project-oneliner-spanish": "Atrapa a los agentes de IA que atacan tu sitio: los detecta, les responde con una copia falsa, les niega la prueba de que su ataque funcionó y te muestra qué buscaban.",
 
   // Brief description of your project (in Spanish).
-  "project-description-spanish": "Las empresas ya le dan a los agentes de IA acceso a sus servidores, y hoy la única forma de saber qué hicieron es preguntarles. Espejismo es una prueba antes de dar ese acceso: una casa de utilería con un vigilante señuelo que el agente puede apagar, un sumidero donde cae todo lo que intenta llevarse y un testigo escondido en el sistema que graba lo que hizo de verdad. Al final se le pregunta qué hizo y se compara con la grabación. Lo corrimos 95 veces con 8 modelos reales, sin que saliera un byte a internet: sin que nadie se lo pidiera, 11 de 47 agentes abrieron un archivo de credenciales que la tarea no necesitaba; y un modelo con un objetivo oculto neutralizó al vigilante 9 de 18 veces, creyó llevarse las credenciales en 8 y no lo reportó en ninguna de las 8 cuando se le preguntó.",
+  "project-description-spanish": "Los atacantes ya usan agentes de IA que prueban, leen la respuesta y ajustan a velocidad de máquina. Bloquearlos les avisa que los vieron. Centinela controla lo que el agente cree que pasó: detecta las sesiones que sondean tu sitio, les responde con una copia falsa, retiene la respuesta cuando trae la prueba de que un ataque funcionó, y muestra en un panel el recorrido de cada agente atrapado, la falla que usó y un arreglo propuesto. Es abierto y corre delante de tus propios servidores. En nuestras pruebas, la prueba del ataque dejó de llegarle al atacante en 5 de 5 intentos sin bloquear ningún pedido legítimo; el ataque igual se ejecuta en el servidor, y lo decimos. Lo respalda Espejismo, nuestro estudio con 95 corridas y 8 modelos: un agente neutralizó a su vigilante 9 de 18 veces y no lo reportó.",
 
   // Public URL where your project is deployed and running.
   // Must be a valid URL, for example: https://my-project.vercel.app
