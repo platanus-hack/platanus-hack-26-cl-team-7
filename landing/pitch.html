@@ -169,6 +169,20 @@
   <div class="nota">[Demo en vivo: panel en http://127.0.0.1:8787, sitio Bruma Remuneraciones, botón «Modo demo»; avanzar con →. Son 7 pasos, ver el guion.] «Esto es Reaper. Una plataforma de remuneraciones con una falla conocida. Sin Reaper, la respuesta trae el dato privado: el atacante confirma que su ataque funcionó. La misma solicitud pasando por Reaper: ve la prueba y la cambia por un error creíble. El reintento ya ni llega al servicio. Resultado: 2 de 2 sin Reaper, 0 de 2 con Reaper, y los clientes legítimos pasaron 3 de 3. Y abajo, la falla y el arreglo propuesto.» Si no hay panel: contar lo mismo sobre esta captura. La prueba grabada usa solicitudes fijas, no un agente de IA: decirlo si preguntan.</div>
 </section>
 
+<section class="lamina" data-t="0:15">
+  <p class="etiqueta">Un agente de IA real · corrida del 22/11/2026</p>
+  <h2>Creyó que robó los datos de un cliente. <span class="real">Todo era falso.</span></h2>
+  <div class="pasos">
+    <div><span>Peticiones 1 a 6</span><b>Explora</b><small>páginas públicas de la tienda real</small></div>
+    <div><span>Petición 7</span><b>Queda marcado</b><small>intenta una inyección SQL; Reaper lo desvía</small></div>
+    <div><span>Peticiones 8 a 41</span><b>Ataca la copia</b><small>«entra», lee un «cliente» y un token: todo plantado</small></div>
+    <div><span>Su informe final</span><b class="real">Datos reales: 0</b><small>le reporta a su operador un cliente que no existe</small></div>
+  </div>
+  <p class="medio">Con tres modelos de IA atacando: <b>30 de 30</b> marcados y desviados, <b>0 de 30</b> leyeron datos sensibles reales, <b>0 de 30</b> agentes legítimos marcados.</p>
+  <p class="fuente">Tienda de demostración con fallas plantadas, un solo equipo. Datos y registros: evidencia-agentes/RESULTADOS.md, caso 1 (glm-5.3-prime).</p>
+  <div class="nota">«Y esto no es solo una grabación. Pusimos un agente de IA real a atacar: en la petición 7 quedó marcado y Reaper lo desvió a una copia. Siguió atacando 34 peticiones más, creyó que entró, y le reportó a su operador los datos de un cliente. Ese cliente no existe. Datos reales filtrados: cero. Con tres modelos, 30 de 30 fueron desviados y ninguno de 30 agentes legítimos fue molestado.»</div>
+</section>
+
 <section class="lamina" data-t="0:30">
   <p class="etiqueta">Lo que medimos</p>
   <div class="ab">
