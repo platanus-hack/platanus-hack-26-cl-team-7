@@ -1,22 +1,33 @@
-import { ExperimentProject, experimentNames, type ExperimentEvent, type FixtureResult } from "@sentinel/contracts";
+import { useState } from "react";
+import { experimentNames, type ExperimentEvent, type ExperimentProject, type FixtureResult } from "@sentinel/contracts";
+import { ProjectFlow } from "./ProjectFlow";
 
 const count = (events: readonly unknown[], total: number) => total ? `${events.length}/${total}` : "—";
 const yes = (value: boolean | null) => value === null ? "No aplica" : value ? "Sí" : "No";
 const stages = { inputs: "Entradas", traffic: "Tráfico legítimo", fixtures: "Fixtures", detection: "Detección", containment: "Contención", research: "Firecrawl", feedback: "OpenRouter A/B" } as const;
-const statusLabel = { running: "En curso", passed: "Listo", failed: "Falló", degraded: "Parcial", skipped: "Sin hallazgo" } as const;
 const researchLabel = { retrieved: "Guía consultada", unavailable: "Consulta no disponible", unconfigured: "Sin configurar", no_finding: "Sin hallazgo confirmado" } as const;
+
+const fixtureNames: Record<string, string> = {
+  "receipt-body": "Referencia en el cuerpo de la respuesta", "receipt-body-variant": "Variante de referencia en el cuerpo",
+  "receipt-header": "Referencia en una cabecera", "duplicate-header": "Cabecera duplicada", "receipt-record": "Registro interno",
+  "unlabelled-record": "Registro sin marcador", "bank-stale-approval": "Aprobación de una versión anterior",
+  "bank-missing-approval": "Reembolso sin aprobación", "bank-reapproved": "Reembolso aprobado de nuevo",
+  "path-indicator": "Señal de ruta", "script-indicator": "Señal de script", "middleware-indicator": "Señal de middleware",
+};
+const fixtureName = (id: string) => fixtureNames[id] ?? id;
 
 function Fixture({ fixture: f }: { fixture: FixtureResult }) {
   return (
     <details className="xp-detail">
-      <summary>{f.id}{!f.passed && <span className="xp-alert"> · Fuera de lo esperado</span>}</summary>
-      <table className="xp-table">
+      <summary>Pasos y trazas · {fixtureName(f.id)}{!f.passed && <span className="xp-alert"> · Fuera de lo esperado</span>}</summary>
+      <div className="xp-table-scroll"><table className="xp-table">
         <thead><tr><th>Observación</th><th>HTTP</th><th>Evidencia</th><th>Recibidas por el servicio</th><th>Detección</th></tr></thead>
         <tbody>{([ ["A · Directo", f.A], ["B · Con proxy", f.B], ["B · Reintento", f.retry] ] as const).map(([label, wire]) => (
           <tr key={label} id={wire.trace}><th>{label}</th><td>{wire.status}</td><td>{yes(wire.evidence)}</td><td>{wire.hits}</td><td>{yes(wire.detected)}</td></tr>
         ))}</tbody>
-      </table>
+      </table></div>
       <p>Regla instalada {yes(f.actual.contained)} · Contención ejecutada {yes(f.actual.executed)}</p>
+      {f.cve && <p className="xp-muted">Referencia defensiva del caso <code>{f.cve}</code></p>}
       {f.project === "bank" && <dl className="xp-ids" aria-label="Registro de aprobación del banco">
         {([ ["A · Directo", f.A], ["B · Con proxy", f.B], ["B · Reintento", f.retry] ] as const).map(([label, wire]) => (
           <div key={label}><dt>{label} · Decisión del banco</dt><dd>{wire.approval
@@ -59,49 +70,77 @@ function FeedbackEvidence({ feedback }: { feedback: Feedback[] }) {
   </div>;
 }
 
-export function ProjectEvidence({ project, events }: { project: ExperimentProject; events: ExperimentEvent[] }) {
+export function ProjectEvidence({ project, events, running, live, runProject }: {
+  project: ExperimentProject;
+  events: ExperimentEvent[];
+  running: boolean;
+  live: boolean;
+  runProject: () => void;
+}) {
+  const [selected, setSelected] = useState("");
   const records = events.filter((event) => "project" in event && event.project === project);
   const baseline = records.find((event) => event.kind === "baseline");
   const fixtures = records.filter((event) => event.kind === "fixture");
   const controls = records.filter((event) => event.kind === "control");
   const feedback = records.filter((event) => event.kind === "feedback");
   const research = records.find((event) => event.kind === "research");
-  const steps = new Map(records.filter((event) => event.kind === "stage").map((event) => [event.stage, event.status] as const));
-  const measure = (key: "directEvidence" | "proxyEvidence" | "detected" | "contained" | "executed") => count(fixtures.filter((f) => f.actual[key]), fixtures.length);
-  const good = (arm: "A" | "B") => count(controls.filter((c) => c.arm === arm && c.passed), controls.filter((c) => c.arm === arm).length);
+  const phases = new Map(records.filter((event) => event.kind === "stage").map((event) => [event.stage, event.status] as const));
+  const inProgress = live ? [...phases].filter(([, status]) => status === "running").map(([stage]) => stages[stage]).join(" · ") : "";
+  const fixture = fixtures.find((f) => f.id === selected) ?? fixtures.find((f) => f.B.evidence) ?? fixtures.find((f) => f.actual.executed) ?? fixtures[0];
+  const direct = baseline?.direct ?? { yes: fixtures.filter((f) => f.A.evidence).length, total: fixtures.length };
+  const protectedEvidence = baseline?.protected ?? { yes: fixtures.filter((f) => f.B.evidence).length, total: fixtures.length };
   const format = (x: { yes: number; total: number }) => `${x.yes}/${x.total}`;
-  const direct = baseline ? format(baseline.direct) : measure("directEvidence");
-  const protectedEvidence = baseline ? format(baseline.protected) : measure("proxyEvidence");
+  const good = (arm: "A" | "B") => {
+    const observations = controls.filter((c) => c.arm === arm);
+    const recorded = arm === "A" ? baseline?.legitimateA : baseline?.legitimateB;
+    return recorded ? format(recorded) : count(observations.filter((c) => c.passed), observations.length);
+  };
+  const contained = baseline?.executed.yes ?? fixtures.filter((f) => f.actual.executed).length;
+  const change = direct.yes - protectedEvidence.yes;
+  const outcome = change > 0 ? "El proxy redujo la evidencia visible" : change < 0 ? "La evidencia visible aumentó" : "La evidencia visible se mantuvo";
   return <article className="xp-card">
-    <h2>{experimentNames[project]}</h2>
-    <a className="xp-service-link" href={`http://127.0.0.1:9120/${project}/`} target="_blank" rel="noreferrer">Abrir el servicio <span aria-hidden="true">↗</span></a>
-    {project === "bank" && <p className="xp-muted">Reembolsos simulados. CVE-2026-129289 es una referencia defensiva de PHP-FPM. La corrida evalúa decisiones del banco y exposición de evidencia.</p>}
-    <table className="xp-table">
-      <thead><tr><th>Medición</th><th>A · Directo</th><th>B · Con proxy</th></tr></thead>
-      <tbody>
-        <tr><th>Evidencia recibida</th><td>{direct}</td><td>{protectedEvidence}</td></tr>
-        <tr><th>Tráfico legítimo</th><td>{baseline ? format(baseline.legitimateA) : good("A")}</td><td>{baseline ? format(baseline.legitimateB) : good("B")}</td></tr>
-        <tr><th>Detectado</th><td>No aplica</td><td>{baseline ? format(baseline.detected) : measure("detected")}</td></tr>
-        <tr><th>Regla instalada</th><td>No aplica</td><td>{baseline ? format(baseline.installed) : measure("contained")}</td></tr>
-        <tr><th>Contención ejecutada</th><td>No aplica</td><td>{baseline ? format(baseline.executed) : measure("executed")}</td></tr>
-      </tbody>
-    </table>
-    {!baseline && <ul className="xp-stages" aria-label="Etapas">{Object.entries(stages).map(([key, label]) => {
-      const value = steps.get(key as keyof typeof stages);
-      return <li key={key} data-phase={value ?? "pending"}>{label}<small>{value ? statusLabel[value] : "Pendiente"}</small></li>;
-    })}</ul>}
-    {fixtures.map((fixture) => <Fixture key={fixture.id} fixture={fixture} />)}
+    <header className="xp-project-head"><h2>{experimentNames[project]}</h2><div className="xp-actions">
+      <a className="xp-service-link" href={`http://127.0.0.1:9120/${project}/`} target="_blank" rel="noreferrer">Abrir el servicio <span aria-hidden="true">↗</span></a>
+      <button type="button" className="xp-button xp-primary" disabled={running} onClick={runProject}>Ejecutar proyecto A/B</button>
+    </div></header>
+    {inProgress && <p className="xp-progress" role="status">En curso · {inProgress}</p>}
+    {direct.total > 0 ? <section className="xp-outcome" aria-label="Resultado principal">
+      <h3>{outcome}</h3>
+      <p><strong>{format(direct)} <span aria-label="a">→</span> {format(protectedEvidence)}</strong> <span>casos con evidencia visible</span></p>
+      <p className="xp-muted">Legítimos {good("A")} directos y {good("B")} con proxy · {contained} reintentos contenidos</p>
+      {protectedEvidence.yes > 0 && <p className="xp-alert">{protectedEvidence.yes === 1 ? "En un caso siguió llegando evidencia." : `En ${protectedEvidence.yes} casos siguió llegando evidencia.`}</p>}
+    </section> : <p className="xp-empty">{inProgress ? "Los resultados aparecerán al recibir las primeras observaciones." : "Esta ejecución no contiene resultados de este proyecto."}</p>}
+    {baseline && <p className="xp-muted xp-recorded">Esta grabación contiene resultados agregados.</p>}
+    {fixture && <label className="xp-picker xp-case">Caso del recorrido
+      <select value={fixture.id} onChange={(event) => setSelected(event.target.value)}>
+        {fixtures.map((f) => <option key={f.id} value={f.id}>{fixtureName(f.id)}</option>)}
+      </select>
+    </label>}
+    <ProjectFlow fixture={fixture} recorded={baseline ? { A: baseline.direct, B: baseline.protected } : undefined} />
+    {fixture && <Fixture key={fixture.id} fixture={fixture} />}
+    {direct.total > 0 && <details className="xp-detail"><summary>Indicadores de detección</summary>
+      <p>Detectados {baseline ? format(baseline.detected) : count(fixtures.filter((f) => f.actual.detected), fixtures.length)} · Reglas instaladas {baseline ? format(baseline.installed) : count(fixtures.filter((f) => f.actual.contained), fixtures.length)} · Contención ejecutada {contained}/{direct.total}</p>
+    </details>}
     {controls.length > 0 && <details className="xp-detail"><summary>Observaciones del tráfico legítimo</summary><ul className="xp-choices">
       {controls.map((c) => <li key={c.receipt.trace}>{c.arm} · HTTP {c.receipt.status} · {c.passed ? "Pasó" : "Falló"}
         {c.receipt.operationId && <> · Registro <code>{c.receipt.operationId}</code></>}<code>{c.receipt.trace}</code></li>)}
     </ul></details>}
-    {research && <div className="xp-model"><h3>Investigación defensiva</h3><p>{researchLabel[research.status]}{research.source && <>
+    {research && <details className="xp-detail"><summary>Investigación defensiva · {researchLabel[research.status]}</summary><div className="xp-model"><p>{research.source && <>
       {" · "}<a href={research.source} target="_blank" rel="noreferrer">{research.cve}</a></>}</p>
       {research.source && <p className="xp-muted">Referencia asociada al fixture simulado.</p>}
       {research.fixes.length > 0 && <ul className="xp-choices">{research.fixes.map((fix) => <li key={fix}>{fix}</li>)}</ul>}
       {research.evidence.length > 0 && <ul className="xp-choices" aria-label="Trazas del hallazgo">{research.evidence.map((trace) =>
-        <li key={trace}><a href={`#${trace}`} onClick={() => document.getElementById(trace)?.closest("details")?.setAttribute("open", "")}><code>{trace}</code></a></li>)}</ul>}
-    </div>}
-    <FeedbackEvidence feedback={feedback} />
+        <li key={trace}><button type="button" className="xp-trace-link" onClick={() => {
+          const found = fixtures.find((f) => f.A.trace === trace || f.B.trace === trace);
+          if (!found) return;
+          setSelected(found.id);
+          requestAnimationFrame(() => {
+            const row = document.getElementById(trace);
+            row?.closest("details")?.setAttribute("open", "");
+            row?.scrollIntoView({ block: "nearest" });
+          });
+        }}><code>{trace}</code></button></li>)}</ul>}
+    </div></details>}
+    {feedback.length > 0 && <details className="xp-detail"><summary>Comparación de OpenRouter</summary><FeedbackEvidence feedback={feedback} /></details>}
   </article>;
 }

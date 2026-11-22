@@ -37,7 +37,10 @@ export class ExperimentStore {
   }
 
   list() {
-    return this.db.prepare("SELECT * FROM experiment_runs ORDER BY rowid DESC LIMIT 100").all().map((row) => ExperimentRun.parse(row));
+    return this.db.prepare(`SELECT r.*, (SELECT CASE WHEN COUNT(DISTINCT json_extract(e.event, '$.project')) = 1
+        THEN MIN(json_extract(e.event, '$.project')) END
+      FROM experiment_entries AS e WHERE e.run_id = r.id) AS project
+      FROM experiment_runs AS r ORDER BY r.rowid DESC LIMIT 100`).all().map((row) => ExperimentRun.parse(row));
   }
 
   get(id: string) {

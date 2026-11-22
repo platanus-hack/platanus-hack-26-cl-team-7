@@ -31,8 +31,9 @@ From the repository root, run `pnpm start` and open **Demo de evidencia** in Sen
 recorded mock-bank A/B and the synthetic detector replay have separate run IDs. The replay
 works without a proxy, a target service, or any provider credentials.
 
-Sentinel opens on **Experimentos** with the saved Último Paso baseline. On macOS, start
-the existing VM with `limactl start espejismo` before clicking **Iniciar ejecución A/B**.
+Sentinel opens on **Experimentos** with a saved run. Select a project to see its outcome,
+compare the two connected paths, or start an independent run with **Ejecutar proyecto A/B**.
+Use **Ejecutar todos** for the full suite. On macOS, start the existing VM with `limactl start espejismo`.
 The VM needs Python 3, Go, a running Docker engine, and `envoyproxy/envoy:v1.36.2`. On
 Linux those dependencies run directly on the host. Sentinel needs a loopback bind for
 live runs. Run `pnpm start` from the repository root. Provider credentials are read from
@@ -48,7 +49,7 @@ only saved observation flags for the separate feedback comparison, and Firecrawl
 approved advisory references. Choose a finished run and click **Reproducir** to play back
 its stored event sequence or **Exportar JSON** to save its recording.
 
-Use **Ejecutar banca A/B** to run only Banco Estero. Expand each case to compare the requested
+Select **Banco Estero** and use **Ejecutar proyecto A/B** to run only the bank. Expand a case to compare the requested
 refund version, the approved version, and the service's eligibility decision in both arms.
 Firecrawl attaches defensive guidance for CVE-2026-129289. The bank simulates approval decisions
 and evidence exposure using safe HTTP fixtures. It does not execute payments or run PHP-FPM.

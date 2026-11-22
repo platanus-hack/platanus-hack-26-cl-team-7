@@ -36,7 +36,7 @@ export type FixtureResult = Extract<ExperimentEvent, { kind: "fixture" }>;
 
 export const ExperimentRun = z.object({ id: z.string(), mode: z.enum(["recorded", "live"]),
   status: z.enum(["running", "completed", "failed", "interrupted"]), started: z.string().nullable(),
-  finished: z.string().nullable(), source: z.string().nullable(), error: z.string().nullable() });
+  finished: z.string().nullable(), source: z.string().nullable(), error: z.string().nullable(), project: ExperimentProject.nullable().optional() });
 export type ExperimentRun = z.infer<typeof ExperimentRun>;
 export const ExperimentList = z.object({ items: z.array(ExperimentRun) });
 export const ExperimentStarted = z.object({ id: z.string() });

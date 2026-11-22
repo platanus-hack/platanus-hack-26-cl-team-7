@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ExperimentEntry, ExperimentProject, ExperimentRun, type ExperimentDetail } from "@sentinel/contracts";
+import { ExperimentEntry, ExperimentProject, ExperimentRun, experimentNames, type ExperimentDetail } from "@sentinel/contracts";
 import { api } from "../sentinel";
 import { ProjectEvidence } from "./ProjectEvidence";
 import "./experiments.css";
@@ -21,6 +21,7 @@ export function Experiments() {
   const [runs, setRuns] = useState<ExperimentRun[]>([]);
   const [selected, setSelected] = useState(() => initial("run") ?? "");
   const [replay, setReplay] = useState(() => initial("replay") === "1");
+  const [focus, setFocus] = useState(() => ExperimentProject.safeParse(initial("project")).data);
   const [detail, setDetail] = useState<ExperimentDetail>();
   const [cursor, setCursor] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -28,17 +29,26 @@ export function Experiments() {
   const [starting, setStarting] = useState(false);
   const desired = useRef(selected);
 
-  function select(id: string, reproducing = false) {
+  function select(id: string, reproducing = false, project = id === selected ? focus : undefined) {
     desired.current = id;
     if (id !== selected) setDetail(undefined);
     setPlaying(false);
     setCursor(detail?.run.id === id ? detail.entries.length : 0);
     setSelected(id);
     setReplay(reproducing);
+    setFocus(project);
     setError("");
     const url = new URL(window.location.href);
     url.searchParams.set("run", id);
+    if (project) url.searchParams.set("project", project); else url.searchParams.delete("project");
     if (reproducing) url.searchParams.set("replay", "1"); else url.searchParams.delete("replay");
+    window.history.replaceState(null, "", url);
+  }
+
+  function selectProject(project: ExperimentProject) {
+    setFocus(project);
+    const url = new URL(window.location.href);
+    url.searchParams.set("project", project);
     window.history.replaceState(null, "", url);
   }
 
@@ -48,7 +58,9 @@ export function Experiments() {
       if (controller.signal.aborted) return;
       setRuns(items);
       if (!desired.current || !items.some((item) => item.id === desired.current)) {
-        const defaultRun = items[0];
+        const defaultRun = items.find((item) => item.status === "running")
+          ?? items.find((item) => item.mode === "live" && !item.project)
+          ?? items[0];
         if (defaultRun) {
           desired.current = defaultRun.id;
           setSelected(defaultRun.id);
@@ -81,7 +93,7 @@ export function Experiments() {
         const run = ExperimentRun.safeParse(JSON.parse(message.data));
         if (run.success) {
           setDetail((state) => state && state.run.id === selected ? { ...state, run: run.data } : state);
-          setRuns((items) => items.map((item) => item.id === selected ? run.data : item));
+          setRuns((items) => items.map((item) => item.id === selected ? { ...item, ...run.data } : item));
         }
         stream?.close();
       });
@@ -101,8 +113,8 @@ export function Experiments() {
     setError("");
     try {
       const { id } = await api.startExperiment(project);
-      select(id);
-      setRuns((items) => [{ id, mode: "live", status: "running", started: null, finished: null, source: null, error: null }, ...items]);
+      select(id, false, project);
+      setRuns((items) => [{ id, mode: "live", status: "running", started: null, finished: null, source: null, error: null, project }, ...items]);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No se pudo iniciar la ejecución.");
     } finally {
@@ -113,54 +125,58 @@ export function Experiments() {
   const visible = detail?.entries.slice(0, replay ? cursor : undefined) ?? [];
   const events = visible.map((entry) => entry.event);
   const projects = ExperimentProject.options.filter((project) => detail?.entries.some(({ event }) => "project" in event && event.project === project));
-  const baseline = events.filter((event) => event.kind === "baseline");
-  const fixtures = events.filter((event) => event.kind === "fixture");
-  const controls = events.filter((event) => event.kind === "control");
-  const total = (key: "direct" | "protected" | "legitimateA" | "legitimateB") =>
-    `${baseline.reduce((sum, event) => sum + event[key].yes, 0)}/${baseline.reduce((sum, event) => sum + event[key].total, 0)}`;
-  const observed = (arm: "A" | "B") => `${fixtures.filter((fixture) => fixture[arm].evidence).length}/${fixtures.length}`;
-  const legitimate = (arm: "A" | "B") => {
-    const results = controls.filter((control) => control.arm === arm);
-    return `${results.filter((control) => control.passed).length}/${results.length}`;
-  };
-  const isLive = runs.some((run) => run.status === "running");
+  const project = focus ?? projects[0] ?? "bruma";
+  const isLive = starting || runs.some((run) => run.status === "running");
+  const journal = visible.filter(({ event }) => !("project" in event) || event.project === project);
   return <main className="xp-main" aria-labelledby="xp-title">
     <div className="xp-content">
       <header className="xp-head">
-        <div><h1 id="xp-title">Experimentos</h1><p className="xp-muted">Tráfico directo y a través del proxy, con evidencia por proyecto.</p></div>
+        <h1 id="xp-title">Experimentos</h1>
         <div className="xp-actions">
           <a className="xp-button" href="http://127.0.0.1:9120" target="_blank" rel="noreferrer">Abrir servicios</a>
-          <button type="button" className="xp-button" disabled={starting || isLive} onClick={() => void start("bank")}>Ejecutar banca A/B</button>
-          <button type="button" className="xp-button xp-primary" disabled={starting || isLive} onClick={() => void start()}>{starting ? "Comprobando entorno…" : "Iniciar ejecución A/B"}</button>
+          <button type="button" className="xp-button" disabled={isLive} onClick={() => void start()}>{starting ? "Comprobando entorno…" : "Ejecutar todos"}</button>
         </div>
       </header>
       {error && <p className="xp-alert" role="alert">{error}</p>}
+      <div className="xp-runbar">
       {runs.length > 0 && <label className="xp-picker">Ejecución
         <select value={selected} onChange={(event) => select(event.target.value)}>{runs.map((run) => <option key={run.id} value={run.id}>
-          {run.mode === "recorded" ? "Resultados grabados" : `${runLabel[run.status]} · ${run.started?.slice(0, 16).replace("T", " ") ?? run.id}`}
+          {run.mode === "recorded" ? "Resultados grabados" : `${run.project ? experimentNames[run.project] : "Varios proyectos"} · ${runLabel[run.status]} · ${run.started?.slice(0, 16).replace("T", " ") ?? run.id}`}
         </option>)}</select>
       </label>}
       {detail && <>
         <div className="xp-run"><strong>{replay ? "Replay" : detail.run.mode === "recorded" ? "Resultados grabados" : runLabel[detail.run.status]}</strong>
-          <code>{detail.run.id}</code>
           {detail.run.status !== "running" && <button type="button" className="xp-button" onClick={() => select(detail.run.id, !replay)}>{replay ? "Salir del replay" : "Reproducir"}</button>}
           <button type="button" className="xp-button" onClick={() => exportRun(detail)}>Exportar JSON</button>
         </div>
+      </>}
+      </div>
+      {detail && <>
         {detail.run.error && <p className="xp-alert" role="status">{detail.run.error}</p>}
-        {detail.run.source && <p className="xp-muted">Resumen del informe grabado <code>{detail.run.source}</code>. No hay trazas individuales en esta grabación.</p>}
-        {baseline.length > 0 && <p className="xp-run">Evidencia recibida <strong>{total("direct")} → {total("protected")}</strong> · Tráfico legítimo <strong>{total("legitimateA")} → {total("legitimateB")}</strong></p>}
-        {fixtures.length > 0 && <p className="xp-run">Evidencia recibida <strong>{observed("A")} → {observed("B")}</strong> · Tráfico legítimo <strong>{legitimate("A")} → {legitimate("B")}</strong></p>}
         {replay && <div className="xp-playback">
           <button type="button" className="xp-button" onClick={() => { if (cursor >= length) { setCursor(0); setPlaying(true); } else setPlaying(!playing); }}>{playing && cursor < length ? "Pausar" : "Reproducir secuencia"}</button>
           <input aria-label="Posición en la grabación" type="range" min={0} max={length} value={cursor} onChange={(event) => { setPlaying(false); setCursor(Number(event.target.value)); }} />
           <output>{cursor}/{length}</output>
         </div>}
       </>}
-      {detail && <div className="xp-projects">{projects.map((project) => <ProjectEvidence key={project} project={project} events={events} />)}</div>}
-      {visible.length > 0 && detail?.run.mode === "live" && <details className="xp-detail xp-journal">
-        <summary>Registro de la ejecución · {visible.length} eventos</summary>
-        <ol className="xp-choices">{visible.map(({ seq, at, event }) => <li key={seq}><code>#{seq} {at ?? ""}</code> {summaries[event.kind]} {"project" in event ? `· ${event.project}` : ""}</li>)}</ol>
-      </details>}
+      <div className="xp-workbench">
+        <aside className="xp-sidebar" aria-label="Proyectos">
+          <h2>Proyectos</h2>
+          {ExperimentProject.options.map((item) => <button key={item} type="button" aria-pressed={item === project} onClick={() => selectProject(item)}>
+            {experimentNames[item]}{detail && !projects.includes(item) && <small>Sin datos en esta ejecución</small>}
+          </button>)}
+        </aside>
+        <div className="xp-workbench-main">
+          {detail ? <ProjectEvidence key={`${detail.run.id}:${project}`} project={project} events={events} running={isLive}
+            live={detail.run.status === "running"} runProject={() => void start(project)} />
+            : <p className="xp-empty" role="status">{error ? "Selecciona una ejecución para ver los resultados." : "Cargando resultados…"}</p>}
+          {detail && <details className="xp-detail xp-journal">
+            <summary>Registro de la ejecución</summary>
+            <p><code>{detail.run.id}</code>{detail.run.source && <> · <code>{detail.run.source}</code></>}</p>
+            {journal.length > 0 && detail.run.mode === "live" && <ol className="xp-choices">{journal.map(({ seq, at, event }) => <li key={seq}><code>#{seq} {at ?? ""}</code> {summaries[event.kind]} {"project" in event ? `· ${event.project}` : ""}</li>)}</ol>}
+          </details>}
+        </div>
+      </div>
     </div>
   </main>;
 }
