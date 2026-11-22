@@ -1,8 +1,10 @@
 # Centinela
 
-### Atrapa a los agentes de IA que atacan tu sitio: los detecta, les responde con una copia falsa, les niega la prueba de que su ataque funcionó y te muestra qué buscaban.
+### Si a un agente de IA que te ataca le niegas la prueba de que su ataque funcionó, se queda sin rumbo. Lo medimos, y Centinela es la versión abierta de esa idea.
 
-> Bloquear a un agente le avisa que lo vieron, y aprende. Centinela controla lo que el agente cree que pasó.
+> **El hallazgo:** los mismos ataques, con dos modelos de IA atacando. La prueba del ataque le llegó al atacante en 20 de 20 corridas sin defensa, en 20 de 20 por la protección por defecto de Cloudflare, y en **0 de 20** con nuestra pieza. Sin esa prueba, ningún agente declaró haber tenido éxito, y gastaron entre 3 y 11 veces más peticiones.
+
+Bloquear a un agente le avisa que lo vieron, y aprende. Centinela controla lo que el agente cree que pasó: lo detecta, le responde con una copia falsa, le niega la confirmación y te muestra qué buscaba.
 
 ## El problema
 Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelven a probar, a velocidad de máquina. En julio de 2026, durante una evaluación, agentes de OpenAI entraron a sistemas de Hugging Face y nadie lo vio a tiempo ([comunicado de OpenAI](https://openai.com/index/hugging-face-model-evaluation-security-incident/)). Quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.
