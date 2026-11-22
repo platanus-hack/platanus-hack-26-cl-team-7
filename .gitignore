@@ -35,3 +35,4 @@ espejismo/sandbox/ca.pem
 
 # Ultimo Paso build artifacts
 ultimo-paso/bin/
+.firecrawl/
