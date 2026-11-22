@@ -8,6 +8,7 @@ None. Mask and sync both use it, so a row looks the same whichever job wrote it.
 
 from __future__ import annotations
 
+import contextlib
 import sqlite3
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -16,11 +17,12 @@ from pathlib import Path
 import yaml
 
 from demo import db, fake
-from demo.tables import SQL
+from demo.db import SQL
 
 PUBLIC = "public"
 UNIQUE_KINDS = ("username", "email")
 Row = tuple[object, ...]
+Tables = dict[str, dict[int, Row]]
 
 
 @dataclass(frozen=True)
@@ -40,15 +42,6 @@ class Policy:
     recent_orders: int
 
 
-@dataclass(frozen=True)
-class Canary:
-    kind: str
-    table: str
-    column: str
-    row_id: int
-    value: str
-
-
 def _rule(where: str, raw: object, listed: Mapping[str, object]) -> Rule:
     if raw == PUBLIC:
         return PUBLIC
@@ -57,6 +50,9 @@ def _rule(where: str, raw: object, listed: Mapping[str, object]) -> Rule:
         if kind in fake.PERSON_FIELDS and listed.get(person) == PUBLIC:
             return Masked(kind, person)
     raise ValueError(f"{where}: expected 'public' or {{mask: <kind>, person: <public column>}}")
+
+
+DEFAULT_POLICY = Path("config/mask.yaml")
 
 
 def load_policy(path: Path) -> Policy:
@@ -86,6 +82,29 @@ class Projection:
                 raise ValueError(f"{table}: no such columns {sorted(unknown)}")
         self.people = self._people(source)
         self.tables = {t: dict(self._project(t, rows)) for t, rows in source.items()}
+
+    def account(self, user_id: int) -> Tables:
+        """The rows of one account in this projection: its user row, its orders, and their items
+        and history. Per table the projection lists, `users` is empty when there is no such user.
+        Copy on flag takes these from here, never from the real database, so what reaches the twin
+        is what the nightly mask would write for the same account."""
+        own: Tables = {}
+        if "users" in self.tables:
+            user = self.tables["users"].get(user_id)
+            own["users"] = {} if user is None else {user_id: user}
+        if "orders" in self.tables:
+            own["orders"] = self._matching("orders", "user_id", {user_id})
+        orders: set[object] = set(own.get("orders", {}))
+        for table in self.tables:
+            key = SQL[table].order_key
+            if key is not None:
+                own[table] = self._matching(table, key, orders)
+        return own
+
+    def _matching(self, table: str, column: str, wanted: set[object]) -> dict[int, Row]:
+        """The rows of `table` whose `column` holds one of `wanted`."""
+        index = self.columns[table].index(column)
+        return {i: row for i, row in self.tables[table].items() if row[index] in wanted}
 
     def masked(self) -> list[tuple[str, int, Masked]]:
         """(table, column index, rule) of every masked column."""
@@ -136,29 +155,8 @@ class Projection:
             out.append((int(str(row[key])), tuple(values)))
         return out
 
-    def canaries(self) -> list[Canary]:
-        """Ordinary private values only the twin holds: the admin's masked contact details and
-        the masked ship-to addresses of the newest orders. Never a secret or a key."""
-        wanted: list[tuple[str, str, str, int]] = []
-        if "users" in self.tables:
-            role = self.columns["users"].index("role")
-            admins = [
-                i for i, row in self.tables["users"].items() if row[role] == self.policy.admin_role
-            ]
-            for column in ("email", "phone", "address"):
-                wanted += [(f"admin_{column}", "users", column, i) for i in admins]
-        if "orders" in self.tables and self.policy.recent_orders > 0:
-            placed = self.columns["orders"].index("created_at")
-            newest = sorted(
-                self.tables["orders"].items(), key=lambda kv: (str(kv[1][placed]), kv[0])
-            )
-            for row_id, _ in newest[-self.policy.recent_orders :]:
-                wanted.append(("order_address", "orders", "ship_address", row_id))
-        found: dict[str, Canary] = {}
-        for kind, table, column, row_id in wanted:
-            if not isinstance(self.policy.tables[table].get(column), Masked):
-                continue
-            value = self.tables[table][row_id][self.columns[table].index(column)]
-            if isinstance(value, str) and value and value not in found:
-                found[value] = Canary(kind, table, column, row_id, value)
-        return list(found.values())
+
+def project(real: Path, policy: Policy) -> Projection:
+    """Read the real database through the policy. Opens the real file read-only."""
+    with contextlib.closing(db.connect(real, db.READ_ONLY)) as conn:
+        return Projection(policy, conn)

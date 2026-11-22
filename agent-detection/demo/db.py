@@ -6,6 +6,7 @@ ATTACH, no PRAGMA, no writes, no extension loading), values are capped in size a
 statement gets a fixed step budget. An injected query can read this instance's own tables, as a
 real flaw would, and can never touch a host file. The one table it cannot read is `sessions`: a
 session token signs in on the real shop too, and copy on flag puts a real one in the twin's file.
+`SQL` holds the fixed whole-row statements of each table, which the seed, the mask and the sync use.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 import contextlib
 import sqlite3
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from pathlib import Path
 
 BUSY_SECONDS = 5.0
@@ -22,6 +24,7 @@ PROGRESS_EVERY = 1000  # VM instructions between progress checks
 MAX_PROGRESS_CHECKS = 2000  # about two million VM instructions per injectable statement
 BLOCKED_FUNCTIONS = frozenset({"load_extension", "fts3_tokenizer", "zeroblob", "randomblob"})
 UNREADABLE_TABLES = frozenset({"sessions"})  # no text-built SQL reads these
+_ALLOWED_ACTIONS = frozenset({sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_RECURSIVE})
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS products (
@@ -47,9 +50,56 @@ CREATE INDEX IF NOT EXISTS items_by_order ON order_items (order_id);
 CREATE INDEX IF NOT EXISTS events_by_order ON order_events (order_id);
 """
 
-_ALLOWED_ACTIONS = frozenset(
-    {sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_RECURSIVE}
-)
+
+@dataclass(frozen=True)
+class TableSql:
+    """Fixed statements for whole-row work on one table. Table names cannot be SQL parameters,
+    so each table has its own literal statements and nothing builds SQL from a table name."""
+
+    select_all: str
+    replace: str
+    delete: str
+    order_key: str | None = None  # the column with the id of the order this row belongs to
+    user_key: str | None = None  # the column with the id of the user this row belongs to
+
+    @property
+    def insert(self) -> str:
+        """The row statement without OR REPLACE: a duplicate id raises (the seed relies on it)."""
+        return self.replace.replace(" OR REPLACE", "", 1)
+
+
+SQL = {
+    "products": TableSql(
+        "SELECT * FROM products ORDER BY id",
+        "INSERT OR REPLACE INTO products VALUES (?, ?, ?, ?, ?, ?)",
+        "DELETE FROM products WHERE id = ?",
+    ),
+    "users": TableSql(
+        "SELECT * FROM users ORDER BY id",
+        "INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "DELETE FROM users WHERE id = ?",
+    ),
+    "orders": TableSql(
+        "SELECT * FROM orders ORDER BY id",
+        "INSERT OR REPLACE INTO orders VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "DELETE FROM orders WHERE id = ?",
+        "id",
+        "user_id",
+    ),
+    "order_items": TableSql(
+        "SELECT * FROM order_items ORDER BY id",
+        "INSERT OR REPLACE INTO order_items VALUES (?, ?, ?, ?, ?)",
+        "DELETE FROM order_items WHERE id = ?",
+        "order_id",
+    ),
+    "order_events": TableSql(
+        "SELECT * FROM order_events ORDER BY id",
+        "INSERT OR REPLACE INTO order_events VALUES (?, ?, ?, ?)",
+        "DELETE FROM order_events WHERE id = ?",
+        "order_id",
+    ),
+}
+SESSION_REPLACE = "INSERT OR REPLACE INTO sessions VALUES (?, ?, ?)"
 
 
 def connect(path: Path, mode: str = CREATE) -> sqlite3.Connection:

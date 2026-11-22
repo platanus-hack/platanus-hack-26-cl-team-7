@@ -11,11 +11,19 @@ from html import escape
 
 from demo import auth, fetch, files, store
 from demo.api import LOGIN_FAILED, database_error
-from demo.layout import page, redirect
-from demo.web import CART_COOKIE, SESSION_COOKIE, TEXT, Call, Reply, cleared, session_cookie
+from demo.web import (
+    CART_COOKIE,
+    SESSION_COOKIE,
+    TEXT,
+    Call,
+    Reply,
+    cleared,
+    page,
+    redirect,
+    session_cookie,
+)
 
 PREVIEW_BYTES = 300
-CENTS = store.CENTS
 
 LOGIN_FORM = """<form method="post" action="/login">
 <label>Username <input name="username" autocomplete="username"></label>
@@ -69,7 +77,7 @@ def profile(user: sqlite3.Row) -> str:
 def order_table(call: Call, user_id: int) -> str:
     rows = "".join(
         f"<tr><td>#{o['id']}</td><td>{escape(o['created_at'])}</td><td>{escape(o['status'])}</td>"
-        f"<td>${o['total_cents'] / CENTS:.2f}</td>"
+        f"<td>${o['total_cents'] / store.CENTS:.2f}</td>"
         f'<td><a href="/account?invoice={o["id"]}.txt">Invoice</a></td></tr>'
         for o in store.orders_of(call.shop, user_id)
     )
@@ -93,13 +101,12 @@ def update_avatar(call: Call, user: sqlite3.Row) -> Reply:
 
 
 def cart(call: Call) -> Reply:
-    current = store.parse_cart(call.cookies.get(CART_COOKIE, ""))
+    current = store.cart_of(call)
     if call.method == "POST":
         current = store.add_to_cart(
             current, call.form.get("id", ""), call.form.get("quantity", "1")
         )
-        cookie = f"{CART_COOKIE}={store.format_cart(current)}; Path=/; SameSite=Lax"
-        return redirect("/cart", {"Set-Cookie": cookie})
+        return redirect("/cart", {"Set-Cookie": store.cart_cookie(current)})
     lines = store.cart_lines(call.shop, current)
     if not lines:
         return page("Cart", '<p>Your cart is empty.</p><p><a href="/products">Shop</a></p>')
@@ -114,7 +121,7 @@ def checkout(call: Call) -> Reply:
     user = auth.current_user(call)
     if user is None:
         return redirect("/login") if call.method == "GET" else page("Checkout", SIGN_IN_FIRST, 401)
-    current = store.parse_cart(call.cookies.get(CART_COOKIE, ""))
+    current = store.cart_of(call)
     if call.method != "POST":
         form = '<form method="post" action="/checkout"><button type="submit">Place order</button>'
         return page("Checkout", f"<p>Ship to {escape(user['address'] or '')}.</p>{form}</form>")

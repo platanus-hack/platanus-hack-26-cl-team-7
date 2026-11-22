@@ -9,10 +9,9 @@ import pytest
 from test_twin_support import POLICY_FILE, make_shop, make_twin
 
 from demo import auth, db, store
-from demo.mask import project
-from demo.masking import Row, load_policy
+from demo.db import SQL
+from demo.masking import Row, load_policy, project
 from demo.replica import Copied, Syncer
-from demo.tables import SQL
 from demo.web import Call, Shop
 
 Shops = tuple[Shop, Shop, Syncer]

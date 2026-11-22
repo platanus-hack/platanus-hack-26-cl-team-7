@@ -84,6 +84,19 @@
 .ag-real .ag-t {
   color: var(--color-ash);
 }
+/* A lab agent: the request reaches the real service; the proof is what stays behind. */
+.ag-service .ag-dot {
+  color: var(--color-text);
+  border-color: var(--color-iron);
+}
+.ag-proof .ag-dot {
+  color: var(--c-ok);
+  border-style: dashed;
+  border-color: rgba(34, 197, 94, 0.5);
+}
+.ag-proof .ag-t {
+  color: var(--color-ash);
+}
 .rp-ctl {
   display: flex;
   align-items: center;

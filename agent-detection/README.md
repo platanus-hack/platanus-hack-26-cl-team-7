@@ -33,13 +33,16 @@ bash scripts/stack_local.sh stop
 
 ## Sentinel evidence demo
 
-From the repository root, run `pnpm start` and open **Demo de evidencia** in Sentinel. The
-recorded mock-bank A/B and the synthetic detector replay have separate run IDs. The replay
-works without a proxy, a target service, or any provider credentials.
+From the repository root, run `pnpm start` and open Sentinel. The panel has one page per protected
+site (Bruma, Litoral, Surco, Banco Estero), each with the CVE its case is modelled on. A page reads
+top to bottom: the result without and with Reaper, the replay of the attack, every request as raw
+HTTP side by side (without Reaper | with Reaper | the retry, the proof highlighted, and what Reaper's
+engine recorded), the vulnerability with its researched fix, and the limit. Out of the box it shows
+the recording Sentinel bundles (`apps/sentinel/src/experiments/recorded-run.json`), so it works with
+no VM and no keys. **Modo demo** (or `?demo=1`) walks the page with ←/→ and Esc; `?site=litoral`
+opens a site. **Ejecutar prueba A/B** records a new run and the page follows it live.
 
-Sentinel opens on **Experimentos** with a saved run. Select a project to see its outcome,
-compare the two connected paths, or start an independent run with **Ejecutar proyecto A/B**.
-Use **Ejecutar todos** for the full suite. On macOS, start the existing VM with `limactl start espejismo`.
+On macOS, start the existing VM with `limactl start espejismo`.
 The VM needs Python 3, Go, a running Docker engine, and `envoyproxy/envoy:v1.36.2`. On
 Linux those dependencies run directly on the host. Sentinel needs a loopback bind for
 live runs. Run `pnpm start` from the repository root. Provider credentials are read from

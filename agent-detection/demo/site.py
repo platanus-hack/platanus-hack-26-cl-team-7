@@ -97,6 +97,7 @@ INTERNAL_ERROR = Reply(500, TEXT, b"Internal server error\n")
 
 
 class ShopHandler(BaseHTTPRequestHandler):
+    server: ShopServer | UnixShopServer
     server_version = "DemoShop/0.1"
 
     def version_string(self) -> str:
@@ -106,11 +107,6 @@ class ShopHandler(BaseHTTPRequestHandler):
         self.dispatch()
 
     do_HEAD = do_POST = do_PUT = do_PATCH = do_DELETE = do_OPTIONS = do_GET
-
-    def instance(self) -> ShopServer | UnixShopServer:
-        if not isinstance(self.server, ShopServer | UnixShopServer):
-            raise TypeError("ShopHandler runs only inside a shop server")
-        return self.server
 
     def read_body(self) -> bytes:
         try:
@@ -124,8 +120,7 @@ class ShopHandler(BaseHTTPRequestHandler):
     def dispatch(self) -> None:
         url = urlsplit(self.path)
         form = parse_form(self.headers.get("Content-Type") or "", self.read_body())
-        server = self.instance()
-        found = resolve(server.routes, self.command, url.path)
+        found = resolve(self.server.routes, self.command, url.path)
         if isinstance(found, Match):
             call = Call(
                 self.command,
@@ -133,7 +128,7 @@ class ShopHandler(BaseHTTPRequestHandler):
                 found.params,
                 parse_query(url.query),
                 form,
-                server.shop,
+                self.server.shop,
                 parse_cookies(self.headers.get("Cookie") or ""),
                 self.headers.get("Authorization") or "",
             )

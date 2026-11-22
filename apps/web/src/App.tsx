@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect } from "react";
 import { Dashboard } from "./dashboard/Dashboard";
 import { connect, loadHealth, startClock, useDashboard } from "./dashboard/store";
 import { useReports } from "./reports/store";
-import { startMirror } from "./mirror/store";
 import { Skeleton } from "./ui";
 
 const CopilotPanel = lazy(() => import("./copilot/CopilotPanel"));
@@ -19,7 +18,7 @@ function CopilotFallback() {
   );
 }
 
-/** App lifecycle: connect to Reaper, keep the chart clock and health fresh, ⌘K / Esc for the copilot. */
+/** App lifecycle: connect to Reaper for the copilot, keep health fresh, ⌘K / Esc for the copilot. */
 export function App() {
   return <SentinelApp />;
 }
@@ -29,8 +28,6 @@ function SentinelApp() {
   const reportIp = useReports((s) => s.ip);
 
   useEffect(() => {
-    // The mirror taps the stream before the first snapshot, so that snapshot's resync loads it.
-    const stopMirror = startMirror();
     connect(useDashboard.getState().data.range);
     void loadHealth();
     const stopClock = startClock();
@@ -46,7 +43,6 @@ function SentinelApp() {
     window.addEventListener("keydown", onKey);
     return () => {
       stopClock();
-      stopMirror();
       clearInterval(healthTimer);
       window.removeEventListener("keydown", onKey);
     };

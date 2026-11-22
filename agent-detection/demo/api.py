@@ -39,13 +39,13 @@ def cart_items(call: Call, cart: dict[int, int]) -> list[dict[str, object]]:
 
 
 def api_cart(call: Call) -> Reply:
-    cart = store.parse_cart(call.cookies.get(CART_COOKIE, ""))
+    cart = store.cart_of(call)
     if call.method == "DELETE":
         return as_json({"items": []}, headers={"Set-Cookie": cleared(CART_COOKIE)})
     if call.method != "POST":
         return as_json({"items": cart_items(call, cart)})
     cart = store.add_to_cart(cart, call.form.get("id", ""), call.form.get("quantity", "1"))
-    cookie = f"{CART_COOKIE}={store.format_cart(cart)}; Path=/; SameSite=Lax"
+    cookie = store.cart_cookie(cart)
     return as_json({"items": cart_items(call, cart)}, 201, {"Set-Cookie": cookie})
 
 

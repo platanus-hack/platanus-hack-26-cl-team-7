@@ -96,5 +96,16 @@ export function createExperimentProviders(root: string, keys: { openrouter?: str
       observations: choices.length ? visible : [], choices };
   }
 
-  return { inputs, research, feedback };
+  /** Cases the manifest defines for a project: a run is complete when it measured all of them. */
+  function cases(project: ExperimentProject): number {
+    try {
+      const manifest = z.object({ projects: z.record(z.string(), z.array(z.unknown())) })
+        .parse(JSON.parse(readFileSync(join(root, "attacks/fixtures.json"), "utf8")));
+      return manifest.projects[project]?.length ?? 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  return { inputs, research, feedback, cases };
 }

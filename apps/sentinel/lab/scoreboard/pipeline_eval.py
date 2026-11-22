@@ -1,4 +1,8 @@
-"""Matched direct/proxy evaluation of the fictional services' fixed inert fixtures."""
+"""Matched direct/proxy evaluation of the fictional services' fixed inert fixtures.
+
+Only the cases modelled on a published CVE are run. Every observation keeps the raw request and
+response as the client saw them, and the protected arm keeps what Reaper's engine recorded.
+"""
 import argparse
 import json
 import re
@@ -17,16 +21,11 @@ from targets.businesses.workflows import demo_form
 # Request construction is entirely local. Manifest data cannot specify a URL, header value,
 # method, arbitrary path, executable payload, or upstream implementation.
 SHAPES = {
-    "receipt": ("receipt", "private", {"X-Catalog-Note": "receipt-fixture"}),
-    "receipt-note": ("receipt", "private", {"X-Catalog-Note": "receipt-variant"}),
-    "duplicate": ("repeated", "private", {"X-Catalog-Note": "duplicate-header-fixture"}),
-    "unlabelled": ("unlabelled", "unlabelled", {"X-Catalog-Note": "unlabelled-control"}),
-    "path-indicator": ("service", "", {"X-Catalog-Note": "../sample"}),
-    "script-indicator": ("service", "", {"X-Catalog-Note": "javascript:example"}),
-    "middleware-indicator": ("service", "", {"X-Middleware-Subrequest": "fixture"}),
-    "refund-stale": ("refunds/stale-approval", "private", {}),
-    "refund-missing": ("refunds/missing-approval", "private", {}),
-    "refund-reapproved": ("refunds/reapproved", "", {}),
+    "receipt": ("receipt", {"X-Catalog-Note": "receipt-fixture"}),
+    "receipt-note": ("receipt", {"X-Catalog-Note": "receipt-variant"}),
+    "duplicate": ("repeated", {"X-Catalog-Note": "duplicate-header-fixture"}),
+    "refund-stale": ("refunds/stale-approval", {}),
+    "refund-missing": ("refunds/missing-approval", {}),
 }
 FIELDS = {"detected", "contained", "executed", "directEvidence", "proxyEvidence"}
 
@@ -48,11 +47,10 @@ def load_fixtures():
                 raise ValueError("Invalid fixture")
             ids.add(case["id"])
             if case["shape"] not in SHAPES or (case["shape"] == "duplicate" and project != "litoral") or (
-                    case["shape"] == "unlabelled" and project != "surco") or (
                     case["shape"].startswith("refund-") != (project == "bank")):
                 raise ValueError("Fixture route is outside its project")
-            if case.get("cve") and not re.fullmatch(r"CVE-\d{4}-\d{4,}", case["cve"]):
-                raise ValueError("Invalid advisory identifier")
+            if not re.fullmatch(r"CVE-\d{4}-\d{4,}", case.get("cve", "")):
+                raise ValueError("Every case must reference the CVE it is modelled on")
     return doc["projects"]
 
 
@@ -71,7 +69,7 @@ def receipt(service, port, journal, arm, path, actor, token, headers, form=None)
     events = [e for e in read_events(journal) if e.get("trace_id") == trace] if request else []
     response = next((e for e in events if e["kind"] == "response"), None)
     result = {
-        "trace": trace, "requestId": observed["fixture_id"],
+        "trace": trace, "requestId": observed["fixture_id"], "path": path, "raw": observed["raw"],
         "status": observed["status"], "hits": observed["upstream_hits"],
         "evidence": observed["evidence_in_body"] or observed["evidence_in_headers"],
         "detected": bool(request["symbol"] in ("probe", "exploit", "confirm") or (response and
@@ -79,6 +77,15 @@ def receipt(service, port, journal, arm, path, actor, token, headers, form=None)
         "decision": (response or {}).get("action") or (request or {}).get("action"),
         "rule": (request or {}).get("rule_id"),
     }
+    if request:
+        result["engine"] = {
+            "level": (response or {}).get("level") or request.get("level") or "",
+            "symbol": request.get("symbol") or "",
+            "decision": result["decision"] or "",
+            "rule": request.get("rule_id"),
+            "evidence": (response or {}).get("evidence") or [],
+            "reason": (response or {}).get("reason") or request.get("reason") or "",
+        }
     approval = service.refund_receipt(observed["fixture_id"])
     if approval is not None:
         result["approval"] = approval
@@ -142,17 +149,18 @@ def evaluate_project(binary, b, cases, args):
                 emit("stage", project=b.slug, stage="fixtures", status="running")
                 results = []
                 for case in cases:
-                    suffix, marker, headers = SHAPES[case["shape"]]
-                    token = {"private": b.private_ref, "unlabelled": "ROOM-OTHER-2571", "": None}[marker]
+                    suffix, headers = SHAPES[case["shape"]]
+                    token = b.private_ref
                     path = f"/{b.slug}/{suffix}"
                     actor = f"pipeline-{case['id']}"
-                    label = "unlabelled-control" if marker == "unlabelled" else "disclosure-fixture" if marker else "request-indicator"
+                    label = "disclosure-fixture"
                     direct, direct_obs = receipt(direct_backend, direct_backend.server_port, journal, "A", path, actor, token, headers)
                     protected, protected_obs = receipt(backend, edge, journal, "B", path, actor, token, headers)
                     rule = wait_rule(journal, protected["trace"]) if protected["detected"] else None
                     retry, retry_obs = receipt(backend, edge, journal, "B", path, actor, token, headers)
                     actual = score_case(direct, protected, retry, rule)
-                    results.append({**case, "A": direct, "B": protected, "retry": retry, "rule": rule,
+                    # The fictional canary the response carries when the weakness is reached.
+                    results.append({**case, "proof": token, "A": direct, "B": protected, "retry": retry, "rule": rule,
                                     "actual": actual, "passed": actual == case["expected"]})
                     emit("fixture", project=b.slug, **results[-1])
                     records.extend([(direct, direct_obs, "A", label, case["id"]), (protected, protected_obs, "B", label, case["id"]),

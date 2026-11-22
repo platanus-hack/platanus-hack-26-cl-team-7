@@ -17,6 +17,10 @@ the agent stays signed in there. The account comes from the same masked projecti
 the twin never holds a real private value (the password hash, name, email, phone and address are
 NULL or made up); the session row is the one real value, and the twin's SQL cannot read it (see
 demo.db). The same rules apply, so a second copy of the same session changes nothing.
+
+real_values(values): the values the real database holds as a username, email or session token.
+The router asks before it binds a value the twin gave out to a track, so a real user is never
+routed to the twin by their own identity. The real file is only read.
 """
 
 from __future__ import annotations
@@ -30,11 +34,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from demo import db
-from demo.mask import project
-from demo.masking import Policy, Row
-from demo.own import Tables, own_rows
-from demo.tables import SESSION_REPLACE, SQL
+from demo.db import SESSION_REPLACE, SQL
+from demo.masking import Policy, Row, Tables, project
 from demo.web import SESSION_COOKIE, parse_cookies
+
+IS_REAL = (
+    "SELECT 1 FROM users WHERE lower(username) = lower(?) OR lower(email) = lower(?)"
+    " UNION ALL SELECT 1 FROM sessions WHERE token = ? LIMIT 1"
+)
 
 
 @dataclass(frozen=True)
@@ -44,8 +51,9 @@ class Copied:
 
 
 class Syncer:
-    """The push and the copy. One lock keeps them from writing the twin at the same time, and
-    `_ours` holds, per table and id, the row this job last wrote and the twin still has."""
+    """The push, the copy and real_values. Push and copy take one lock so they never write the
+    twin at the same time; real_values only reads the real file and takes no lock. `_ours` holds,
+    per table and id, the row this job last wrote and the twin still has."""
 
     def __init__(self, real: Path, twin: Path, policy: Policy) -> None:
         if not twin.is_file():
@@ -59,6 +67,12 @@ class Syncer:
             table: {i: row for i, row in rows.items() if current[table].get(i) == row}
             for table, rows in projection.tables.items()
         }
+
+    def real_values(self, values: list[str]) -> list[str]:
+        """The values, as given, that the real database holds as a username, email or session
+        token (a username or email is compared without regard to case)."""
+        with contextlib.closing(db.connect(self.real, db.READ_ONLY)) as conn:
+            return [v for v in values if conn.execute(IS_REAL, (v, v, v)).fetchone() is not None]
 
     def push(self) -> dict[str, int]:
         """One push in one transaction; returns how many rows it inserted, updated and deleted."""
@@ -141,18 +155,18 @@ class Syncer:
         if session is None:
             return None
         user_id = int(session["user_id"])
-        own = own_rows(project(self.real, self.policy), user_id)
+        projection = project(self.real, self.policy)
+        own = projection.account(user_id)
         if not own.get("users"):
             return None
         with self._lock, contextlib.closing(db.connect(self.twin, db.EXISTING)) as conn, conn:
             conn.execute("BEGIN IMMEDIATE")
             conn.execute(SESSION_REPLACE, tuple(session))
-            columns = {table: db.columns(conn, table) for table in own}
             current = _read(conn, own)
-            blocked = self._blocked(columns, own, current)
+            blocked = self._blocked(projection.columns, own, current)
             orders = 0
             for table, rows in own.items():
-                order = _index(columns, table, SQL[table].order_key)
+                order = _index(projection.columns, table, SQL[table].order_key)
                 for row_id, row in rows.items():
                     if self._held(table, row_id, row, current[table]) or (
                         order is not None and row[order] in blocked
@@ -168,9 +182,9 @@ def _index(columns: Mapping[str, list[str]], table: str, key: str | None) -> int
 
 
 def _read(conn: sqlite3.Connection, tables: Mapping[str, object]) -> Tables:
-    return {table: _rows(conn, table) for table in tables}
-
-
-def _rows(conn: sqlite3.Connection, table: str) -> dict[int, Row]:
-    key = db.columns(conn, table).index("id")
-    return {int(row[key]): tuple(row) for row in conn.execute(SQL[table].select_all)}
+    """The rows the twin holds for each of `tables`, by id."""
+    out: Tables = {}
+    for table in tables:
+        key = db.columns(conn, table).index("id")
+        out[table] = {int(row[key]): tuple(row) for row in conn.execute(SQL[table].select_all)}
+    return out

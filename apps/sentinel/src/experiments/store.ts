@@ -1,34 +1,29 @@
+import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
-import { ExperimentEvent, ExperimentRun, type ExperimentEntry } from "@sentinel/contracts";
+import { ExperimentDetail, ExperimentEvent, ExperimentRun, type ExperimentEntry } from "@sentinel/contracts";
 
-const baselineId = "pipeline-6cc4c600c3cf4869be28b791";
-const tally = (yes: number, total = 3) => ({ yes, total });
-const baseline = [
-  { project: "bruma", disclosures: 0, detections: 3, containments: 2 },
-  { project: "litoral", disclosures: 0, detections: 3, containments: 2 },
-  { project: "surco", disclosures: 1, detections: 2, containments: 1 },
-] as const;
+/** The aggregated baseline earlier versions seeded. It has no per-request traffic, so it is removed. */
+const legacyBaselineId = "pipeline-6cc4c600c3cf4869be28b791";
+/** A full live run of the four services, recorded with raw traffic: the panel works offline from it. */
+const recording = new URL("./recorded-run.json", import.meta.url);
+export const recordedSource = "apps/sentinel/src/experiments/recorded-run.json";
 
 export class ExperimentStore {
   private readonly db: DatabaseSync;
 
-  constructor(db: DatabaseSync) {
+  constructor(db: DatabaseSync, readRecording = () => readFileSync(recording, "utf8")) {
     this.db = db;
     db.prepare("UPDATE experiment_runs SET status='interrupted', finished=?, error=? WHERE status='running'")
       .run(new Date().toISOString(), "Reaper se reinició durante la ejecución.");
     db.exec("BEGIN IMMEDIATE");
     try {
-      const inserted = db.prepare("INSERT OR IGNORE INTO experiment_runs (id, mode, status, source) VALUES (?, 'recorded', 'completed', ?)")
-        .run(baselineId, "related_experiments/ultimo-paso/scoreboard/evidence/PIPELINE.md");
-      db.prepare("UPDATE experiment_runs SET source=? WHERE id=? AND source=?")
-        .run("related_experiments/ultimo-paso/scoreboard/evidence/PIPELINE.md", baselineId, "ultimo-paso/scoreboard/evidence/PIPELINE.md");
-      if (inserted.changes) {
-        for (const item of baseline) this.write(baselineId, {
-          kind: "baseline", project: item.project, direct: tally(2), protected: tally(item.disclosures),
-          detected: tally(item.detections), installed: tally(item.containments), executed: tally(item.containments),
-          legitimateA: tally(3), legitimateB: tally(3),
-        }, null);
-      }
+      db.prepare("DELETE FROM experiment_entries WHERE run_id=?").run(legacyBaselineId);
+      db.prepare("DELETE FROM experiment_runs WHERE id=?").run(legacyBaselineId);
+      const { run, entries } = ExperimentDetail.parse(JSON.parse(readRecording()));
+      const inserted = db.prepare("INSERT OR IGNORE INTO experiment_runs (id, mode, status, started, finished, source) VALUES (?, 'recorded', 'completed', ?, ?, ?)")
+        .run(run.id, run.started, run.finished, recordedSource);
+      if (inserted.changes) for (const entry of entries) db.prepare("INSERT INTO experiment_entries (run_id, seq, at, event) VALUES (?, ?, ?, ?)")
+        .run(run.id, entry.seq, entry.at, JSON.stringify(entry.event));
       db.exec("COMMIT");
     } catch (err) {
       db.exec("ROLLBACK");

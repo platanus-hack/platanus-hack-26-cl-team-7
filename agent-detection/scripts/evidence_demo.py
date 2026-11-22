@@ -82,8 +82,7 @@ def detector_trials(first: str = "benign") -> list[dict[str, object]]:
     detector = Detector(routes, Thresholds())
     trials = []
     profiles: tuple[tuple[str, tuple[str, ...]], ...] = (
-        ("benign", BENIGN_PATHS),
-        ("unlisted", UNLISTED_PATHS),
+        ("benign", BENIGN_PATHS), ("unlisted", UNLISTED_PATHS),
     )
     if first == "unlisted":
         profiles = profiles[::-1]
