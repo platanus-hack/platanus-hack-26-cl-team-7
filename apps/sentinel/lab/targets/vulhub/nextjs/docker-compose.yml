@@ -1,0 +1,8 @@
+services:
+  web:
+    image: vulhub/nextjs:15.2.2
+    container_name: up-nextjs
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - NODE_ENV=production

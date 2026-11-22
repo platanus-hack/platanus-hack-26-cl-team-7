@@ -29,7 +29,7 @@ const dbPath = resolve(process.env.SENTINEL_DB ?? resolve(here, "../data/sentine
 const webRoot = resolve(process.env.SENTINEL_WEB ?? resolve(here, "../../web/dist"));
 const list = (v: string | undefined) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 const allowedOrigins = list(process.env.SENTINEL_ALLOWED_ORIGINS);
-const allowedHosts = list(process.env.SENTINEL_ALLOWED_HOSTS);
+const allowedHosts = list(process.env.SENTINEL_ALLOWED_HOSTS || "neowaf.paoloose.site");
 const ingestToken = process.env.SENTINEL_INGEST_TOKEN || undefined;
 // The agent-detection stack (scripts/stack_local.sh) writes its log and verdicts under agent-detection/run.
 const repoRoot = resolve(here, "../../..");
