@@ -3,7 +3,7 @@
  * JSON requests with timeouts and the error envelope, plus an SSE reader for streams.
  */
 import { Report, ReportSummary, type AttackerDetail, type Block, type DecisionRequest, type FindingPage, type Health, type Range, type Snapshot, type TrackDetail, type TrackPage } from "@sentinel/contracts";
-import { EvidenceDemoBundle, EvidenceDemoEvaluation } from "@sentinel/contracts";
+import { EvidenceDemoBundle, EvidenceDemoEvaluation, ExperimentDetail, ExperimentList, ExperimentStarted, type ExperimentProject } from "@sentinel/contracts";
 
 /** Same origin by default: Sentinel serves this app in production and Vite proxies /v1 in development. */
 export const BASE_URL: string = (import.meta.env.VITE_SENTINEL_URL as string | undefined) ?? "";
@@ -85,6 +85,10 @@ function pageQuery({ range, limit, cursor }: PageParams): string {
 }
 
 export const api = {
+  experiments: async (signal?: AbortSignal) => parseWith(ExperimentList, await request<unknown>("/v1/experiments/runs", { signal })),
+  experiment: async (id: string, signal?: AbortSignal) => parseWith(ExperimentDetail, await request<unknown>(`/v1/experiments/runs/${encodeURIComponent(id)}`, { signal })),
+  startExperiment: async (project?: ExperimentProject) => parseWith(ExperimentStarted, await request<unknown>("/v1/experiments/runs", { method: "POST", body: JSON.stringify({ project }), timeoutMs: 20_000 })),
+  experimentStream: (id: string, after: number) => `${BASE_URL}/v1/experiments/runs/${encodeURIComponent(id)}/events?after=${after}`,
   evidenceDemo: async (signal?: AbortSignal) => parseWith(EvidenceDemoBundle, await request<unknown>("/v1/evidence-demo", { signal })),
   evaluateEvidence: async () => parseWith(EvidenceDemoEvaluation, await request<unknown>("/v1/evidence-demo/evaluate", {
     method: "POST", body: "{}", timeoutMs: 50_000,

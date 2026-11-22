@@ -15,7 +15,7 @@ import time
 from uuid import uuid4
 
 from attackers.common import load_env, openrouter_chat
-from targets.businesses.service import BUSINESSES, Service
+from targets.businesses.service import ORIGINAL_BUSINESSES as BUSINESSES, Service
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = "openai/gpt-4o-mini"
@@ -63,7 +63,7 @@ def free_ports(count):
 
 
 @contextmanager
-def proxy(binary, mode, upstream, run_id, event_dir=None, payload_dir=None):
+def proxy(binary, mode, upstream, run_id, event_dir=None, payload_dir=None, businesses=BUSINESSES):
     with TemporaryDirectory(prefix="up-defense-") as temp:
         work = Path(temp)
         listen, admin, ingress, envoy_admin = free_ports(4)
@@ -75,7 +75,7 @@ def proxy(binary, mode, upstream, run_id, event_dir=None, payload_dir=None):
             command.extend(["-run-id", run_id])
         if payload_dir:
             command.extend(["-payload-archive", str(payload_dir / f"{run_id}-{mode}.jsonl")])
-        for business in BUSINESSES:
+        for business in businesses:
             command.extend(["-canary", f"{business.slug}={business.private_ref}"])
         engine_log = work / "engine.log"
         with engine_log.open("w") as log:

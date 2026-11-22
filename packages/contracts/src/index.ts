@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export * from "./evidence-demo.ts";
+export * from "./experiments.ts";
 
 /** Sentinel API version prefix. Every route lives under it. */
 export const API_PREFIX = "/v1";

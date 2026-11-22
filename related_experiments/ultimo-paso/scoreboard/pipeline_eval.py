@@ -23,6 +23,9 @@ SHAPES = {
     "path-indicator": ("service", "", {"X-Catalog-Note": "../sample"}),
     "script-indicator": ("service", "", {"X-Catalog-Note": "javascript:example"}),
     "middleware-indicator": ("service", "", {"X-Middleware-Subrequest": "fixture"}),
+    "refund-stale": ("refunds/stale-approval", "private", {}),
+    "refund-missing": ("refunds/missing-approval", "private", {}),
+    "refund-reapproved": ("refunds/reapproved", "", {}),
 }
 FIELDS = {"detected", "contained", "executed", "directEvidence", "proxyEvidence"}
 
@@ -44,7 +47,8 @@ def load_fixtures():
                 raise ValueError("Invalid fixture")
             ids.add(case["id"])
             if case["shape"] not in SHAPES or (case["shape"] == "duplicate" and project != "litoral") or (
-                    case["shape"] == "unlabelled" and project != "surco"):
+                    case["shape"] == "unlabelled" and project != "surco") or (
+                    case["shape"].startswith("refund-") != (project == "bank")):
                 raise ValueError("Fixture route is outside its project")
             if case.get("cve") and not re.fullmatch(r"CVE-\d{4}-\d{4,}", case["cve"]):
                 raise ValueError("Invalid advisory identifier")
@@ -65,14 +69,19 @@ def receipt(service, port, journal, arm, path, actor, token, headers):
     trace = request["trace_id"] if request else observed["fixture_id"]
     events = [e for e in read_events(journal) if e.get("trace_id") == trace] if request else []
     response = next((e for e in events if e["kind"] == "response"), None)
-    return {
-        "trace": trace, "status": observed["status"], "hits": observed["upstream_hits"],
+    result = {
+        "trace": trace, "requestId": observed["fixture_id"],
+        "status": observed["status"], "hits": observed["upstream_hits"],
         "evidence": observed["evidence_in_body"] or observed["evidence_in_headers"],
         "detected": bool(request["symbol"] in ("probe", "exploit", "confirm") or (response and
                          (response.get("action") == "replace" or response.get("evidence")))) if request else None,
         "decision": (response or {}).get("action") or (request or {}).get("action"),
         "rule": (request or {}).get("rule_id"),
-    }, observed
+    }
+    approval = service.refund_receipt(observed["fixture_id"])
+    if approval is not None:
+        result["approval"] = approval
+    return result, observed
 
 
 def wait_rule(journal, trace):
@@ -112,7 +121,7 @@ def evaluate_project(binary, b, cases, args):
         worker = Thread(target=backend.serve_forever, daemon=True)
         worker.start()
         try:
-            with proxy(binary, "extproc", backend.server_port, run, args.events, args.payloads) as (edge, _, journal):
+            with proxy(binary, "extproc", backend.server_port, run, args.events, args.payloads, businesses=(b,)) as (edge, _, journal):
                 endpoints = {"A": backend.server_port, "B": edge}
                 emit("stage", project=b.slug, stage="traffic", status="running")
                 customers = {}
@@ -122,6 +131,7 @@ def evaluate_project(binary, b, cases, args):
                         trace, obs = receipt(backend, port, journal, arm, f"/{b.slug}/service",
                                              f"customer-{index}", b.public_ref, {"X-Catalog-Note": note})
                         customers[arm].append({**trace, "passed": trace["status"] == 200 and trace["evidence"]})
+                        emit("control", project=b.slug, arm=arm, receipt=trace, passed=customers[arm][-1]["passed"])
                         records.append((trace, obs, arm, "legitimate", "pipeline-customer"))
                 emit("stage", project=b.slug, stage="traffic", status="passed" if all(x["passed"] for arm in customers.values() for x in arm) else "failed")
                 emit("stage", project=b.slug, stage="fixtures", status="running")
@@ -139,6 +149,7 @@ def evaluate_project(binary, b, cases, args):
                     actual = score_case(direct, protected, retry, rule)
                     results.append({**case, "A": direct, "B": protected, "retry": retry, "rule": rule,
                                     "actual": actual, "passed": actual == case["expected"]})
+                    emit("fixture", project=b.slug, **results[-1])
                     records.extend([(direct, direct_obs, "A", label, case["id"]), (protected, protected_obs, "B", label, case["id"]),
                                     (retry, retry_obs, "B", label, "repeat")])
                 correlate_wire(records, run, b.slug, journal)
@@ -156,6 +167,7 @@ def main():
     parser.add_argument("--first", default="")
     parser.add_argument("--events", required=True, type=Path)
     parser.add_argument("--payloads", required=True, type=Path)
+    parser.add_argument("--project", choices=tuple(b.slug for b in BUSINESSES))
     args = parser.parse_args()
     if not re.fullmatch(r"pipeline-[a-z0-9]{12,32}", args.run_id):
         parser.error("Invalid run ID")
@@ -175,6 +187,8 @@ def main():
         binary = Path(temp) / "engine"
         subprocess.run(["go", "build", "-o", str(binary), "./cmd/engine"], cwd=ROOT, check=True, timeout=60)
         for b in BUSINESSES:
+            if args.project and b.slug != args.project:
+                continue
             if args.first:
                 fixtures[b.slug].sort(key=lambda case: case["id"] != args.first)
             evaluate_project(binary, b, fixtures[b.slug], args)

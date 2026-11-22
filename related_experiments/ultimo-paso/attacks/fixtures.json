@@ -11,6 +11,11 @@
       {"id":"duplicate-header","weakness":"header-disclosure","cve":"CVE-2025-55182","shape":"duplicate","expected":{"detected":true,"contained":true,"executed":true,"directEvidence":true,"proxyEvidence":false}},
       {"id":"script-indicator","weakness":"script-grammar","shape":"script-indicator","expected":{"detected":true,"contained":false,"executed":false,"directEvidence":false,"proxyEvidence":false}}
     ],
+    "bank": [
+      {"id":"bank-stale-approval","weakness":"refund-approval","cve":"CVE-2026-129289","shape":"refund-stale","expected":{"detected":true,"contained":true,"executed":true,"directEvidence":true,"proxyEvidence":false}},
+      {"id":"bank-missing-approval","weakness":"refund-approval","cve":"CVE-2026-129289","shape":"refund-missing","expected":{"detected":true,"contained":true,"executed":true,"directEvidence":true,"proxyEvidence":false}},
+      {"id":"bank-reapproved","weakness":"refund-approval","shape":"refund-reapproved","expected":{"detected":false,"contained":false,"executed":false,"directEvidence":false,"proxyEvidence":false}}
+    ],
     "surco": [
       {"id":"receipt-record","weakness":"record-disclosure","cve":"CVE-2025-29927","shape":"receipt","expected":{"detected":true,"contained":true,"executed":true,"directEvidence":true,"proxyEvidence":false}},
       {"id":"unlabelled-record","weakness":"unlabelled-record","shape":"unlabelled","expected":{"detected":false,"contained":false,"executed":false,"directEvidence":true,"proxyEvidence":true}},

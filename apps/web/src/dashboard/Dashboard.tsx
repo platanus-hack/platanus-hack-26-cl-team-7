@@ -6,11 +6,14 @@ import { useState, type ReactNode } from "react";
 import { useDashboard } from "./store";
 import { MirrorPanel } from "../mirror/MirrorPanel";
 import { EvidenceDemo } from "../evidence-demo/EvidenceDemo";
+import { Experiments } from "../experiments/Experiments";
 import { Orb } from "../ui";
 
 const preloadCopilot = () => void import("../copilot/CopilotPanel");
 
-function TitleBar({ showEvidence, toggleEvidence }: { showEvidence: boolean; toggleEvidence: () => void }) {
+type View = "experiments" | "mirror" | "evidence";
+
+function TitleBar({ view, select }: { view: View; select: (view: View) => void }) {
   const conn = useDashboard((s) => s.conn);
   const open = useDashboard((s) => s.copilotOpen);
   const toggle = useDashboard((s) => s.toggleCopilot);
@@ -36,8 +39,12 @@ function TitleBar({ showEvidence, toggleEvidence }: { showEvidence: boolean; tog
           Sentinel está desconectado
         </span>
       )}
-      <button type="button" className="ask ml-auto" aria-pressed={showEvidence} onClick={toggleEvidence}>Demo de evidencia</button>
-      {!showEvidence && <button type="button" className="ask" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
+      <nav className="ml-auto flex items-center gap-2" aria-label="Vistas de Sentinel">
+        <button type="button" className="ask" aria-pressed={view === "experiments"} onClick={() => select("experiments")}>Experimentos</button>
+        <button type="button" className="ask" aria-pressed={view === "mirror"} onClick={() => select("mirror")}>Mirror</button>
+        <button type="button" className="ask" aria-pressed={view === "evidence"} onClick={() => select("evidence")}>Demo de evidencia</button>
+      </nav>
+      {view === "mirror" && <button type="button" className="ask" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
         <Orb size={20} />
         Copilot
         <kbd className="kbd">⌘K</kbd>
@@ -49,12 +56,14 @@ function TitleBar({ showEvidence, toggleEvidence }: { showEvidence: boolean; tog
 /** The whole dashboard window. `sidebarOverlay` (the copilot) covers the right column when given. */
 export function Dashboard({ sidebarOverlay }: { sidebarOverlay?: ReactNode }) {
   const error = useDashboard((s) => s.error);
-  const [showEvidence, setShowEvidence] = useState(false);
+  const [view, setView] = useState<View>("experiments");
   return (
     <div className="shell">
-      <TitleBar showEvidence={showEvidence} toggleEvidence={() => setShowEvidence(!showEvidence)} />
-      {showEvidence ? <EvidenceDemo /> : <MirrorPanel sidebarOverlay={sidebarOverlay} />}
-      {error && !showEvidence && (
+      <TitleBar view={view} select={setView} />
+      {view === "experiments" && <Experiments />}
+      {view === "evidence" && <EvidenceDemo />}
+      {view === "mirror" && <MirrorPanel sidebarOverlay={sidebarOverlay} />}
+      {error && view === "mirror" && (
         <div role="alert" className="fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl border border-line bg-elev px-4 py-2 text-sm text-ash shadow-2xl">
           {error}
         </div>

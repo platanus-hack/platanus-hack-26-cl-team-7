@@ -1,5 +1,7 @@
 # Último Paso — starve attacking agents of their feedback loop
 
+> Archived study. The active lab and business services now run from `apps/sentinel/lab`. This directory holds the original study and recordings.
+
 Último Paso studies how an agent uses a service’s HTTP responses to decide
 what to do next. A self-hosted proxy inspects the request and response together.
 When the response carries evidence of exploitation, the proxy can withhold it,

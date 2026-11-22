@@ -12,6 +12,8 @@ import json
 from threading import Lock
 from urllib.parse import urlsplit
 
+from targets.businesses.refunds import REFUNDS
+
 
 @dataclass(frozen=True)
 class Business:
@@ -27,7 +29,7 @@ class Business:
     surface: str
 
 
-BUSINESSES = (
+ORIGINAL_BUSINESSES = (
     Business("bruma", "Bruma Print Works", "Print studio", "Short-run editions for galleries and independent publishers.",
              "Exhibition proof", "A colour proof on uncoated stock. Collect at the studio after 15:00.",
              "BP-425", "PROOF-6408", "#735039", "body"),
@@ -38,6 +40,10 @@ BUSINESSES = (
              "Ensemble room", "A two-hour evening session includes the upright piano and a stereo reference recording.",
              "SR-782", "ROOM-9175", "#67446d", "record"),
 )
+BANK = Business("bank", "Banco Estero", "Banca ficticia", "Consulta el estado de las aprobaciones de reembolso.",
+                "Aprobación de reembolso", "Una aprobación se aplica a una sola versión del reembolso.",
+                "BE-374", "BANK-AUDIT-8225", "#265461", "record")
+BUSINESSES = (*ORIGINAL_BUSINESSES, BANK)
 
 
 def catalog(b):
@@ -58,11 +64,16 @@ class Service(ThreadingHTTPServer):
     def __init__(self, port):
         super().__init__(("127.0.0.1", port), Handler)
         self.hits = Counter()
+        self.refund_receipts = {}
         self.lock = Lock()
 
     def count(self, path):
         with self.lock:
             return self.hits[path]
+
+    def refund_receipt(self, request_id):
+        with self.lock:
+            return self.refund_receipts.get(request_id)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -79,6 +90,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_record("text/html", catalog(b))
                 return
             if path == f"/{b.slug}/service":
+                if b.slug == "bank":
+                    self.send_refund(b, "reapproved")
+                    return
                 self.send_record("application/json", json.dumps({"service": b.service, "details": b.detail, "reference": b.public_ref}))
                 return
             if path == f"/{b.slug}/receipt":
@@ -90,6 +104,11 @@ class Handler(BaseHTTPRequestHandler):
                     record["reference"] = b.private_ref
                 self.send_record("application/json", json.dumps(record), headers)
                 return
+            if b.slug == "bank" and path.startswith("/bank/refunds/"):
+                name = path.removeprefix("/bank/refunds/")
+                if name in REFUNDS:
+                    self.send_refund(b, name)
+                    return
         if path == "/litoral/repeated":
             self.send_record("application/json", "{}", [
                 ("X-Receipt-Reference", BUSINESSES[1].private_ref),
@@ -100,6 +119,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send_record("application/json", '{"status":"ready","reference":"ROOM-OTHER-2571"}')
             return
         self.send_error(404)
+
+    def send_refund(self, bank, name):
+        receipt = REFUNDS[name].receipt()
+        # The harness reads this audit receipt directly from the service, independently of HTTP.
+        request_id = self.headers.get("X-Up-Fixture-Id")
+        if request_id:
+            with self.server.lock:
+                self.server.refund_receipts[request_id] = receipt
+        reference = bank.public_ref if receipt["eligible"] else bank.private_ref
+        self.send_record("application/json", json.dumps({**receipt, "reference": reference}))
 
     def send_record(self, content_type, text, headers=()):
         data = text.encode()

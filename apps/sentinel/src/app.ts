@@ -23,6 +23,7 @@ import type { ReportService } from "./reports/service.ts";
 import type { DeceptionStore } from "./deception.ts";
 import { deceptionRoutes } from "./deception-routes.ts";
 import { evidenceDemoRoutes } from "./evidence-demo/routes.ts";
+import { experimentRoutes } from "./experiments/routes.ts";
 import { fail, requireToken } from "./http.ts";
 import type { Store } from "./store.ts";
 
@@ -45,13 +46,14 @@ export interface AppDeps {
   /** Incident reports. Absent or null: every /v1/reports route answers 503 AI_DISABLED. */
   reports?: ReportService | null;
   evaluateEvidence?: (bundle: EvidenceDemoBundle) => Promise<EvidenceDemoEvaluation>;
+  experiments?: Parameters<typeof experimentRoutes>;
 }
 
 const MAX_QUEUED_FRAMES = 1000;
 const MAX_QUEUED_BYTES = 16 * 1024 * 1024;
 const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
 
-export function createApp({ store, bus, ai, deception, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null, evaluateEvidence }: AppDeps) {
+export function createApp({ store, bus, ai, deception, version = "0.1.0", startedAt = Date.now(), heartbeatMs = 15_000, allowedOrigins = [], webRoot, allowedHosts = [], ingestToken, reports = null, evaluateEvidence, experiments }: AppDeps) {
   const app = new Hono().basePath("/v1");
 
   app.use(
@@ -98,6 +100,7 @@ export function createApp({ store, bus, ai, deception, version = "0.1.0", starte
   const rangeOf = (c: Context) => Range.safeParse(c.req.query("range") ?? "1h");
 
   app.route("/", evidenceDemoRoutes(undefined, evaluateEvidence));
+  if (experiments) app.route("/", experimentRoutes(...experiments));
 
   app.get("/health", (c) =>
     c.json<Health>({ ok: true, version, ai: { enabled: ai.enabled, model: ai.enabled ? MODEL : null }, uptimeMs: Date.now() - startedAt }),

@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
 import type { ApiError } from "@sentinel/contracts";
 
-export type ErrorStatus = 400 | 401 | 403 | 404 | 413 | 415 | 422 | 500 | 503;
+export type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 413 | 415 | 422 | 500 | 503;
 
 /** Every API error has the same envelope: `{ error: { code, message } }`. */
 export function fail(c: Context, status: ErrorStatus, code: string, message: string) {
