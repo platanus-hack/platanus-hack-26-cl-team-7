@@ -1,3 +1,4 @@
+import { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import { ExperimentDetail, ExperimentEvent, ExperimentProject, ExperimentRun, type ExperimentEntry } from "@sentinel/contracts";
@@ -10,6 +11,10 @@ export const recordedSource = "apps/sentinel/src/experiments/recorded-run.json";
 
 export class ExperimentStore {
   private readonly db: DatabaseSync;
+  /** Finished runs that the patch step is still adding events to. */
+  private readonly patching = new Set<string>();
+  /** Emits a run id whenever that run's entries or status change, so event streams wake without polling. */
+  readonly changes = new EventEmitter().setMaxListeners(0);
 
   constructor(db: DatabaseSync, readRecording = () => readFileSync(recording, "utf8")) {
     this.db = db;
@@ -40,15 +45,21 @@ export class ExperimentStore {
       FROM experiment_runs AS r ORDER BY r.rowid DESC LIMIT 100`).all().map((row) => {
       const project = row.project as string | null | undefined;
       if (project && !ExperimentProject.safeParse(project).success) {
-        return ExperimentRun.parse({ ...row, project: null });
+        return this.withPatching(ExperimentRun.parse({ ...row, project: null }));
       }
-      return ExperimentRun.parse(row);
+      return this.withPatching(ExperimentRun.parse(row));
     });
   }
 
   get(id: string) {
     const row = this.db.prepare("SELECT * FROM experiment_runs WHERE id=?").get(id);
-    return row && ExperimentRun.parse(row);
+    return row && this.withPatching(ExperimentRun.parse(row));
+  }
+
+  setPatching(id: string, on: boolean) {
+    if (on) this.patching.add(id);
+    else this.patching.delete(id);
+    this.changes.emit(id);
   }
 
   entries(id: string, after = 0): ExperimentEntry[] {
@@ -69,17 +80,23 @@ export class ExperimentStore {
   }
 
   append(id: string, event: ExperimentEvent) {
-    if (this.get(id)?.status === "running") this.write(id, event, new Date().toISOString());
+    if (this.patching.has(id) || this.get(id)?.status === "running") this.write(id, event, new Date().toISOString());
   }
 
   finish(id: string, status: "completed" | "failed" | "interrupted", error: string | null = null) {
     this.db.prepare("UPDATE experiment_runs SET status=?, finished=?, error=? WHERE id=? AND status='running'")
       .run(status, new Date().toISOString(), error, id);
+    this.changes.emit(id);
+  }
+
+  private withPatching(run: ExperimentRun): ExperimentRun {
+    return this.patching.has(run.id) ? { ...run, patching: true } : run;
   }
 
   private write(id: string, event: ExperimentEvent, at: string | null) {
     this.db.prepare(`INSERT INTO experiment_entries (run_id, seq, at, event)
       SELECT ?, COALESCE(MAX(seq), 0)+1, ?, ? FROM experiment_entries WHERE run_id=?`)
       .run(id, at, JSON.stringify(ExperimentEvent.parse(event)), id);
+    this.changes.emit(id);
   }
 }

@@ -70,8 +70,10 @@ const providers = {
 const evaluateEvidence = localOnly ? createEvidenceEvaluator(repoRoot, providers) : undefined;
 const experimentStore = new ExperimentStore(db);
 const experimentLab = resolve(here, "../lab");
-const experimentService = createExperimentService(experimentStore, localOnly ? createWorker(experimentLab, setting("ULTIMO_PASO_LIMA_VM") || "espejismo") : undefined,
-  createExperimentProviders(experimentLab, providers));
+const experimentWorker = localOnly ? createWorker(experimentLab, setting("ULTIMO_PASO_LIMA_VM") || "espejismo") : undefined;
+// The patch step (experiments/patch.ts) stays off: its verifier replays the fictional Python services, and the
+// pipeline now measures real Vulhub targets in Docker. It is wired in again when a Vulhub verifier exists.
+const experimentService = createExperimentService(experimentStore, experimentWorker, createExperimentProviders(experimentLab, providers));
 const app = createApp({ store, bus, ai, deception, webRoot, presentationRoot: resolve(repoRoot, "landing"), allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence,
   experiments: [experimentStore, experimentService] });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
