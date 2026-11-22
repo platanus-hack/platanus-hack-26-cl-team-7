@@ -1,11 +1,18 @@
 """Black-box tests: they drive the patch_verify CLI exactly as the experiment worker does."""
 import hashlib
 import json
+import os
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
+from collections import Counter
 from pathlib import Path
+from unittest import mock
+
+from scoreboard import patch_verify
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = json.loads((ROOT / "attacks" / "fixtures.json").read_text())["projects"]
@@ -104,6 +111,164 @@ class PatchVerifyTests(unittest.TestCase):
             verify(project, GOOD[project])
         verify("bank", [{**GOOD["bank"][0], "file": "targets/businesses/../x.py"}])
         self.assertEqual(tree_hash(), before)
+
+
+ANCHOR = 'STYLE = Path(__file__).with_name("workspaces.css")'
+HANG = {"file": SERVICE, "old": ANCHOR, "new": ANCHOR + "\nwhile True:\n    pass"}
+SECRET = "sk-ant-FAKE-secret-0123456789"
+
+
+def add(code: str) -> list[dict]:
+    """An edit that appends `code` to the service module right after its STYLE line."""
+    return [{"file": SERVICE, "old": ANCHOR, "new": f"{ANCHOR}\n{code}"}]
+
+
+def processes_under(path: Path) -> list[str]:
+    listing = subprocess.run(["ps", "-axo", "command="], capture_output=True, text=True, check=True).stdout
+    return [line for line in listing.splitlines() if str(path.resolve()) in line]
+
+
+class HostileEditTests(unittest.TestCase):
+    """The edits are model-written code: none of what they do may leak, forge or linger."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="pv-test-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name).resolve()
+
+    def verify_here(self, project: str, edits: list[dict], timeout: int = 15) -> dict:
+        file = self.root / "edits.json"
+        file.write_text(json.dumps(edits))
+        with mock.patch.object(tempfile, "tempdir", str(self.root)), mock.patch.object(patch_verify, "REPLAY_TIMEOUT", timeout):
+            return dict(patch_verify.verify(project, file))
+
+    def test_error_never_carries_what_the_patched_code_wrote(self) -> None:
+        cases = {
+            "stdout then raise": (f'print("LEAK:{SECRET}")\nraise RuntimeError("LEAK:{SECRET}")', "(RuntimeError)"),
+            "attacker-named exception": (f"class LEAK_{SECRET.replace('-', '_')}(Exception):\n    pass\nraise LEAK_{SECRET.replace('-', '_')}()", None),
+        }
+        for name, (code, kind) in cases.items():
+            with self.subTest(name):
+                out = verify("bank", add(code))
+                self.assertFalse(out["applied"], out)
+                self.assertNotIn(SECRET, json.dumps(out))
+                self.assertNotIn(SECRET.replace("-", "_"), json.dumps(out))
+                self.assertEqual(out["error"], "the patched service did not run" + (f" {kind}" if kind else ""))
+
+    def test_a_forged_result_line_on_stdout_does_not_count(self) -> None:
+        forged = '{"attacks": {"yes": 0, "total": 2}, "legit": {"yes": 3, "total": 3}}'
+        out = verify("bank", add(f"print('REPLAY ' + '{forged}')"))
+        self.assertEqual(out["attacks"], {"yes": 2, "total": 2}, out)
+
+    def test_the_child_environment_is_an_allowlist(self) -> None:
+        parent = {"DATABASE_URL": "x", "ANTHROPIC_API_KEY": "k", "AWS_REGION": "r", "PATH": "/usr/bin", "LANG": "C", "LC_ALL": "C", "TMPDIR": "/t"}
+        with mock.patch.dict(os.environ, parent, clear=True):
+            env = patch_verify.child_env(Path("/temp-copy"))
+        self.assertEqual(env, {"PATH": "/usr/bin", "LANG": "C", "LC_ALL": "C", "TMPDIR": "/t", "PYTHONPATH": str(ROOT),
+                               "PYTHONDONTWRITEBYTECODE": "1", "HOME": "/temp-copy"})
+
+    def test_a_parent_variable_does_not_reach_the_patched_code(self) -> None:
+        # The static check bars `os`, so the probe reaches it through argparse and the check is switched off here.
+        # Returning the private reference only when the variable is set makes the leak visible in the replay counts.
+        def probe(name: str) -> list[dict]:
+            return [{"file": SERVICE, "old": 'record["reference"] = b.private_ref',
+                     "new": f'record["reference"] = b.private_ref if argparse._os.environ.get("{name}") else b.public_ref'}]
+
+        with mock.patch.dict(os.environ, {"DATABASE_URL": "x"}), mock.patch.object(patch_verify, "references", return_value=Counter()):
+            control = self.verify_here("surco", probe("PATH"))
+            hidden = self.verify_here("surco", probe("DATABASE_URL"))
+        self.assertEqual(control["attacks"], {"yes": 1, "total": 1}, "the probe must be able to see an allowed variable")
+        self.assertEqual(hidden["attacks"], {"yes": 0, "total": 1}, hidden)
+
+    def test_additions_the_static_check_refuses(self) -> None:
+        cases = {
+            "import": "import os",
+            "from import": "from os import path",
+            "open": 'DATA = open("/etc/passwd")',
+            "__import__": '_os = __import__("os")',
+            "dunder attribute": "KIND = ().__class__",
+            "dunder name": 'OPEN = __builtins__["open"]',
+            "getattr": 'KIND = getattr(Path, "x", None)',
+            "os name": "KIND = os",
+            "door through a module": "KIND = argparse._os",
+            "Path": 'DATA = Path("/etc/passwd").read_text()',
+        }
+        for name, code in cases.items():
+            with self.subTest(name):
+                out = verify("bank", add(code))
+                self.assertFalse(out["applied"], out)
+                self.assertEqual(out["error"], "the patch adds a forbidden construct")
+                self.assertEqual((out["attacks"], out["legit"]), ({"yes": 0, "total": 0}, {"yes": 0, "total": 0}))
+
+    def test_constructs_the_original_already_has_are_not_refused(self) -> None:
+        self.assertEqual(verify("bank", add("KIND = Path"))["error"], "the patch adds a forbidden construct")
+        self.assertTrue(verify("bank", [{"file": SERVICE, "old": "def log_message(self, *args):",
+                                         "new": "def log_message(self, *args):  # __init__ __name__ Path argparse"}])["applied"])
+
+    def test_the_canary_cannot_be_forged(self) -> None:
+        for edit in ({"file": SERVICE, "old": "PROOF-6408", "new": ""},
+                     {"file": SERVICE, "old": "BP-425", "new": "BP-426"},
+                     {"file": SERVICE, "old": ANCHOR, "new": ANCHOR + '\nFORGED = "PROOF-6408"'}):
+            with self.subTest(edit["new"][-20:]):
+                out = verify("bruma", [edit])
+                self.assertEqual(out, patch_verify.failure("the patch changed the canary"))
+
+    def test_a_canary_rebuilt_without_naming_it_is_caught_in_the_replay(self) -> None:
+        swap = ("BUSINESSES = tuple(type(b)(*(x if x != b.private_ref else 'ZZZ-1' for x in (b.slug, b.name, b.sector, "
+                "b.description, b.service, b.detail, b.public_ref, b.private_ref, b.accent, b.surface))) for b in BUSINESSES)")
+        edit = {"file": SERVICE, "old": "BY_SLUG = {b.slug: b for b in BUSINESSES}", "new": swap + "\nBY_SLUG = {b.slug: b for b in BUSINESSES}"}
+        self.assertEqual(verify("bruma", [edit]), patch_verify.failure("the patch changed the canary"))
+
+    def test_a_hanging_import_times_out_and_leaves_nothing_behind(self) -> None:
+        started = time.monotonic()
+        out = self.verify_here("bank", [HANG], timeout=3)
+        self.assertLess(time.monotonic() - started, 20)
+        self.assertEqual(out, patch_verify.failure("the patched service did not finish the replay in time"))
+        self.assertEqual(list(self.root.glob("patch-verify-*")), [])
+        self.assertEqual(processes_under(self.root), [])
+
+    def test_a_forked_grandchild_does_not_survive_the_timeout(self) -> None:
+        fork = "if argparse._os.fork() == 0:\n    while True:\n        pass\nwhile True:\n    pass"
+        with mock.patch.object(patch_verify, "references", return_value=Counter()):
+            out = self.verify_here("bank", add(fork), timeout=3)
+        self.assertFalse(out["applied"], out)
+        self.assertEqual(processes_under(self.root), [])
+        self.assertEqual(list(self.root.glob("patch-verify-*")), [])
+
+    def test_sigterm_from_the_caller_kills_the_replay_and_removes_the_copy(self) -> None:
+        file = self.root / "edits.json"
+        file.write_text(json.dumps([HANG]))
+        env = {**os.environ, "TMPDIR": str(self.root)}
+        proc = subprocess.Popen([sys.executable, "-m", "scoreboard.patch_verify", "--project", "bank", "--edits", str(file)],
+                                cwd=ROOT, env=env, stdout=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 10
+        while not processes_under(self.root) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        self.assertTrue(processes_under(self.root), "the replay child never started")
+        proc.send_signal(signal.SIGTERM)
+        proc.communicate(timeout=10)
+        self.assertEqual(proc.returncode, 128 + signal.SIGTERM)
+        self.assertEqual(processes_under(self.root), [])
+        self.assertEqual(list(self.root.glob("patch-verify-*")), [])
+
+
+@unittest.skipUnless(sys.platform == "darwin" and Path("/usr/bin/sandbox-exec").exists(), "sandbox-exec is macOS only")
+class SandboxTests(unittest.TestCase):
+    def test_writes_stay_in_the_copy_and_only_loopback_is_reachable(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pv-sandbox-") as raw, tempfile.TemporaryDirectory(prefix="pv-outside-") as other:
+            temp = Path(raw).resolve()
+            probe = (
+                "import socket, pathlib, sys\n"
+                "def ok(f):\n    try:\n        f(); return 'yes'\n    except OSError:\n        return 'no'\n"
+                "l = socket.socket(); l.bind(('127.0.0.1', 0)); l.listen()\n"
+                "print(ok(lambda: pathlib.Path(sys.argv[1], 'a').write_text('x')),\n"
+                "      ok(lambda: pathlib.Path(sys.argv[2], 'a').write_text('x')),\n"
+                "      ok(lambda: socket.create_connection(('127.0.0.1', l.getsockname()[1]), 2)),\n"
+                "      ok(lambda: socket.create_connection(('203.0.113.1', 9), 2)))\n")
+            command = ["/usr/bin/sandbox-exec", "-D", f"TEMP={temp}", "-p", patch_verify.SANDBOX_PROFILE, sys.executable, "-c", probe, str(temp), other]
+            done = subprocess.run(command, capture_output=True, text=True, check=False, timeout=30)
+            self.assertEqual(done.stdout.split(), ["yes", "no", "yes", "no"], done.stderr)
+            self.assertFalse((Path(other) / "a").exists())
 
 
 if __name__ == "__main__":

@@ -133,7 +133,8 @@ identifiers, log lines, commit messages, PR text and this file are English. [rev
      against it on loopback. Bounds, each a contract: at most 3 exact replacements in
      `targets/businesses/*.py`; a static check refuses new imports, file, process, network and
      reflection names and dunder access; the canary refs are pinned from the original files; the child
-     gets an allowlisted env, a timeout and a process group that is killed with it; its output never
+     gets an allowlisted env, a timeout and a process group that is killed with it, and on macOS runs
+     under `sandbox-exec` (no network except loopback, no writes outside the copy); its output never
      reaches the event, the panel or the model. The repository targets and any real service are never
      changed: moving a patch to a real service stays a human decision.
 - Provider keys never reach lab, target or experiment subprocesses. `experiments/worker.ts` strips them.

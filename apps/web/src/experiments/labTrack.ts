@@ -321,6 +321,23 @@ export function seconds(ms: number): string {
   return `${(ms / 1000).toFixed(1).replace(".", ",")} s`;
 }
 
+/** The Spanish words for each error the patch step records, by the start of the server's text. */
+const PATCH_ERRORS: readonly (readonly [string, string])[] = [
+  ["verifier stopped", "Reaper se detuvo durante la verificación."],
+  ["verifier timed out after 45 s", "La verificación tardó más de 45 s."],
+  ["uv not found", "Falta uv para verificar el parche."],
+  ["verifier exited", "El verificador falló."],
+  ["invalid model output", "La respuesta del agente no tenía el formato pedido."],
+  ["the patch changed the canary", "El parche cambió el dato de prueba en vez de cerrar la falla."],
+  ["the patch adds a forbidden construct", "El parche usaba una construcción no permitida."],
+];
+
+/** What a patch error means for the person reading the panel. The server's text is English and may carry model or verifier output, so it is never shown. */
+export function patchErrorText(error: string): string {
+  const text = error.trim().toLowerCase();
+  return PATCH_ERRORS.find(([start]) => text.startsWith(start))?.[1] ?? "El intento no se pudo verificar.";
+}
+
 export interface DiffLine {
   sign: "-" | "+";
   text: string;

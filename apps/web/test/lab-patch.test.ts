@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ExperimentDetail, type ExperimentEvent, type ExperimentRun, type PatchResult } from "@sentinel/contracts";
-import { diffLines, labAgents, seconds } from "../src/experiments/labTrack";
+import { diffLines, labAgents, patchErrorText, seconds } from "../src/experiments/labTrack";
+import { PatchBlock } from "../src/site/PatchBlock";
 
 const recorded = ExperimentDetail.parse(JSON.parse(readFileSync(new URL("../../sentinel/src/experiments/recorded-run.json", import.meta.url), "utf8")));
 
@@ -70,6 +73,18 @@ describe("labAgents steps", () => {
   });
 });
 
+describe("labAgents worker stages", () => {
+  it("shows detection and containment running, then passed with the time the worker took", () => {
+    const events = [stage("detection", "running")];
+    expect(summary(detailWith(events))).toEqual([["detection", "running", null], ["containment", "pending", null], ["research", "pending", null], ["patch", "pending", null]]);
+    expect(bruma(detailWith(events)).live).toBe(true);
+    events.push(stage("detection", "passed", 3400), stage("containment", "running"));
+    expect(summary(detailWith(events))).toEqual([["detection", "passed", 3400], ["containment", "running", null], ["research", "pending", null], ["patch", "pending", null]]);
+    events.push(stage("containment", "passed", 150_000));
+    expect(summary(detailWith(events)).slice(0, 2)).toEqual([["detection", "passed", 3400], ["containment", "passed", 150_000]]);
+  });
+});
+
 describe("labAgents while patching a finished run", () => {
   const base = [stage("detection", "passed"), stage("containment", "passed"), stage("research", "passed", 1500)];
   const patching = { status: "completed", patching: true } as const;
@@ -95,6 +110,53 @@ describe("labAgents while patching a finished run", () => {
   it("is live for a run in progress while any stage runs", () => {
     expect(bruma(detailWith([stage("research", "running")])).live).toBe(true);
     expect(bruma(detailWith(base)).live).toBe(false);
+  });
+});
+
+describe("PatchBlock without a patch event", () => {
+  const base = [stage("detection", "passed"), stage("containment", "passed"), stage("research", "passed", 1500)];
+  const html = (events: ExperimentEvent[], run: Partial<ExperimentRun>) => renderToStaticMarkup(createElement(PatchBlock, { site: bruma(detailWith([...base, ...events], run)) }));
+
+  it("says the patch is pending only while the run is in progress", () => {
+    expect(html([], { status: "running" })).toContain("Parche pendiente");
+    expect(html([], { status: "completed", patching: true })).toContain("Parche pendiente");
+  });
+
+  it("says the patch was interrupted when a finished run cut it off, with no pending words", () => {
+    const out = html([stage("patch", "running")], { status: "completed" });
+    expect(out).toContain("Parche interrumpido");
+    expect(out).toContain("Reaper se detuvo antes de terminar el parche. Se reintenta al iniciar de nuevo con ANTHROPIC_API_KEY.");
+    expect(out).not.toContain("Parche pendiente");
+    expect(out).not.toContain("Empieza cuando termina");
+  });
+
+  it("says the agent is writing while the step runs", () => {
+    expect(html([stage("patch", "running")], { status: "running" })).toContain("El agente está escribiendo el parche…");
+  });
+
+  it("shows the Spanish words for a recorded error, never the server's text", () => {
+    const failed: PatchResult = { ...patchEvent("unavailable"), error: "verifier exited with code 1: Traceback (most recent call last)" };
+    const out = renderToStaticMarkup(createElement(PatchBlock, { site: bruma(detailWith([...base, stage("patch", "running"), failed, stage("patch", "degraded", 40)], { status: "completed" })) }));
+    expect(out).toContain("El verificador falló.");
+    expect(out).not.toContain("Traceback");
+    expect(out).not.toContain("verifier");
+  });
+});
+
+describe("patchErrorText", () => {
+  it("maps each error the server records to Spanish", () => {
+    expect([
+      "verifier stopped", "verifier timed out after 45 s", "uv not found", "verifier exited with code 2", "invalid model output: edits.0.file: Invalid",
+      "the patch changed the canary", "the patch adds a forbidden construct",
+    ].map(patchErrorText)).toEqual([
+      "Reaper se detuvo durante la verificación.", "La verificación tardó más de 45 s.", "Falta uv para verificar el parche.", "El verificador falló.",
+      "La respuesta del agente no tenía el formato pedido.", "El parche cambió el dato de prueba en vez de cerrar la falla.", "El parche usaba una construcción no permitida.",
+    ]);
+  });
+
+  it("hides anything else behind one sentence", () => {
+    expect(patchErrorText("ECONNRESET at /Users/someone/key=sk-ant-123")).toBe("El intento no se pudo verificar.");
+    expect(patchErrorText("")).toBe("El intento no se pudo verificar.");
   });
 });
 

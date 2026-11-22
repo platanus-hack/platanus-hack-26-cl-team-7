@@ -5,7 +5,7 @@
  * protects never changes. Every string, including the model's, is rendered as React text.
  */
 import type { PatchResult } from "@sentinel/contracts";
-import { diffLines, seconds, type LabAgent } from "../experiments/labTrack";
+import { diffLines, patchErrorText, seconds, type LabAgent } from "../experiments/labTrack";
 
 type Tone = "ok" | "bad" | "warn" | "info" | "idle";
 
@@ -52,7 +52,7 @@ function Result({ patch }: { patch: PatchResult }) {
         </figure>
       ))}
       {patch.replay && <ReplayFacts replay={patch.replay} />}
-      {patch.error && <p className="pb-note">{patch.error}</p>}
+      {patch.error && <p className="pb-note">{patchErrorText(patch.error)}</p>}
       {patch.attempts > 0 && (
         <p className="cap pb-caption">
           Aplicado en una copia del servicio, no en el servicio real. Intentos: {patch.attempts}.
@@ -70,9 +70,11 @@ export function PatchBlock({ site }: { site: LabAgent }) {
     ? [...CHIP[patch.status], null]
     : step?.status === "running"
       ? ["El agente está escribiendo el parche…", "info", "Propone como máximo tres reemplazos exactos y los prueba en una copia del servicio."]
-      : step
+      : step?.status === "pending"
         ? ["Parche pendiente", "idle", "Empieza cuando termina la consulta del aviso."]
-        : ["Sin parche en esta prueba", "idle", "Esta prueba no incluye el paso del parche."];
+        : step
+          ? ["Parche interrumpido", "warn", "Reaper se detuvo antes de terminar el parche. Se reintenta al iniciar de nuevo con ANTHROPIC_API_KEY."]
+          : ["Sin parche en esta prueba", "idle", "Esta prueba no incluye el paso del parche."];
   return (
     <div className="pb">
       <span className="pb-chip" data-tone={tone}>{label}</span>

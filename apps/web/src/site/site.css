@@ -439,7 +439,7 @@
 .ss-step[data-status="passed"] .ss-state { color: var(--c-ok); }
 .ss-step[data-status="failed"] .ss-state { color: var(--c-danger); }
 .ss-step[data-status="degraded"] .ss-state { color: var(--c-warn); }
-.ss-time { display: inline-block; min-width: 8ch; }
+.ss-time { display: inline-block; min-width: 9ch; }
 .ss-time:not(:empty) { animation: ss-in 0.3s ease; }
 .ss-time:not(:empty)::before { content: "· "; }
 @keyframes ss-in { from { opacity: 0; } }
