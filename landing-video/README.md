@@ -15,7 +15,7 @@ Video para entender Reaper de un vistazo (equipo, mentores, jurado). El proyecto
 
 Minimalista, de producto agéntico: casi monocromo con un solo acento, líneas finas, píldoras y mucho aire (referencia de tono y ritmo: elevenlabs.io, visto en el navegador; no se copió marca, textos ni maquetación). Sans para las frases y monoespaciada para todo lo de «máquina». La protagonista es la **traza del agente** (petición → respuesta → siguiente intento); la metáfora del ladrón y la casa sigue en la voz y en dos rótulos. Las trazas son ilustraciones y lo dicen en su cabecera.
 
-**Marca:** fondo `#0a0a0a`, tinta `#fafafa` y lima `#c8f55a` del logo (`project-logo.png` de main; el símbolo está redibujado en SVG desde `/tmp/logo3/r.html`, con el nombre «reaper» en minúsculas). Fuentes Geist y Geist Mono de la landing (`landing/fonts/` en la rama `centinela-web`). Todo vive en `:root` de `index.html` y en `assets/fonts/`.
+**Marca:** fondo `#0a0a0a`, tinta `#fafafa` y lima `#c8f55a` del logo (`project-logo.png` de main; el símbolo es la guadaña «2c», copiada de `~/Downloads/reaper-iconos/v3/2c-guadana-luna.svg`, con «reaper» en minúsculas; va en la cabecera, en los pasos 2 y 3 y en el cierre). Fuentes Geist y Geist Mono de la landing (`landing/fonts/` en la rama `centinela-web`). Todo vive en `:root` de `index.html` y en `assets/fonts/`.
 
 Versiones anteriores en `~/Downloads/`: `gringola-explicado.mp4` (mismo estilo, nombre Gríngola, commit `8edc4a9`) y, con el nombre Centinela, `centinela-explicado.mp4` (v3, estilo claro, commit `9d8e9b1`), `centinela-explicado-v2.mp4` (estilo oscuro con dibujos, `6073084`) y `centinela-explicado-v1.mp4` (sin el hallazgo, `635f482`).
 
