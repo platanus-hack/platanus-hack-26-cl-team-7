@@ -258,7 +258,10 @@ def test_a_malformed_request_line_is_refused_by_the_server(make: Build) -> None:
     host, port = relay_run.proxy.removeprefix("http://").rsplit(":", 1)
     with socket.create_connection((host, int(port))) as raw:
         raw.sendall(b"NONSENSE\r\n\r\n")
-        assert raw.makefile("rb").read().startswith(b"HTTP/1.0 400")
+        answer = raw.makefile("rb").read()
+    # Python 3.13 sends a status line; 3.12 reads the one-word line as HTTP/0.9 and sends only
+    # the error page. Both refuse it with 400.
+    assert answer.startswith(b"HTTP/1.0 400") or b"Error code: 400" in answer, answer[:200]
     assert relay_run.events == []
 
 
