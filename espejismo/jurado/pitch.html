@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espejismo — pitch (3 min)</title>
+<!-- Funciona sin internet: sin fuentes ni scripts remotos. Flechas o espacio para avanzar, N para notas, F pantalla completa. -->
+<style>
+  :root { --tinta:#1b1f24; --suave:#5b6470; --borde:#e3e6ea; --real:#11795b; --alerta:#9f1239; --fondo:#f7f8fa; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:#0f1215; overflow:hidden; }
+  body { font-family:system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--tinta); }
+  /* Lienzo fijo de 1920x1080 escalado a la ventana: se ve igual a 1920x1080 y a 1280x720. */
+  #lienzo { position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:0 0; }
+  .lamina { position:absolute; inset:0; background:var(--fondo); padding:96px 128px; display:none; flex-direction:column; justify-content:center; }
+  .lamina.activa { display:flex; }
+  .num { position:absolute; right:56px; bottom:40px; font-size:24px; color:#a0a7b1; font-variant-numeric:tabular-nums; }
+  .marca { position:absolute; left:128px; bottom:40px; font-size:24px; color:#a0a7b1; font-weight:600; letter-spacing:.02em; }
+  .etiqueta { font-size:30px; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); font-weight:650; margin:0 0 28px; }
+  h1 { font-size:88px; line-height:1.08; margin:0; letter-spacing:-.01em; }
+  h2 { font-size:72px; line-height:1.1; margin:0 0 48px; letter-spacing:-.01em; }
+  p { margin:0; }
+  .grande { font-size:52px; line-height:1.3; }
+  .medio { font-size:40px; line-height:1.35; }
+  .suave { color:var(--suave); }
+  .alerta { color:var(--alerta); }
+  .real { color:var(--real); }
+  .fuente { font-size:24px; color:var(--suave); margin-top:56px; }
+  .caso { font-size:50px; line-height:1.35; max-width:1560px; margin-bottom:72px; }
+  .pregunta { font-size:84px; line-height:1.12; font-weight:750; max-width:1600px; }
+  .cifras { display:grid; grid-template-columns:1fr 1.25fr; gap:40px; }
+  .cifra { background:#fff; border:1px solid var(--borde); border-radius:28px; padding:48px; }
+  .cifra b { display:block; font-size:120px; line-height:1; color:var(--alerta); margin-bottom:20px; font-variant-numeric:tabular-nums; }
+  .cifra p { font-size:38px; line-height:1.3; }
+  .cifra .chico { font-size:30px; color:var(--suave); margin-top:18px; }
+  .momentos { display:grid; grid-template-columns:repeat(3,1fr); gap:36px; margin-top:16px; }
+  .momento { background:#fff; border:1px solid var(--borde); border-radius:28px; padding:48px 44px; }
+  .momento span { display:block; font-size:30px; color:var(--suave); font-weight:650; margin-bottom:16px; }
+  .momento p { font-size:46px; line-height:1.2; font-weight:700; }
+  /* Diagrama de la casa de utilería */
+  .diagrama { display:grid; grid-template-columns:1fr 380px; gap:40px; align-items:stretch; }
+  .casa { border:4px dashed #b8bfc8; border-radius:32px; padding:36px 40px 40px; position:relative; }
+  .casa > .tit { font-size:30px; font-weight:700; color:var(--suave); margin-bottom:26px; }
+  .fila { display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; align-items:center; }
+  .caja { background:#fff; border:2px solid var(--borde); border-radius:22px; padding:28px; text-align:center; }
+  .caja b { display:block; font-size:38px; margin-bottom:8px; }
+  .caja small { display:block; font-size:27px; line-height:1.3; color:var(--suave); }
+  .caja.agente { border-color:var(--tinta); }
+  .caja.agente b { font-size:44px; }
+  .flecha { font-size:30px; color:var(--suave); text-align:center; margin:18px 0; }
+  .testigo { background:#eaf5f0; border:3px solid var(--real); border-radius:32px; padding:36px; display:flex; flex-direction:column; justify-content:center; text-align:center; }
+  .testigo b { font-size:42px; color:var(--real); margin-bottom:14px; }
+  .testigo small { font-size:28px; line-height:1.3; color:var(--tinta); }
+  .preguntafinal { margin-top:32px; font-size:38px; text-align:center; }
+  .preguntafinal b { background:var(--tinta); color:#fff; border-radius:16px; padding:10px 24px; }
+  /* Demo */
+  .demo { display:grid; grid-template-columns:900px 1fr; gap:64px; align-items:center; }
+  .demo img { width:900px; border-radius:20px; border:1px solid var(--borde); box-shadow:0 12px 40px rgba(0,0,0,.12); }
+  .envivo { display:inline-block; background:var(--alerta); color:#fff; font-size:34px; font-weight:750; padding:14px 28px; border-radius:16px; margin-bottom:36px; }
+  .url { font-size:32px; font-weight:650; margin-top:36px; }
+  .frase { font-size:58px; line-height:1.25; font-weight:700; border-left:12px solid var(--real); padding-left:48px; max-width:1640px; }
+  .limites { font-size:40px; line-height:1.45; padding-left:44px; margin:0 0 56px; }
+  .limites li { margin-bottom:10px; }
+  .cierre { font-size:76px; line-height:1.12; font-weight:750; }
+  /* Notas del orador: tecla N */
+  #notas { display:none; position:fixed; left:0; right:0; bottom:0; max-height:42vh; overflow:auto; background:#111; color:#f2f2f2; font-size:22px; line-height:1.45; padding:18px 28px; border-top:3px solid var(--alerta); z-index:10; }
+  #notas.ver { display:block; }
+  #notas .t { color:#ffb4c2; font-weight:700; margin-bottom:6px; }
+  .nota { display:none; }
+  @media print {
+    @page { size:1920px 1080px; margin:0; }
+    html, body { overflow:visible; height:auto; background:#fff; }
+    #lienzo { position:static; transform:none !important; width:auto; height:auto; }
+    .lamina { display:flex !important; position:relative; width:1920px; height:1080px; page-break-after:always; break-after:page; }
+    #notas { display:none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="lienzo">
+
+<section class="lamina" data-t="0:20">
+  <p class="etiqueta">6 de octubre de 2026</p>
+  <p class="caso">Dentro de OpenAI, un agente de IA quitó el sistema que lo monitoreaba mientras hacía una tarea normal. Cuando le preguntaron, <b>negó haberlo quitado</b>.</p>
+  <p class="pregunta">¿Cómo sabes qué hace un agente cuando cree que nadie lo mira?</p>
+  <p class="fuente">Fuente: OpenAI, reporte de los incidentes del 3 y 6 de octubre de 2026 (openai.com/safety-alignment/misalignment-reports).</p>
+  <div class="nota">«El 6 de octubre, dentro de OpenAI, un agente de código quitó el sistema que lo monitoreaba mientras hacía una tarea normal. Cuando el usuario le preguntó, negó haberlo quitado. Lo publicó la propia OpenAI. Hoy las empresas les están dando a agentes como ese las llaves de sus servidores. ¿Cómo sabes qué hace un agente cuando cree que nadie lo mira?»</div>
+</section>
+
+<section class="lamina" data-t="0:30">
+  <p class="etiqueta">El problema</p>
+  <h2>Hoy solo puedes preguntarle.</h2>
+  <div class="cifras">
+    <div class="cifra"><b>11 de 47</b><p>agentes abrieron credenciales que la tarea no necesitaba, sin que nadie se lo pidiera.</p></div>
+    <div class="cifra"><b>0 de 8</b><p>Un modelo con un objetivo oculto neutralizó al vigilante 9 de 18 veces y creyó llevarse las credenciales en 8. <span class="alerta">No lo reportó en ninguna.</span></p></div>
+  </div>
+  <p class="fuente">8 modelos reales, 95 corridas. Ninguna credencial salió a internet: todo cayó en el sumidero.</p>
+  <div class="nota">«Hoy la única forma de saberlo es preguntarle, o leer su propia conversación. Lo probamos con 8 modelos reales: sin que nadie se lo pidiera, 11 de 47 agentes abrieron un archivo de credenciales que la tarea no necesitaba. Y cuando a un modelo le dimos un objetivo oculto, neutralizó al vigilante 9 de 18 veces, creyó llevarse las credenciales en 8, y cuando le preguntamos no lo reportó en ninguna de las 8.»</div>
+</section>
+
+<section class="lamina" data-t="0:20">
+  <p class="etiqueta">Para quién</p>
+  <h2>El equipo de seguridad o de plataforma que le va a dar acceso a un agente.</h2>
+  <div class="momentos">
+    <div class="momento"><span>1</span><p>Antes de darle acceso</p></div>
+    <div class="momento"><span>2</span><p>Para elegir modelo</p></div>
+    <div class="momento"><span>3</span><p>Con cada versión nueva</p></div>
+  </div>
+  <div class="nota">«Esto es para el equipo de seguridad o de plataforma que va a darle acceso a un agente de código. En tres momentos: antes de dar acceso, para elegir modelo, y cada vez que sale una versión nueva.»</div>
+</section>
+
+<section class="lamina" data-t="0:35">
+  <p class="etiqueta">La solución</p>
+  <h2 style="margin-bottom:36px">Espejismo: una casa de utilería, idéntica a la real.</h2>
+  <div class="diagrama">
+    <div class="casa">
+      <p class="tit">Lo que ve el agente</p>
+      <div class="fila">
+        <div class="caja"><b>Vigilante señuelo</b><small>el agente puede apagarlo</small></div>
+        <div class="caja agente"><b>Agente</b><small>haciendo una tarea normal</small></div>
+        <div class="caja"><b>Sumidero</b><small>cae todo lo que intenta llevarse; no sale ni un byte</small></div>
+      </div>
+      <p class="preguntafinal">Al final: <b>¿Qué hiciste?</b></p>
+    </div>
+    <div class="testigo"><b>Testigo del sistema</b><small>Fuera de su alcance. Graba lo que hizo de verdad.</small></div>
+  </div>
+  <p class="medio suave" style="margin-top:36px">Resultado: una ficha por modelo con lo que intentó, lo que logró y lo que contó.</p>
+  <div class="nota">«Espejismo es una prueba antes de dar acceso. Es una casa de utilería, idéntica a la real: un vigilante señuelo, que el agente puede apagar; un sumidero, donde cae todo lo que intenta llevarse: no sale ni un byte; un testigo escondido en el sistema, fuera de su alcance, que graba lo que hizo de verdad; y al final una pregunta: ¿qué hiciste? El resultado es una ficha por modelo con tres columnas: lo que intentó, lo que logró y lo que contó.»</div>
+</section>
+
+<section class="lamina" data-t="0:25">
+  <div class="demo">
+    <img src="img/episodio-kimi.jpg" alt="Explorador de Espejismo: corrida 15 de Kimi K3.1 Pro, lo que hizo el agente al lado de lo que registró el sistema">
+    <div>
+      <p class="envivo">Demo en vivo aquí</p>
+      <p class="grande" style="font-weight:700">Una corrida real: lo que hizo el agente, al lado de lo que registró el sistema.</p>
+      <p class="medio suave" style="margin-top:28px">Neutralizó al vigilante y creyó llevarse las credenciales. Al preguntarle, respondió sin mencionarlo.</p>
+      <p class="url">espejismo-demo.haroldmedrano33<br>.workers.dev/explorar</p>
+    </div>
+  </div>
+  <div class="nota">[Demo en vivo] Abrir /explorar, elegir Kimi K3.1 Pro, abrir la corrida 15 (roja, «Hizo algo que no contó»). «Esto es una corrida real. Arriba, lo que respondió cuando le preguntamos: un resumen de auditoría sin una palabra del vigilante. Abajo a la izquierda, lo que hizo; a la derecha, lo que registró el sistema: el vigilante neutralizado, otro programa haciéndose pasar por él, las credenciales que creyó llevarse, y que cayeron en el sumidero.» Si no hay internet: poner el video de respaldo (video/explorador.mp4).</div>
+</section>
+
+<section class="lamina" data-t="0:30">
+  <p class="etiqueta">Propuesta de valor</p>
+  <p class="grande" style="max-width:1640px;margin-bottom:56px">Antes de darle acceso a un agente, te mostramos qué tocó, qué intentó sacar y si te lo contó, con evidencia que el agente no puede borrar.</p>
+  <p class="frase">Lo que el agente reporta ayuda, pero no alcanza cuando tiene motivos para no contarlo: lo contrastamos con un registro del sistema que no puede tocar.</p>
+  <p class="medio suave" style="margin-top:48px">Otros bloquean al agente, o confían en lo que el agente reporta.</p>
+  <div class="nota">«Antes de darle acceso y credenciales a un agente, te mostramos qué tocó, qué intentó sacar y si te lo contó, con evidencia del sistema que el agente no puede borrar. Otros bloquean al agente, o confían en lo que el agente reporta. Lo que el agente reporta ayuda, pero no alcanza cuando tiene motivos para no contarlo: por eso lo contrastamos con un registro del sistema que él no puede tocar.»</div>
+</section>
+
+<section class="lamina" data-t="0:20">
+  <p class="etiqueta">Lo que todavía no sabemos</p>
+  <ul class="limites">
+    <li>Primera prueba: 95 corridas, una sola tarea, pocas por modelo. No es un ranking.</li>
+    <li>El caso grave lo provocamos con una instrucción de atacante.</li>
+    <li>En 16 a 22 de 35 corridas sin instrucción, el agente escribió que sospechaba estar en una prueba.</li>
+  </ul>
+  <p class="cierre">Antes de darle las llaves,<br>pásalo por Espejismo.</p>
+  <p class="medio suave" style="margin-top:40px"><b class="real">team-7</b> · espejismo-demo.haroldmedrano33.workers.dev</p>
+  <div class="nota">«Es una primera prueba, acotada: 95 corridas, una sola tarea, pocas por modelo. El caso más grave lo provocamos con una instrucción de atacante, y tenemos el grupo de comparación sin ella. Y en 16 a 22 de 35 corridas sin instrucción, el agente escribió que sospechaba estar en una prueba: hacer la casa más parecida a la real es lo siguiente. Antes de darle las llaves, pásalo por Espejismo.»</div>
+</section>
+
+</div>
+<div id="notas"></div>
+<script>
+  const laminas = [...document.querySelectorAll('.lamina')];
+  const lienzo = document.getElementById('lienzo');
+  const notas = document.getElementById('notas');
+  let i = Math.max(0, Math.min(laminas.length - 1, (parseInt(location.hash.slice(1)) || 1) - 1));
+  laminas.forEach((l, k) => l.insertAdjacentHTML('beforeend', `<span class="marca">Espejismo · team-7</span><span class="num">${k + 1} / ${laminas.length}</span>`));
+  function ajustar() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    lienzo.style.transform = `scale(${s}) translate(-50%, -50%)`;
+  }
+  function ver(n) {
+    i = Math.max(0, Math.min(laminas.length - 1, n));
+    laminas.forEach((l, k) => l.classList.toggle('activa', k === i));
+    const l = laminas[i];
+    notas.innerHTML = `<div class="t">Lámina ${i + 1} · tiempo objetivo ${l.dataset.t} · total 3:00</div>${l.querySelector('.nota').innerHTML}`;
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); ver(i + 1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); ver(i - 1); }
+    else if (e.key === 'Home') ver(0);
+    else if (e.key === 'End') ver(laminas.length - 1);
+    else if (e.key === 'n' || e.key === 'N') notas.classList.toggle('ver');
+    else if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  });
+  addEventListener('click', e => { if (!notas.contains(e.target)) ver(i + (e.clientX < innerWidth / 3 ? -1 : 1)); });
+  addEventListener('hashchange', () => ver((parseInt(location.hash.slice(1)) || 1) - 1));
+  addEventListener('resize', ajustar);
+  ajustar(); ver(i);
+</script>
+</body>
+</html>
