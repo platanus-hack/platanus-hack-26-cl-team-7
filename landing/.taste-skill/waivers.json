@@ -6,8 +6,8 @@
   },
   {
     "check": "copy-headings",
-    "target": "article.card.card--row:nth-of-type(1) > h3",
-    "reason": "Página en español: el léxico del verificador es inglés; los títulos nombran partes de Centinela (pasos, servidor, copia falsa, confirmación, arreglo)."
+    "target": "> h3",
+    "reason": "Página en español: el léxico del verificador es inglés; los títulos nombran a Reaper y sus partes (pasos, copia falsa, confirmación, arreglo)."
   },
   {
     "check": "no-visual",
@@ -16,7 +16,12 @@
   },
   {
     "check": "no-visual",
-    "target": "section#demo",
-    "reason": "El visual de #demo son los dos paneles con la traza real pedido por pedido (role=img); a 390 ocupan menos superficie porque la sección crece con el texto."
+    "target": "section#empresa",
+    "reason": "Tabla problema → qué hace → lo que medimos: la dirección de estilo pide densidad baja y sin ilustraciones decorativas; no hay imagen real que sume."
+  },
+  {
+    "check": "no-visual",
+    "target": "section#instalar",
+    "reason": "Los bloques de comandos son el contenido; la dirección de estilo prohíbe ilustraciones e iconos de relleno."
   }
 ]

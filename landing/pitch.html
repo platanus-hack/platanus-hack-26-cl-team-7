@@ -3,22 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Centinela — pitch (3 min)</title>
+<title>Reaper — pitch (3 min)</title>
 <!-- Funciona sin internet: sin fuentes ni scripts remotos. Flechas o espacio para avanzar, N para notas, F pantalla completa. -->
 <style>
-  :root { --tinta:#1b1f24; --suave:#5b6470; --borde:#e3e6ea; --real:#11795b; --alerta:#9f1239; --fondo:#f7f8fa; }
+  @font-face { font-family:"Geist"; src:url(fonts/geist.woff2) format("woff2"); font-weight:100 900; }
+  @font-face { font-family:"Geist Mono"; src:url(fonts/geist-mono.woff2) format("woff2"); font-weight:100 900; }
+  :root { --tinta:#0a0a0a; --suave:#5b5b5b; --borde:#e4e4e1; --real:#4d7c0f; --alerta:#0a0a0a; --fondo:#fbfbfa; --mono:"Geist Mono", ui-monospace, Menlo, monospace; }
   * { box-sizing:border-box; }
-  html, body { margin:0; height:100%; background:#0f1215; overflow:hidden; }
-  body { font-family:system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--tinta); }
+  html, body { margin:0; height:100%; background:#fbfbfa; overflow:hidden; }
+  body { font-family:"Geist", system-ui, sans-serif; color:var(--tinta); }
   /* Lienzo fijo de 1920x1080 escalado a la ventana: se ve igual a 1920x1080 y a 1280x720. */
   #lienzo { position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:0 0; }
   .lamina { position:absolute; inset:0; background:var(--fondo); padding:96px 128px; display:none; flex-direction:column; justify-content:center; }
   .lamina.activa { display:flex; }
-  .num { position:absolute; right:56px; bottom:40px; font-size:24px; color:#a0a7b1; font-variant-numeric:tabular-nums; }
-  .marca { position:absolute; left:128px; bottom:40px; font-size:24px; color:#a0a7b1; font-weight:600; letter-spacing:.02em; }
-  .etiqueta { font-size:30px; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); font-weight:650; margin:0 0 28px; }
-  h1 { font-size:88px; line-height:1.08; margin:0; letter-spacing:-.01em; }
-  h2 { font-size:72px; line-height:1.1; margin:0 0 48px; letter-spacing:-.01em; }
+  .num { position:absolute; right:56px; bottom:40px; font-family:var(--mono); font-size:22px; color:var(--suave); font-variant-numeric:tabular-nums; }
+  .marca { position:absolute; left:128px; bottom:40px; font-family:var(--mono); font-size:22px; color:var(--suave); font-weight:400; }
+  .etiqueta { font-family:var(--mono); font-size:26px; letter-spacing:0; color:var(--suave); font-weight:400; margin:0 0 28px; }
+  h1 { font-size:88px; line-height:1.08; margin:0; font-weight:300; letter-spacing:-.01em; }
+  h2 { font-size:72px; line-height:1.1; margin:0 0 48px; letter-spacing:-.03em; font-weight:300; }
   p { margin:0; }
   .grande { font-size:52px; line-height:1.3; }
   .medio { font-size:40px; line-height:1.35; }
@@ -27,16 +29,16 @@
   .real { color:var(--real); }
   .fuente { font-size:24px; color:var(--suave); margin-top:56px; }
   .caso { font-size:50px; line-height:1.35; max-width:1560px; margin-bottom:72px; }
-  .pregunta { font-size:84px; line-height:1.12; font-weight:750; max-width:1600px; }
+  .pregunta { font-size:84px; line-height:1.12; font-weight:300; letter-spacing:-.03em; max-width:1600px; }
   .cifras { display:grid; grid-template-columns:1fr 1.25fr; gap:40px; }
-  .cifra { background:#fff; border:1px solid var(--borde); border-radius:28px; padding:48px; }
-  .cifra b { display:block; font-size:120px; line-height:1; color:var(--alerta); margin-bottom:20px; font-variant-numeric:tabular-nums; }
+  .cifra { background:transparent; border:1px solid var(--borde); border-radius:28px; padding:48px; }
+  .cifra b { display:block; font-family:var(--mono); font-weight:400; font-size:120px; line-height:1; color:var(--tinta); margin-bottom:20px; font-variant-numeric:tabular-nums; }
   .cifra p { font-size:38px; line-height:1.3; }
   .cifra .chico { font-size:30px; color:var(--suave); margin-top:18px; }
   .momentos { display:grid; grid-template-columns:repeat(3,1fr); gap:36px; margin-top:16px; }
-  .momento { background:#fff; border:1px solid var(--borde); border-radius:28px; padding:48px 44px; }
+  .momento { background:transparent; border:1px solid var(--borde); border-radius:28px; padding:48px 44px; }
   .momento span { display:block; font-size:30px; color:var(--suave); font-weight:650; margin-bottom:16px; }
-  .momento p { font-size:46px; line-height:1.2; font-weight:700; }
+  .momento p { font-size:42px; line-height:1.2; font-weight:300; }
   /* Diagrama de la casa de utilería */
   .diagrama { display:grid; grid-template-columns:1fr 380px; gap:40px; align-items:stretch; }
   .casa { border:4px dashed #b8bfc8; border-radius:32px; padding:36px 40px 40px; position:relative; }
@@ -55,37 +57,37 @@
   .preguntafinal b { background:var(--tinta); color:#fff; border-radius:16px; padding:10px 24px; }
   /* Demo */
   .demo { display:grid; grid-template-columns:900px 1fr; gap:64px; align-items:center; }
-  .demo img { width:900px; border-radius:20px; border:1px solid var(--borde); box-shadow:0 12px 40px rgba(0,0,0,.12); }
-  .envivo { display:inline-block; background:var(--alerta); color:#fff; font-size:34px; font-weight:750; padding:14px 28px; border-radius:16px; margin-bottom:36px; }
+  .demo img { width:900px; border-radius:12px; border:1px solid var(--tinta);  }
+  .envivo { display:inline-block; background:var(--tinta); color:#fbfbfa; font-size:30px; font-weight:400; padding:14px 32px; border-radius:999px; margin-bottom:36px; }
   .url { font-size:32px; font-weight:650; margin-top:36px; }
-  .frase { font-size:58px; line-height:1.25; font-weight:700; border-left:12px solid var(--real); padding-left:48px; max-width:1640px; }
+  .frase { font-size:58px; line-height:1.25; font-weight:300; border-left:1px solid var(--tinta); padding-left:48px; max-width:1640px; }
   .limites { font-size:40px; line-height:1.45; padding-left:44px; margin:0 0 56px; }
   .limites li { margin-bottom:10px; }
-  .cierre { font-size:76px; line-height:1.12; font-weight:750; }
-  /* Centinela */
+  .cierre { font-size:76px; line-height:1.12; font-weight:300; letter-spacing:-.03em; }
+  /* Reaper */
   .pasos { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; margin-bottom:40px; }
-  .pasos div { background:#fff; border:1px solid var(--borde); border-radius:22px; padding:28px; }
+  .pasos div { background:transparent; border:1px solid var(--borde); border-radius:22px; padding:28px; }
   .pasos span { display:block; font-size:26px; color:var(--suave); font-weight:650; margin-bottom:8px; }
-  .pasos b { display:block; font-size:38px; line-height:1.15; }
+  .pasos b { display:block; font-size:36px; line-height:1.15; font-weight:400; }
   .pasos small { display:block; font-size:25px; line-height:1.3; color:var(--suave); margin-top:8px; }
-  .captura { width:100%; max-height:420px; object-fit:cover; object-position:top; border-radius:18px; border:1px solid var(--borde); }
+  .captura { width:100%; max-height:420px; object-fit:cover; object-position:top; border-radius:12px; border:1px solid var(--tinta); }
   .demo img { max-height:760px; object-fit:cover; object-position:top; }
   .ab { display:grid; grid-template-columns:repeat(4,1fr); gap:28px; margin-bottom:48px; }
   .ab .cifra { padding:36px; }
-  .ab .cifra b { font-size:62px; color:var(--real); white-space:nowrap; }
+  .ab .cifra b { font-size:56px; color:var(--tinta); white-space:nowrap; }
   .ab .cifra p { font-size:30px; }
   .vs { display:grid; grid-template-columns:1fr 1fr; gap:36px; }
-  .vs div { background:#fff; border:1px solid var(--borde); border-radius:24px; padding:32px 40px; }
+  .vs div { background:transparent; border:1px solid var(--borde); border-radius:24px; padding:32px 40px; }
   .vs h3 { font-size:34px; margin:0 0 12px; }
   .vs p { font-size:31px; line-height:1.35; }
   .qa { display:none; }
   .barras { display:grid; gap:26px; max-width:1500px; }
   .barra { display:grid; grid-template-columns:560px 1fr 220px; align-items:center; gap:32px; font-size:36px; }
-  .barra i { height:44px; border-radius:8px; background:#e9ecef; position:relative; overflow:hidden; }
+  .barra i { height:14px; border-radius:999px; background:var(--borde); position:relative; overflow:hidden; }
   .barra i::after { content:""; position:absolute; inset:0; width:calc(var(--v) * 100%); background:var(--alerta); }
-  .barra b { font-variant-numeric:tabular-nums; text-align:right; }
-  .barra.nuestra span, .barra.nuestra b { color:var(--real); font-weight:700; }
-  .barra.nuestra i { outline:3px dashed var(--real); outline-offset:-3px; }
+  .barra b { font-family:var(--mono); font-weight:400; font-variant-numeric:tabular-nums; text-align:right; }
+  .barra.nuestra span, .barra.nuestra b { color:var(--real); font-weight:400; }
+  .barra.nuestra i { outline:1.5px solid var(--real); outline-offset:0; background:transparent; }
 
   /* Notas del orador: tecla N */
   #notas { display:none; position:fixed; left:0; right:0; bottom:0; max-height:42vh; overflow:auto; background:#111; color:#f2f2f2; font-size:22px; line-height:1.45; padding:18px 28px; border-top:3px solid var(--alerta); z-index:10; }
@@ -127,32 +129,34 @@
   <div class="nota">«¿Por qué importa? En julio, agentes de OpenAI entraron a sistemas de Hugging Face durante una evaluación y nadie lo vio a tiempo. Un agente atacante trabaja así: prueba algo, lee la respuesta del servidor, ajusta y vuelve a probar. A velocidad de máquina. Y la defensa típica, bloquear, le dice que lo vieron: aprende y cambia. Mientras tanto, quien defiende ve miles de líneas de registro y no sabe cuál era un agente, qué buscaba ni si lo logró.»</div>
 </section>
 
-<section class="lamina" data-t="0:15">
-  <p class="etiqueta">Para quién</p>
-  <h2>Equipos chicos con su app o su API en servidores propios.</h2>
-  <div class="momentos">
-    <div class="momento"><span>Startups</span><p>Sin equipo de seguridad</p></div>
-    <div class="momento"><span>Fintechs</span><p>Con datos que valen</p></div>
-    <div class="momento"><span>Tiendas</span><p>Sin nadie mirando registros</p></div>
+<section class="lamina" data-t="0:25">
+  <p class="etiqueta">Para quién · un caso</p>
+  <h2 style="margin-bottom:28px">Una plataforma de RR. HH. y remuneraciones.</h2>
+  <p class="medio" style="max-width:1640px;margin-bottom:44px">Liquidaciones, RUT, cuentas bancarias y contratos de los trabajadores de cientos de empresas: una sola falla abre los datos de todos sus clientes.</p>
+  <div class="momentos" style="grid-template-columns:repeat(4,1fr)">
+    <div class="momento"><span>01 detectar</span><p>marca la sesión que sondea</p></div>
+    <div class="momento"><span>02 engañar</span><p>liquidaciones de mentira</p></div>
+    <div class="momento"><span>03 negar</span><p>no le llega la prueba</p></div>
+    <div class="momento"><span>04 arreglar</span><p>dentro de las 3 horas de la ley</p></div>
   </div>
-  <p class="medio suave" style="margin-top:44px">Quien decide: la persona de plataforma o el CTO.</p>
-  <div class="nota">«Es para equipos chicos que publican una app o una API en sus propios servidores y no tienen a nadie mirando registros: startups, fintechs, tiendas. Quien decide es la persona de plataforma o el CTO.»</div>
+  <p class="fuente" style="margin-top:36px">En nuestras pruebas, con una app de demostración: 30 de 30 ataques de tres modelos de IA marcados y desviados; la prueba del ataque, 20 de 20 → 0 de 20. Un ejemplo del tipo de sistema, no de una empresa en particular.</p>
+  <div class="nota">«Piensa en una plataforma de remuneraciones, como las de RR. HH. que todos usamos: guarda las liquidaciones de sueldo, los RUT, las cuentas bancarias y los contratos de los trabajadores de cientos de empresas. Para un agente de IA atacante es el objetivo ideal: una sola falla abre los datos de todos sus clientes. Con Reaper, la sesión que sondea queda marcada, va a una copia con liquidaciones de mentira, no recibe la prueba de que algo le funcionó, y el equipo ve qué buscaba y qué arreglar dentro de las 3 horas que da la ley chilena para la alerta temprana. En nuestras pruebas, con una app de demostración, marcamos y desviamos 30 de 30 ataques.»</div>
 </section>
 
-<section class="lamina" data-t="0:35">
+<section class="lamina" data-t="0:30">
   <p class="etiqueta">La solución</p>
-  <h2 style="margin-bottom:32px">Centinela controla lo que el agente cree que pasó.</h2>
+  <h2 style="margin-bottom:32px">Reaper controla lo que el agente cree que pasó.</h2>
   <div class="pasos">
     <div><span>1</span><b>Detectar</b><small>quién sondea rutas que no existen o pide archivos sensibles</small></div>
     <div><span>2</span><b>Engañar</b><small>a esa sesión le responde una copia falsa del sitio</small></div>
     <div><span>3</span><b>Negar la confirmación</b><small>si la respuesta trae la prueba del ataque, no sale</small></div>
     <div><span>4</span><b>Mostrar y arreglar</b><small>su recorrido, la falla y un arreglo propuesto</small></div>
   </div>
-  <img class="captura" src="img/agente-recorrido-1600.webp" alt="Panel de Centinela: el atacante pasó por Centinela, fue desviado a la copia falsa y la tienda real no recibió visitas suyas">
-  <div class="nota">«Centinela se pone delante de tu sitio y hace cuatro cosas. Uno: detecta sondeos, quién pide rutas que no existen o archivos sensibles. Dos: desde ahí, a esa sesión le responde una copia falsa del sitio. Tres: si una respuesta trae la prueba de que el ataque funcionó, no se la entrega. Y cuatro: te muestra qué hizo, qué falla usó y cómo arreglarla. Esta es una captura real: el atacante fue desviado a la copia falsa y la tienda real recibió cero visitas suyas.»</div>
+  <img class="captura" src="img/agente-recorrido-1600.webp" alt="Panel de Reaper: el atacante pasó por Reaper, fue desviado a la copia falsa y la tienda real no recibió visitas suyas">
+  <div class="nota">«Reaper se pone delante de tu sitio y hace cuatro cosas. Uno: detecta sondeos, quién pide rutas que no existen o archivos sensibles. Dos: desde ahí, a esa sesión le responde una copia falsa del sitio. Tres: si una respuesta trae la prueba de que el ataque funcionó, no se la entrega. Y cuatro: te muestra qué hizo, qué falla usó y cómo arreglarla. Esta es una captura real: el atacante fue desviado a la copia falsa y la tienda real recibió cero visitas suyas.»</div>
 </section>
 
-<section class="lamina" data-t="0:35">
+<section class="lamina" data-t="0:30">
   <div class="demo">
     <img src="img/copia-falsa-1600.webp" alt="Detalle en el panel: el atacante pidió /etc/passwd y la copia falsa le respondió un archivo falso">
     <div>
@@ -171,13 +175,13 @@
     <div class="cifra"><b>5/5 → 0/5</b><p>la prueba del ataque dejó de llegar, banco de prueba</p></div>
     <div class="cifra"><b>3/3 → 0/3</b><p>contra una falla real de Langflow</p></div>
     <div class="cifra"><b>3 a 11×</b><p>más peticiones gastó el agente sin la prueba</p></div>
-    <div class="cifra"><b>0 de 34</b><p>pedidos legítimos bloqueados en el banco y Langflow</p></div>
+    <div class="cifra"><b>18/20 → 0/20</b><p>concluyó que la falla existía: con un 403 y con Reaper</p></div>
   </div>
   <div class="vs">
     <div><h3>Cloudflare, 21/10/2026</h3><p>Solo para el tráfico de su red. En nuestro benchmark, la prueba le llegó al atacante <b>20 de 20</b> veces por Cloudflare (reglas por defecto, plan gratuito).</p></div>
-    <div><h3 class="real">Centinela</h3><p>Abierto, delante de tus servidores: <b>0 de 20</b>. Responde algo falso y creíble, y te explica el recorrido.</p></div>
+    <div><h3 class="real">Reaper</h3><p>Abierto, delante de tus servidores: <b>0 de 20</b>. Responde algo falso y creíble, y te explica el recorrido.</p></div>
   </div>
-  <div class="nota">«Y no es solo el benchmark. La prueba del ataque dejó de llegarle al atacante 5 de 5 a 0 de 5 en un banco de prueba y 3 de 3 a 0 de 3 contra una falla real de Langflow, sin bloquear ninguno de 34 pedidos legítimos; sin la prueba, el agente gastó de 3 a 11 veces más peticiones. Cloudflare protege solo lo que pasa por su red; Centinela es abierto, corre delante de tus servidores, responde algo falso y te explica el recorrido.»</div>
+  <div class="nota">«Y no es solo el benchmark. La prueba del ataque dejó de llegarle al atacante 5 de 5 a 0 de 5 en un banco de prueba y 3 de 3 a 0 de 3 contra una falla real de Langflow, sin bloquear ninguno de 34 pedidos legítimos; sin la prueba, el agente gastó de 3 a 11 veces más peticiones. ¿Y si bloqueamos con un 403? También le niega la prueba, igual que parchar, y parchar es mejor cuando se puede. Pero con el 403 el agente concluyó que la falla existía en 18 de 20 corridas y se puso a evadir el filtro; con Reaper, en 0 de 20. Cloudflare protege solo lo que pasa por su red; Reaper es abierto, corre delante de tus servidores, responde algo falso y te explica el recorrido.»</div>
 </section>
 
 <section class="lamina" data-t="0:20">
@@ -188,11 +192,12 @@
     <li>El benchmark mide una sola app de prueba, con las reglas por defecto de Cloudflare.</li>
   </ul>
   <p class="cierre">Que el agente no sepa<br>si su ataque funcionó.</p>
-  <p class="medio suave" style="margin-top:40px"><b class="real">team-7</b> · centinela.haroldmedrano33.workers.dev</p>
-  <div class="nota">«Lo decimos de frente: no evita el daño, el ataque igual se ejecuta en el servidor; lo que evita es que el atacante reciba la prueba. La detección hoy encuentra 1 de cada 10 sondeos, sin falsas alarmas, y no la probamos con agentes de IA. Y el benchmark es una sola app de prueba con las reglas por defecto de Cloudflare. Lo que sí tenemos es el mecanismo funcionando y medido. Centinela: que el agente no sepa si su ataque funcionó. Somos team-7, gracias.»
+  <p class="medio suave" style="margin-top:40px"><img src="logo.svg" alt="Reaper" width="56" height="56" style="vertical-align:-14px;margin-right:16px"><b class="real">team-7</b> · reaper.haroldmedrano33.workers.dev</p>
+  <div class="nota">«Lo decimos de frente: no evita el daño, el ataque igual se ejecuta en el servidor; lo que evita es que el atacante reciba la prueba. La detección hoy encuentra 1 de cada 10 sondeos, sin falsas alarmas, y no la probamos con agentes de IA. Y el benchmark es una sola app de prueba con las reglas por defecto de Cloudflare. Lo que sí tenemos es el mecanismo funcionando y medido. Reaper: que el agente no sepa si su ataque funcionó. Somos team-7, gracias.»
   <br><br><b>PREGUNTAS ENSAYADAS</b>
-  <br><b>«Cloudflare ya lo hace.»</b> «Sí, y eso valida la idea: retener la respuesta de un ataque exitoso sirve. Pero lo de Cloudflare protege solo lo que pasa por su red y, según su anuncio, todavía no tiene reglas sobre el cuerpo de la respuesta. Centinela es abierto, corre delante de tus servidores, responde algo falso y te explica el recorrido. En nuestro benchmark, con sus reglas por defecto del plan gratuito, la prueba llegó 20 de 20 por Cloudflare y 0 de 20 por Centinela. Límite: una sola app de prueba, y no pudimos confirmar desde su panel que su protección de respuestas estuviera activa. No decimos que seamos mejores: decimos lo que medimos.»
+  <br><b>«Cloudflare ya lo hace.»</b> «Sí, y eso valida la idea: retener la respuesta de un ataque exitoso sirve. Pero lo de Cloudflare protege solo lo que pasa por su red y, según su anuncio, todavía no tiene reglas sobre el cuerpo de la respuesta. Reaper es abierto, corre delante de tus servidores, responde algo falso y te explica el recorrido. En nuestro benchmark, con sus reglas por defecto del plan gratuito, la prueba llegó 20 de 20 por Cloudflare y 0 de 20 por Reaper. Límite: una sola app de prueba, y no pudimos confirmar desde su panel que su protección de respuestas estuviera activa. No decimos que seamos mejores: decimos lo que medimos.»
   <br><b>«¿Dónde está la IA?»</b> «El atacante es un agente de IA. Con agentes medimos tres cosas: la confirmación negada con dos modelos atacando, 20 de 20 a 0 de 20; un prototipo de pagos donde 30 de 30 agentes cayeron a la copia falsa; y Espejismo, 95 corridas con 8 modelos. Lo que no medimos con agentes es la detección: la evaluación no tiene sesiones de agentes. Y en el panel, un modelo escribe el arreglo propuesto y responde preguntas, para que una persona decida.»
+  <br><b>«¿Por qué no bloquear con un 403?»</b> «Lo medimos: el 403 y el parche también dejan la prueba en 0 de 20, y parchar es mejor cuando se puede. La diferencia es lo que aprende el agente: con el 403 concluyó que la falla existía en 18 de 20 corridas; con Reaper, en 0 de 20. No medimos que eso cause más daño.»
   <br><b>«La muestra es chica.»</b> «Sí: 5, 3 y 20 corridas, y una sola app de prueba; lo decimos en la lámina. Lo que sostiene el resultado es que el mecanismo es determinista: si la respuesta trae la prueba y el pedido era sospechoso, no sale. Y no bloqueó ninguno de 34 pedidos legítimos. Lo siguiente es más corridas con agentes reales y tráfico humano real.»
   <br><b>«¿Evita el ataque?»</b> «No. En todas las pruebas el ataque se ejecutó en el servidor. Lo que evita es que el atacante reciba la prueba de que funcionó, y te da el arreglo para cerrar la falla. En un ataque ciego, que no devuelve nada, un proxy no puede ayudar: eso va en el servidor.»</div>
 </section>
@@ -204,7 +209,7 @@
   const lienzo = document.getElementById('lienzo');
   const notas = document.getElementById('notas');
   let i = Math.max(0, Math.min(laminas.length - 1, (parseInt(location.hash.slice(1)) || 1) - 1));
-  laminas.forEach((l, k) => l.insertAdjacentHTML('beforeend', `<span class="marca">Centinela · team-7</span><span class="num">${k + 1} / ${laminas.length}</span>`));
+  laminas.forEach((l, k) => l.insertAdjacentHTML('beforeend', `<span class="marca"><img src="logo.svg" alt="" width="30" height="30" style="vertical-align:-7px;margin-right:10px">reaper · team-7</span><span class="num">${k + 1} / ${laminas.length}</span>`));
   function ajustar() {
     const s = Math.min(innerWidth / 1920, innerHeight / 1080);
     lienzo.style.transform = `scale(${s}) translate(-50%, -50%)`;
