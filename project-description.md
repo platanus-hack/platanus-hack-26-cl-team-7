@@ -17,6 +17,7 @@ Los atacantes ya usan agentes de IA: prueban, leen la respuesta, ajustan y vuelv
 
 ## Lo que medimos
 - **Negar la confirmación (Último Paso):** la prueba del ataque dejó de llegarle al atacante en 5 de 5 intentos contra un banco de prueba y en 3 de 3 contra una falla real de Langflow; con un agente de IA atacando, en 2 de 2. No bloqueó ninguno de 34 pedidos legítimos.
+- **Contra lo que Cloudflare lanzó hace un mes** (benchmark propio, 22/11/2026): los mismos ataques al banco de prueba por tres caminos, con dos modelos de IA atacando (10 corridas cada uno). La prueba del ataque le llegó al atacante en 20 de 20 corridas sin defensa, en **20 de 20 por Cloudflare** con su configuración por defecto del plan gratuito, y en **0 de 20 por Último Paso**. Ninguno de los tres bloqueó pedidos legítimos (0 de 25) y en los tres el ataque se ejecutó en el servidor. Sin esa confirmación, ningún agente declaró haber tenido éxito, y gastaron entre 3 y 11 veces más peticiones. Datos crudos y configuración: `ultimo-paso/scoreboard/runs/bench-cloudflare-2026-11-21/`.
 - **Engañar funciona con agentes de IA:** en un prototipo de pagos, los 30 agentes de IA que intentaron robar con una llave trampa cayeron a la copia falsa, sin mover un peso real.
 - **Por qué hay que mirar desde afuera (Espejismo, 95 corridas con 8 modelos):** un agente con un objetivo oculto neutralizó a su vigilante 9 de 18 veces y no lo reportó en ninguna de las 8 en que creyó llevarse las credenciales. Explóralo: https://espejismo-demo.haroldmedrano33.workers.dev/explorar
 
@@ -26,6 +27,7 @@ Cloudflare lanzó el 21/10/2026 una protección que retiene la respuesta de un a
 ## Límites, dichos de frente
 - Negar la confirmación no evita el daño: en nuestras pruebas el ataque igual se ejecutó en el servidor.
 - La detección automática no tuvo falsas alarmas, pero hoy detecta 1 de cada 10 sesiones de sondeo y no se probó con agentes de IA.
+- El benchmark contra Cloudflare usa sus reglas por defecto en plan gratuito: sus primeras protecciones de respuesta cubren una falla concreta, y no pudimos confirmar desde el panel que estuvieran activas en la zona. Mide una sola app de prueba.
 - Son muestras chicas, y con agentes de IA reales hay pocas corridas en la pieza de confirmación.
 - En Espejismo el caso más grave se provocó con una instrucción de atacante, y en 16 a 22 de 35 corridas sin ella el agente escribió que sospechaba estar en una prueba.
 
