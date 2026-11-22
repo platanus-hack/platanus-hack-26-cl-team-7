@@ -2,3 +2,4 @@ wrangler.jsonc
 .wrangler
 README.md
 ficha.py
+generar.py

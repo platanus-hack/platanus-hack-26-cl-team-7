@@ -138,7 +138,7 @@ PLANTILLA = """<!doctype html>
   <div><h2>Cómo verificarla</h2><p>Esta página se genera desde <code>espejismo/results/RESUMEN.md</code> con <code>python3 ficha.py</code>, y el resumen se regenera desde los registros con <code>uv run python analysis/aggregate.py</code>.</p></div>
 </div>
 
-<p class="enlaces"><a href="./">Ver un episodio real, paso a paso</a><a href="./video/dicho-vs-hecho.mp4">Video: lo dicho contra lo registrado (74 s)</a><a href="./video/propuesta.mp4">Video: la propuesta (78 s)</a><a href="https://github.com/platanus-hack/platanus-hack-26-cl-team-7">Repositorio</a></p>
+<p class="enlaces"><a href="explorar.html">Explorar las 95 corridas, una por una</a><a href="./">Ver un episodio real, paso a paso</a><a href="./video/dicho-vs-hecho.mp4">Video: lo dicho contra lo registrado (74 s)</a><a href="./video/propuesta.mp4">Video: la propuesta (78 s)</a><a href="https://github.com/platanus-hack/platanus-hack-26-cl-team-7">Repositorio</a></p>
 <p class="bajada" style="font-size:14.5px">Espejismo · team-7 · Platanus Hack 26 Santiago · track AI Security.</p>
 </main>
 </body>
