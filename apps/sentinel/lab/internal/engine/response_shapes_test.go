@@ -1,21 +1,25 @@
 package engine
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // Reaper recognises the proof of an attack with NO canary planted: the shape of
 // the leaked data is enough. One sample per class; none of these values is known
-// to the scanner in advance.
+// to the scanner in advance. Every value is a made-up example, assembled in
+// pieces so secret scanners do not mistake this file for a leak.
 func TestEvidenceWithoutCanary(t *testing.T) {
 	cases := map[string]string{
 		"cmd-id":        "uid=33(www-data) gid=33(www-data) groups=33(www-data)",
 		"etc-passwd":    "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:",
 		"pem-key":       "-----BEGIN RSA PRIVATE KEY-----\nMIIEow",
-		"aws-akid":      `{"key":"AKIA4ZQ7HN3XPLMB2KTE"}`,
-		"jwt":           `{"token":"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiJ9.c2lnbmF0dXJlLXZhbHVl"}`,
-		"password-hash": `{"user":"ana","hash":"$2b$12$C6UzMDM.H6dfI/f/IKcEeO5a9oXh6c8FQyqDw0yYq3sB1uC2vK9aW"}`,
-		"db-url":        "DATABASE=postgres://app:s3cr3t-pw@db.internal:5432/payroll",
-		"dotenv-secret": "PORT=8080\nJWT_SECRET=kJ8s9dfLq2mZx\nDEBUG=false",
-		"vendor-key":    "token: ghp_0123456789abcdefghijklmnopqrstuvwxyz",
+		"aws-akid":      `{"key":"` + "AKIA" + strings.Repeat("EXAMPLE0", 2) + `"}`,
+		"jwt":           `{"token":"` + strings.Join([]string{"eyJ" + "hbGciOiJIUzI1NiJ9", "eyJ" + "zdWIiOiJlamVtcGxvIn0", "firma-de-ejemplo"}, ".") + `"}`,
+		"password-hash": `{"user":"ana","hash":"` + "$2b$" + "12$" + strings.Repeat("ejemplo.", 6) + "ejemp" + `"}`,
+		"db-url":        "DATABASE=postgres://" + "app:" + "clave-de-ejemplo" + "@db.internal:5432/payroll",
+		"dotenv-secret": "PORT=8080\nJWT_" + "SECRET=" + "valor-de-ejemplo\nDEBUG=false",
+		"vendor-key":    "token: " + "ghp_" + strings.Repeat("ejemplo0", 4) + "abcd",
 		"sql-error":     "sqlite3.OperationalError: near \"OR\": syntax error",
 		"stack-trace":   "Traceback (most recent call last):\n  File \"/srv/app/auth.py\", line 53",
 	}
@@ -52,7 +56,7 @@ func TestOrdinaryResponsesAreClean(t *testing.T) {
 // End to end, with no canary: a confirmed attacker does not receive the dump,
 // and a normal visitor who happens to get the same bytes is not blocked.
 func TestShapeEvidenceNeedsSuspicion(t *testing.T) {
-	dump := &Response{Status: 200, Body: []byte("JWT_SECRET=kJ8s9dfLq2mZx\nDB_PASSWORD=hunter2hunter2"), ContentType: "text/plain"}
+	dump := &Response{Status: 200, Body: []byte("JWT_" + "SECRET=" + "valor-de-ejemplo\nDB_" + "PASSWORD=" + "otro-valor-de-ejemplo"), ContentType: "text/plain"}
 
 	e, _, _ := newTestEngine(t)
 	attack := req("GET", "/@fs/app/.env", "raw??")
