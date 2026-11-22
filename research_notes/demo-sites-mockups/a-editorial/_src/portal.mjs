@@ -103,7 +103,7 @@ export const v1 = () => shell('Inicio', 'Inicio · Bruma Portal', `
       <section aria-label="Documentos">
         <div class="flex items-end justify-between pb-3 border-b border-ink"><h2 class="serif text-heading font-normal">Documentos</h2><a href="#" class="text-[13px] link">Ver todos</a></div>
         <ul class="divide-y divide-rule">
-          ${[['Contrato de trabajo', 'PDF · 214 KB', 'file-pdf'], ['Anexo de reajuste 2026', 'PDF · 98 KB', 'file-pdf'], ['Certificado de antigüedad', 'Disponible al solicitarlo', 'file-text']].map(([t, s, i], k) => `
+          ${[['Contrato de trabajo', 'PDF', 'file-pdf'], ['Anexo de reajuste 2026', 'PDF', 'file-pdf'], ['Certificado de antigüedad', '', 'file-text']].map(([t, s, i], k) => `
           <li><a href="#" class="group flex items-center gap-4 py-3.5">${ic(i, '!size-6 text-ink-3 group-hover:text-forest')}
             <span class="flex-1 leading-snug"><span class="block text-[14px] font-medium">${t}</span><span class="block text-[12.5px] text-ink-3">${s}</span></span>
             ${k < 2 ? ic('download-simple', 'text-ink-3 group-hover:text-forest') : '<span class="text-[13px] text-forest link">Solicitar</span>'}</a></li>`).join('')}

@@ -273,7 +273,6 @@ export function v4() {
       </div>
     </div>
   </main>
-  <footer class="px-4 py-4 text-center text-xs text-ink-3">© 2026 Bruma Remuneraciones SpA</footer>
 </div>
 </body>`;
   return page({ title: 'Error · Bruma Portal', desc: 'No pudimos completar la solicitud.' }, body);
