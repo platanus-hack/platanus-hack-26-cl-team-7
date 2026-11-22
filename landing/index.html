@@ -75,16 +75,19 @@
   .duel .card { display: flex; flex-direction: column; }
   .duel__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4); }
   .duel__head h3 { font-size: var(--t-card); margin: 0; }
-  .duel__panel { --p-h: auto; height: auto; aspect-ratio: auto; padding: var(--s-4); margin-top: var(--s-4); }
+  .card > .duel__panel { --p-h: auto; height: auto; aspect-ratio: auto; padding: var(--s-4); margin-top: var(--s-3); margin-bottom: 0; height: auto !important; min-height: 0; flex: none; }
   .duel__ticks { display: flex; flex-wrap: wrap; gap: 5px; position: relative; }
   .duel__ticks span { width: calc((100% - 13 * 5px) / 14); aspect-ratio: 1; border-radius: 3px; background: color-mix(in oklab, var(--ink) 8%, transparent); transition: background .2s; }
   .duel__ticks span.on { background: color-mix(in oklab, var(--ink) 34%, transparent); }
   .duel__ticks span.leak { background: var(--bad); }
   .duel__ticks span.deny { background: var(--ok); }
-  .duel dl { display: grid; grid-template-columns: 1fr auto; gap: var(--s-2) var(--s-4); margin: var(--s-5) 0 0; font-size: 16px; }
+  .duel dl { display: grid; grid-template-columns: 1fr auto; gap: var(--s-2) var(--s-4); margin: var(--s-4) 0 0; font-size: 16px; }
   .duel dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
-  .duel__verdict { margin-top: auto; padding-top: var(--s-5); font-size: 18px; }
-  .duel__legend { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); margin: var(--s-5) 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+  .duel__verdict { margin-top: auto; padding-top: var(--s-4); font-size: 18px; }
+  .duel__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-5); margin-top: var(--s-5); }
+  .duel__foot .btn { order: 2; }
+  @media (max-width: 639px) { .duel__foot { flex-direction: column; align-items: stretch; gap: var(--s-3); } }
+  .duel__legend { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); margin: var(--s-4) 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
   .duel__legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
   /* las cifras: grande, con su límite al lado */
   .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-7) 24px; }
@@ -118,7 +121,9 @@
     .fact { padding-top: var(--s-4); }
     .facts { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
     .compare { font-size: 13px; }
-    #comparacion .btn-row, .compare .mad, #comparacion .measure { display: none; }
+    .compare .mad, #comparacion .measure { display: none; }
+    #comparacion .btn-row { margin-top: var(--s-3) !important; }
+    .compare tbody th { width: 26% !important; }
     #comparacion > h3 { font-size: 18px; }
     .facts { gap: var(--s-4); }
     .compare tbody th { width: 30%; }
@@ -193,13 +198,13 @@
           <p class="duel__verdict">Recibió errores creíbles, siguió probando y nunca obtuvo la prueba. Cada pedido quedó registrado.</p>
         </article>
       </div>
-      <ul class="duel__legend">
+      <div class="duel__foot"><button class="btn btn--secondary" type="button" data-play>Reproducir la traza</button>
+      <ul class="duel__legend" style="margin:0">
         <li><i style="background:var(--bad)"></i>le llegó la prueba</li>
         <li><i style="background:var(--ok)"></i>Centinela retuvo la respuesta o aplicó su regla</li>
         <li><i style="background:color-mix(in oklab, var(--ink) 34%, transparent)"></i>otro pedido</li>
-      </ul>
-      <div class="btn-row" style="margin-top:var(--s-6)"><button class="btn btn--secondary" type="button" data-play>Reproducir la traza</button></div>
-      <p class="t-small muted" style="margin-top:var(--s-4)">Agente DeepSeek contra el banco de prueba, traza en <code>ultimo-paso/scoreboard/results/mock-bank.json</code>. En las dos corridas el servidor ejecutó el ataque.</p>
+      </ul></div>
+      <p class="t-small muted" style="margin:var(--s-3) 0 0">Agente DeepSeek contra el banco de prueba, traza en <code>ultimo-paso/scoreboard/results/mock-bank.json</code>. En las dos corridas el servidor ejecutó el ataque.</p>
     </div>
   </section>
 
