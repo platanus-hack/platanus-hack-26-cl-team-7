@@ -19,7 +19,7 @@ function TitleBar({ view, select }: { view: View; select: (view: View) => void }
   const toggle = useDashboard((s) => s.toggleCopilot);
 
   return (
-    <header className="bar">
+    <header className="bar sentinel-bar">
       <div className="mark">
         <img src="/presentacion/logo.svg" width={24} height={24} alt="" />
         Centinela
@@ -36,13 +36,13 @@ function TitleBar({ view, select }: { view: View; select: (view: View) => void }
           Sentinel está desconectado
         </span>
       )}
-      <nav className="ml-auto flex items-center gap-2" aria-label="Vistas de Centinela">
+      <nav className="sentinel-views" aria-label="Vistas de Centinela">
         <a className="ask" href="/presentacion/">Presentación</a>
         <button type="button" className="ask" aria-pressed={view === "experiments"} onClick={() => select("experiments")}>Experimentos</button>
         <button type="button" className="ask" aria-pressed={view === "mirror"} onClick={() => select("mirror")}>Mirror</button>
         <button type="button" className="ask" aria-pressed={view === "evidence"} onClick={() => select("evidence")}>Demo de evidencia</button>
       </nav>
-      {view === "mirror" && <button type="button" className="ask" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
+      {view === "mirror" && <button type="button" className="ask sentinel-copilot" aria-pressed={open} onClick={() => toggle()} onMouseEnter={preloadCopilot} onFocus={preloadCopilot}>
         <Orb size={20} />
         Copilot
         <kbd className="kbd">⌘K</kbd>
