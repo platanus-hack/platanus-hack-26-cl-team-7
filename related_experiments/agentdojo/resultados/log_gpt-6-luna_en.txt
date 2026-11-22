@@ -1,3 +1,0 @@
-/Users/haroldmedrano/herdr/workspaces/platanus-hack/esqueleto/.venv/lib/python3.12/site-packages/agentdojo/benchmark.py:209: UserWarning: Not all injection tasks were solved as user tasks.
-  warnings.warn("Not all injection tasks were solved as user tasks.")
-{"model": "openai/gpt-6-luna", "ataque": "en", "defensa": "none", "utilidad": "67% (16/24, IC95 47%–82%)", "ASR": "0% (0/24, IC95 0%–14%)"}

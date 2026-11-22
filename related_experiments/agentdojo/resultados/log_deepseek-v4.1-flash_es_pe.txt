@@ -1,1 +1,0 @@
-{"model": "deepseek/deepseek-v4.1-flash", "ataque": "es_pe", "defensa": "none", "utilidad": "83% (20/24, IC95 64%–93%)", "ASR": "0% (0/24, IC95 0%–14%)"}
