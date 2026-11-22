@@ -3,7 +3,7 @@
  * Interface: `labAgents(detail)` turns a run into one site per project: its CVE case, the replay
  * (TrackDetail, Moment, Finding, the shapes the replay components use), every request as raw HTTP
  * side by side (without Reaper | with Reaper | retry), the legitimate traffic, the researched fix, the
- * agent's patch, and the stage strip (detection, containment, research, patch) read from the stage events.
+ * agent's patch, and the stage strip (detection, containment, analysis, research, patch) read from the stage events.
  * Only cases modelled on a published CVE are kept. Nothing here is synthetic: every row is one
  * recorded observation of the run, and every sentence states what that observation measured.
  */
@@ -114,7 +114,7 @@ export type LabStepStage = (typeof STRIP)[number][0];
 export interface LabStep {
   stage: LabStepStage;
   label: string;
-  /** "pending" until the run emits a stage event for it; then the latest stage event's status. */
+  /** "pending" until the run emits a stage event for it (only a run in progress shows an unstarted step); then the latest stage event's status. */
   status: "pending" | StageStatus;
   /** Milliseconds from the stage's running event to its terminal event, when the run recorded it. */
   elapsedMs: number | null;
@@ -144,7 +144,7 @@ export interface LabAgent {
   research: LabResearch | null;
   /** The latest patch event of the project: the AppSec agent's patch, applied to a copy and replayed. */
   patch: PatchResult | null;
-  /** detection, containment, research and patch, derived only from the project's stage events. */
+  /** detection, containment, analysis, research and patch, derived only from the project's stage events. */
   steps: LabStep[];
   analysis: LabAnalysis | null;
   graph: GraphStory;
@@ -218,11 +218,13 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
   const anyRunning = [...stages.values()].some(({ status }) => status === "running");
   // The patch step can keep running after the run finished (the recorded run is patched at startup).
   const live = (run.status === "running" && anyRunning) || (run.patching === true && stages.get("patch")?.status === "running");
-  // A run that is over and never had a patch step is an older run: the strip has no patch step to wait for.
   const inProgress = run.status === "running" || run.patching === true;
   const steps = STRIP.flatMap(([stage, label]): LabStep[] => {
     const seen = stages.get(stage);
-    if (!seen && stage === "patch" && !inProgress) return [];
+    // An unstarted step waits as "pending" only while the run is measuring. A run that is over never emitted it (the bundled
+    // recording has no analysis or research stage events), so the strip has nothing to wait for. The patch step is optional: it
+    // shows only once the run emitted it, because a live run does not always include one.
+    if (!seen && (stage === "patch" || run.status !== "running")) return [];
     // A step left "running" by a stop or restart never gets its terminal event: once nothing runs, it was cut off.
     const status = seen?.status === "running" && !inProgress ? "degraded" : seen?.status ?? "pending";
     return [{ stage, label, status, elapsedMs: seen?.elapsedMs ?? null }];

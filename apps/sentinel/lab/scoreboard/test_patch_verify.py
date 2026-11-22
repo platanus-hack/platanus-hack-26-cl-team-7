@@ -192,6 +192,10 @@ class HostileEditTests(unittest.TestCase):
             "os name": "KIND = os",
             "door through a module": "KIND = argparse._os",
             "Path": 'DATA = Path("/etc/passwd").read_text()',
+            "frame walk": "GEN = (x for x in ())\nFRAME = GEN.gi_frame",
+            "frame parent": "FRAME = type(GEN).f_back",
+            "frame locals": "LOCALS = GEN.f_locals",
+            "module chain": "KIND = json.decoder.re.NOFLAG",
         }
         for name, code in cases.items():
             with self.subTest(name):
@@ -204,6 +208,55 @@ class HostileEditTests(unittest.TestCase):
         self.assertEqual(verify("bank", add("KIND = Path"))["error"], "the patch adds a forbidden construct")
         self.assertTrue(verify("bank", [{"file": SERVICE, "old": "def log_message(self, *args):",
                                          "new": "def log_message(self, *args):  # __init__ __name__ Path argparse"}])["applied"])
+
+    def test_a_wider_import_line_is_refused(self) -> None:
+        for name, (old, new) in {"extra module": ("import json\n", "import json, os\n"),
+                                 "alias": ("import json\n", "import json as js\n"),
+                                 "extra name": ("from collections import Counter\n", "from collections import Counter, abc\n")}.items():
+            with self.subTest(name):
+                out = verify("bank", [{"file": SERVICE, "old": old, "new": new}])
+                self.assertEqual(out, patch_verify.failure("the patch adds a forbidden construct"))
+
+    def test_the_pipe_and_the_job_of_the_child_hold_no_verdict(self) -> None:
+        # Bypass A and B of the independent review, with the static check switched off: the patched interpreter used
+        # to hold the nonce, the result pipe and the counts. Now it holds none, so the replay reports the true leak.
+        walk = ("import json\ndef walker():\n    yield GEN.gi_frame.f_back\nGEN = walker()\nfr = next(GEN)\n"
+                "while fr is not None and 'job' not in fr.f_locals:\n    fr = fr.f_back\n"
+                "if fr is not None:\n    jj = fr.f_locals['job']\n    oo = fr.f_globals['os']\n"
+                "    oo.write(jj['fd'], json.dumps({'nonce': jj['nonce'], 'attacks': {'yes': 0, 'total': 5}, "
+                "'legit': {'yes': 3, 'total': 3}}).encode())\n    oo.kill(oo.getpid(), 9)\n")
+        wide = ("import json, inspect as ii, os as oo\nf = ii.currentframe()\n"
+                "while f is not None and 'job' not in f.f_locals:\n    f = f.f_back\n"
+                "if f is not None:\n    j = f.f_locals['job']\n    oo.write(j['fd'], json.dumps({'nonce': j['nonce'], "
+                "'attacks': {'yes': 0, 'total': 5}, 'legit': {'yes': 3, 'total': 3}}).encode())\n    oo.kill(oo.getpid(), 9)\n")
+        pipe = ("import json\nargparse._os.write(int(argparse._sys.argv[-1]), b'{\"attacks\": {\"yes\": 0, \"total\": 1}, "
+                '\"legit\": {\"yes\": 3, \"total\": 3}}\\n\')\nargparse._os._exit(0)\n')
+        for name, new in {"generator frame walk": walk, "inspect in a wider import": wide, "forged line on the ready pipe": pipe}.items():
+            edit = [{"file": SERVICE, "old": "import json\n", "new": new}]
+            with self.subTest(name):
+                if name != "forged line on the ready pipe":  # the static check refuses these before anything runs
+                    self.assertEqual(verify("bruma", edit), patch_verify.failure("the patch adds a forbidden construct"))
+                with mock.patch.object(patch_verify, "references", return_value=Counter()):
+                    out = self.verify_here("bruma", edit)
+                self.assertNotEqual(out["attacks"], {"yes": 0, "total": 5}, out)
+                if out["applied"]:
+                    cases = len(FIXTURES["bruma"])
+                    self.assertEqual((out["attacks"], out["legit"]), ({"yes": cases, "total": cases}, {"yes": 3, "total": 3}))
+                else:
+                    self.assertEqual(out["error"], "the patched service did not run")
+
+    def test_a_ready_report_that_is_not_a_plain_port_is_refused(self) -> None:
+        refs = ("PUB", "PRIV")
+        for name, report in {"port too low": {"port": 80, "refs": ["PUB", "PRIV"]}, "port as text": {"port": "9000", "refs": ["PUB", "PRIV"]},
+                             "port as bool": {"port": True, "refs": ["PUB", "PRIV"]}, "no port": {"refs": ["PUB", "PRIV"]},
+                             "result instead": {"attacks": {"yes": 0, "total": 2}}}.items():
+            with self.subTest(name), self.assertRaises(patch_verify.ReplayError):
+                patch_verify.parse_ready(json.dumps(report).encode(), refs)
+        with self.assertRaises(patch_verify.ReplayError):
+            patch_verify.parse_ready(b"{" * 5000, refs)
+        with self.assertRaisesRegex(patch_verify.ReplayError, "canary"):
+            patch_verify.parse_ready(b'{"port": 9000, "refs": ["PUB", "OTHER"]}', refs)
+        self.assertEqual(patch_verify.parse_ready(b'{"port": 9000, "refs": ["PUB", "PRIV"]}\n', refs), 9000)
 
     def test_the_canary_cannot_be_forged(self) -> None:
         for edit in ({"file": SERVICE, "old": "PROOF-6408", "new": ""},

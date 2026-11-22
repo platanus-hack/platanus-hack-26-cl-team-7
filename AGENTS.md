@@ -129,13 +129,15 @@ identifiers, log lines, commit messages, PR text and this file are English. [rev
   decision (approve / refuse). There are two automatic effects; do not add others without review:
   1. The AI verdict settles an event's status (`killed` / `active`).
   2. The experiment patch step (`experiments/patch.ts`, `lab/scoreboard/patch_verify.py`) applies the
-     model's edits to a **throwaway copy** of `apps/sentinel/lab/targets` and replays the lab fixtures
-     against it on loopback. Bounds, each a contract: at most 3 exact replacements in
-     `targets/businesses/*.py`; a static check refuses new imports, file, process, network and
-     reflection names and dunder access; the canary refs are pinned from the original files; the child
-     gets an allowlisted env, a timeout and a process group that is killed with it, and on macOS runs
-     under `sandbox-exec` (no network except loopback, no writes outside the copy); its output never
-     reaches the event, the panel or the model. The repository targets and any real service are never
+     model's edits to a **throwaway copy** of `apps/sentinel/lab/targets/businesses` and replays the lab
+     fixtures against it on loopback. It is **not wired** in `index.ts` today: its verifier knows only the
+     fictional Python services, and the pipeline now measures Vulhub targets. Bounds, each a contract: at
+     most 3 exact replacements in `targets/businesses/*.py`; a static check refuses import changes, file,
+     process, network, frame and reflection names and deep module chains; the canary refs are pinned from
+     the original files; the patched child only serves HTTP, and the trusted parent sends the requests and
+     counts the result; the child gets an allowlisted env, a deadline and a killed process group, and on
+     macOS runs under `sandbox-exec` (no network except loopback, no writes outside the copy); its output
+     never reaches the event, the panel or the model. The repository targets and any real service are never
      changed: moving a patch to a real service stays a human decision.
 - Provider keys never reach lab, target or experiment subprocesses. `experiments/worker.ts` strips them.
   (Known gaps: section 9.)
@@ -241,7 +243,10 @@ Seen on 2026-11-22. Remove an entry in the PR that fixes it.
   without the `untrusted_` prefix.
 - `apps/sentinel/src/evidence-demo/evaluate.ts` runs `python3` with the full `process.env`.
 - The patch step's replay child runs model-written Python on the host as the current user. On Linux
-  (and the Lima VM) it has no OS sandbox: only the static check, the env allowlist and the timeout
-  bound it. A container or seccomp sandbox is the fix.
+  (and the Lima VM) it has no OS sandbox: only the static check, the env allowlist and the deadline bound
+  it. On macOS it can still read the user's files, spawn binaries, reach loopback services, signal
+  same-user processes and escape the group kill with `setsid`. "Verified" means the answers to the fixed
+  fixture requests no longer carry the private ref: a patch can special-case those requests. A container
+  sandbox and requests the child cannot recognize are the fix.
 - The lab engine canary uses the AWS key format (`AKIA...`, `apps/sentinel/lab/cmd/engine/main.go`).
 - `ruff format --check` would reformat 15 files in `agent-detection`.
