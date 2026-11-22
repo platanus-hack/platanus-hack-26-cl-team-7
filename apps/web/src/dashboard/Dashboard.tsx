@@ -22,7 +22,7 @@ function TitleBar({ view, select }: { view: View; select: (view: View) => void }
     <header className="bar sentinel-bar">
       <div className="mark">
         <img src="/presentacion/logo.svg" width={24} height={24} alt="" />
-        Centinela
+        Reaper
       </div>
       {conn === "reconnecting" && (
         <span className="conn" role="status">
@@ -33,7 +33,7 @@ function TitleBar({ view, select }: { view: View; select: (view: View) => void }
       {conn === "offline" && (
         <span className="conn" role="status">
           <i />
-          Sentinel está desconectado
+          Reaper está desconectado
         </span>
       )}
       <nav className="sentinel-views" aria-label="Vistas de Centinela">
