@@ -1,0 +1,33 @@
+Si a un agente de IA que te ataca
+le niegas la prueba de que su ataque funcionó,
+se queda sin rumbo. Lo medimos.
+La prueba le llegó en veinte de veinte corridas sin defensa,
+en veinte de veinte por la protección por defecto de Cloudflare,
+y en cero de veinte con nuestra pieza.
+Sin esa prueba, ningún agente declaró éxito,
+y gastaron entre tres y once veces más peticiones.
+Imagina a un ladrón que prueba puertas y ventanas de una casa:
+tu sitio.
+Prueba, lee lo que le responde la casa,
+ajusta y vuelve a probar, a velocidad de máquina.
+Si le cierras una puerta de un portazo,
+se entera de que lo vieron
+y busca otra entrada.
+Ríper es para equipos chicos con servidores propios,
+y hace cuatro cosas.
+Uno: detecta a quien prueba puertas que no existen
+o pide cosas sensibles.
+Dos: lo engaña.
+Lo deja pasar a una casa de utilería idéntica, con datos falsos.
+Tres: le niega la prueba.
+Si una respuesta real lleva la prueba de que su ataque funcionó,
+no se la entrega, y el ladrón no sabe si funcionó.
+Cuatro: te lo muestra.
+En un panel ves al agente atrapado, su recorrido,
+la falla que usó y un arreglo propuesto, que una persona aprueba.
+Los límites: una sola app de prueba,
+las reglas por defecto de Cloudflare,
+sin confirmar en su panel que esa protección estuviera activa.
+Y el ataque igual se ejecuta en el servidor.
+Bloquear le avisa.
+Ríper controla lo que el agente ve y cree que pasó.
