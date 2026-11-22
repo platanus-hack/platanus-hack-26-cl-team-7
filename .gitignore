@@ -1,37 +1,39 @@
-n.env*
-*.env
+# Dependencies, build output, and caches
+node_modules/
+dist/
 .venv/
 __pycache__/
-runs/
-.claude/settings.local.json
-.eval.log
-
 *.pyc
-.coverage
-coverage.xml
-htmlcov/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-eval/report.json
-run/
 
-# Sentinel (apps/, packages/, tools/)
-node_modules/
-dist/
+# Test output and local databases
+coverage/
+.coverage
+coverage.xml
+htmlcov/
+.eval.log
 *.db
 *.db-shm
 *.db-wal
+
+# Local settings and credentials
+/.claude/settings.local.json
+/.firecrawl/
+.DS_Store
 .env
 .env.*
-.DS_Store
-coverage/
-apps/sentinel/data/
-
-# Espejismo
+*.env
+n.env*
 *.key
 *.pem
+!.env.example
+!.env.sample
+!.env.template
 
-# Ultimo Paso build artifacts
-ultimo-paso/bin/
-.firecrawl/
+# Local workspace and module output
+/run/
+/runs/
+/apps/sentinel/data/
+/experiments/bin/
