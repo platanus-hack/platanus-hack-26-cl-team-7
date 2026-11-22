@@ -1,6 +1,16 @@
 # Reaper
 
+<<<<<<< HEAD
 **Si a un agente de IA que te ataca le niegas la prueba de que su ataque funcionó, se queda sin rumbo.** Reaper se pone delante de tus servidores: detecta al agente que anda sondeando, lo desvía a una copia falsa, le niega la confirmación y le muestra a tu equipo qué buscaba y qué arreglar.
+=======
+Desde la raíz, ejecuta `pnpm start` para abrir [Sentinel](http://127.0.0.1:8787) y
+`pnpm services` en otra terminal para abrir los [cuatro servicios](http://127.0.0.1:9120).
+El panel de Reaper tiene una página por sitio protegido, con su caso CVE, el resultado con y sin Reaper,
+el replay del ataque, todo el tráfico en HTTP crudo lado a lado y el arreglo propuesto. Funciona sin VM
+ni claves con la grabación incluida; **Modo demo** (o `?demo=1`) la recorre con ←/→. El laboratorio
+activo está en [`apps/sentinel/lab`](apps/sentinel/lab/).
+Consulta [la guía local](agent-detection/README.md#sentinel-evidence-demo) para los requisitos de ejecución.
+>>>>>>> 3857d18 (Reaper panel: one page per site, CVE cases only, raw traffic, guided demo)
 
 Proyecto de team-7 para Platanus Hack 26 Santiago, track AI Security. La descripción completa, con cifras, fuentes y límites, está en [`project-description.md`](project-description.md). Web: https://reaper.haroldmedrano33.workers.dev
 

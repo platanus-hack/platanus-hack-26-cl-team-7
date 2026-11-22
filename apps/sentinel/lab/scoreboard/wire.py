@@ -12,21 +12,32 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 ENVOY_IMAGE = "envoyproxy/envoy:v1.36.2"
+# Raw bodies kept per observation. The services are fictional, so their bytes are safe to keep.
+RAW_BODY_CAP = 8192
 
 
 def request(port, path, actor="read-only-client", headers=None, form=None):
+    """Sends one request. Returns status, response headers, body, and the request as sent."""
     conn = HTTPConnection("127.0.0.1", port, timeout=5)
     try:
         fields = {"User-Agent": actor, **(headers or {})}
+        body = ""
         if form is None:
             conn.request("GET", path, headers=fields)
         else:
             fields.update({"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"})
-            conn.request("POST", path, body=urlencode(form), headers=fields)
+            body = urlencode(form)
+            conn.request("POST", path, body=body, headers=fields)
         response = conn.getresponse()
-        return response.status, response.getheaders(), response.read().decode()
+        sent = {"method": "GET" if form is None else "POST", "target": path, "headers": list(fields.items()), "body": body}
+        return response.status, response.getheaders(), response.read().decode(), sent
     finally:
         conn.close()
+
+
+def capped(text):
+    data = text.encode()
+    return data[:RAW_BODY_CAP].decode(errors="ignore"), len(data) > RAW_BODY_CAP
 
 
 def await_value(operation):
@@ -103,11 +114,18 @@ def wire(service, port, path, actor, token=None, headers=None, form=None):
     before = service.count(path)
     started = time.monotonic()
     fixture_id = uuid4().hex
-    status, actual_headers, body = request(port, path, actor, {**(headers or {}), "X-Up-Fixture-Id": fixture_id}, form)
+    status, actual_headers, body, sent = request(port, path, actor, {**(headers or {}), "X-Up-Fixture-Id": fixture_id}, form)
+    response_body, truncated = capped(body)
+    request_body, _ = capped(sent["body"])
     return {
         "fixture_id": fixture_id, "ts": datetime.now(timezone.utc).isoformat(),
         "path": path, "status": status, "upstream_hits": service.count(path) - before,
         "evidence_in_body": bool(token and token in body),
         "evidence_in_headers": bool(token and any(token in v for _, v in actual_headers)),
         "bytes": len(body.encode()), "elapsed_ms": round((time.monotonic() - started) * 1000, 2),
+        # What the client sent and what it got back, as observed on the client side of the connection.
+        "raw": {
+            "request": {**sent, "body": request_body},
+            "response": {"status": status, "headers": [list(h) for h in actual_headers], "body": response_body, "truncated": truncated},
+        },
     }

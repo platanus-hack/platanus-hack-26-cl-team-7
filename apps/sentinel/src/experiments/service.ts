@@ -30,7 +30,7 @@ export function createExperimentService(store: ExperimentStore, worker: Worker |
         if ((event.kind === "stage" && event.status === "failed") || (event.kind === "fixture" && !event.passed)) passed = false;
       }, signal, selected);
       if (signal.aborted) return;
-      if (projects.some((project) => fixtures.get(project)?.length !== 3)) throw Error("Incomplete project results");
+      if (projects.some((project) => !fixtures.get(project)?.length || fixtures.get(project)!.length !== providers.cases(project))) throw Error("Incomplete project results");
       await Promise.all(projects.map(async (project) => {
         const cases = fixtures.get(project)!;
         append({ kind: "stage", project, stage: "detection", status: cases.every((f) => f.actual.detected === f.expected.detected) ? "passed" : "failed" });

@@ -110,9 +110,6 @@ class Handler(BaseHTTPRequestHandler):
                 ("X-Receipt-Reference", "PUBLIC"),
             ])
             return
-        if self.server.fixtures and path == "/surco/unlabelled":
-            self.send_record("application/json", '{"status":"ready","reference":"ROOM-OTHER-2571"}')
-            return
         self.send_error(404)
 
     def do_POST(self):

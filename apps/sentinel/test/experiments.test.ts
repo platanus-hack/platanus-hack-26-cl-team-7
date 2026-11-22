@@ -44,7 +44,7 @@ describe("recorded experiments", () => {
     }
   });
 
-  it("serves the seed baseline and a completed live record, without re-running on reads or streams", async () => {
+  it("serves the bundled recording and a completed live record, without re-running on reads or streams", async () => {
     const db = new DatabaseSync(":memory:");
     try {
       migrate(db);
@@ -52,14 +52,17 @@ describe("recorded experiments", () => {
       const providers = createExperimentProviders("x", {});
       const inputs = vi.spyOn(providers, "inputs");
       const feedback = vi.spyOn(providers, "feedback");
+      vi.spyOn(providers, "cases").mockReturnValue(3);
       const run = vi.fn<NonNullable<Parameters<typeof createExperimentService>[1]>["run"]>(async (_id, _notes, _first, emit) => {
         for (const project of ExperimentProject.options) for (const pos of [1, 2, 3]) emit(fixture(project, pos));
       });
       const service = createExperimentService(store, { readiness: async () => null, run }, providers);
       const app = new Hono().route("/v1", experimentRoutes(store, service));
-      const [baseline] = store.list();
-      expect(baseline?.mode).toBe("recorded");
-      expect(store.entries(baseline!.id).map((row) => row.event.kind === "baseline" && row.event.protected.yes)).toEqual([0, 0, 1]);
+      const [recorded] = store.list();
+      expect(recorded?.mode).toBe("recorded");
+      const cases = store.entries(recorded!.id).flatMap(({ event }) => (event.kind === "fixture" ? [event] : []));
+      expect(cases.map((f) => [f.cve?.startsWith("CVE-"), f.A.evidence, f.B.evidence, !!f.A.raw && !!f.B.raw && !!f.B.engine])).toEqual(
+        Array(7).fill([true, true, false, true]));
 
       const started = await app.request("/v1/experiments/runs", { method: "POST" });
       expect(started.status).toBe(202);

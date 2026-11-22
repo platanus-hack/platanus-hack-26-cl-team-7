@@ -1,7 +1,7 @@
 /**
- * The attack path of one caught agent as a small graph (React Flow): agent -> Centinela -> fake copy,
+ * The attack path of one caught agent as a small graph (React Flow): agent -> Reaper -> fake copy,
  * with the path to the real shop blocked. Interface: `<AttackGraph track moment shot decoys story? />`.
- * A lab agent passes `story`: agent -> Centinela -> the service, with the proof held back.
+ * A lab site passes `story`: agent -> Reaper -> the service, with the proof held back.
  * Each time `shot` changes, up to 5 requests travel to the fake copy and back (Motion), coloured by
  * what the agent got. Strings from the track render as text only.
  */
@@ -160,9 +160,9 @@ const edgeTypes = { packet: PacketEdge, blocked: BlockedEdge };
 /** The caught-agent story: Centinela sends the agent to a fake copy and keeps it off the real shop. */
 function mirrorStory(track: Track, decoys: number): GraphStory {
   return {
-    label: "Ruta del ataque: el agente pasa por Centinela a la copia falsa; la tienda real está bloqueada.",
+    label: "Ruta del ataque: el agente pasa por Reaper a la copia falsa; la tienda real está bloqueada.",
     agent: { title: agentName(track.userAgent), sub: disguises(track) || "Agente atrapado" },
-    sentinel: { title: "Centinela", sub: "lo desvió" },
+    sentinel: { title: "Reaper", sub: "lo desvió" },
     top: { icon: "decoy", title: "Copia falsa", sub: `${numEs(decoys)} respuestas falsas` },
     bottom: { icon: "real", title: "Tienda real", sub: "0 visitas desde la captura" },
   };

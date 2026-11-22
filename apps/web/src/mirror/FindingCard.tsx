@@ -39,7 +39,7 @@ function AskCopilot({ text }: { text: string }) {
     toggle(true);
     void import("../copilot/store").then(({ useCopilot }) =>
       // A copilot message holds 8000 characters at most (CopilotTurn in @sentinel/contracts); long evidence is cut.
-      useCopilot.getState().send(`Explícame esta vulnerabilidad y qué debo arreglar en la tienda real:\n\n${text}`.slice(0, 8000), range),
+      useCopilot.getState().send(`Explícame esta vulnerabilidad y qué debo arreglar en el sitio:\n\n${text}`.slice(0, 8000), range),
     );
   };
   return (

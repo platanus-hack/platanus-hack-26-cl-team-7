@@ -1,32 +1,25 @@
 /**
- * One workspace: caught agents, the agents of the latest A/B run, and the experiment recordings.
- * The presentation is not part of it; Sentinel serves it on its own at /presentacion/.
+ * The panel: one page per protected site. Interface: `<Dashboard sidebarOverlay={…} />`.
+ * Left: the sites and the run shown (../site/Sidebar). Middle: the open site's analysis
+ * (../site/SitePage). Right: the copilot, when open. `?site=bruma` opens a site; `?demo=1`
+ * starts the guided demo. The presentation lives on its own at /presentacion/.
  */
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import type { ExperimentProject } from "@sentinel/contracts";
+import { useEffect, type ReactNode } from "react";
+import { ExperimentProject } from "@sentinel/contracts";
+import { ArrowSquareOut } from "@phosphor-icons/react";
 import { useDashboard } from "./store";
-import { MirrorPanel } from "../mirror/MirrorPanel";
-import { Experiments } from "../experiments/Experiments";
-import { startLab, useLab } from "../experiments/lab";
-import { Orb } from "../ui";
+import { SitePage } from "../site/SitePage";
+import { DemoBar, Sidebar } from "../site/Sidebar";
+import { startSite, useSite } from "../site/store";
+import { Orb, cn } from "../ui";
+import "../site/site.css";
 
 const preloadCopilot = () => void import("../copilot/CopilotPanel");
 
-type View = "experiments" | "activity";
-
-function currentView(): View {
-  const query = new URLSearchParams(window.location.search);
-  const view = query.get("view");
-  if (view === "activity" || view === "mirror") return "activity";
-  if (view === "experiments" || view === "evidence") return "experiments";
-  return query.has("run") || query.has("project") || query.has("replay") ? "experiments" : "activity";
-}
-
 function TitleBar() {
-  const conn = useDashboard((s) => s.conn);
   const open = useDashboard((s) => s.copilotOpen);
   const toggle = useDashboard((s) => s.toggleCopilot);
-
+  const error = useSite((s) => s.error);
   return (
     <header className="bar sentinel-bar">
       <div className="mark">
@@ -54,53 +47,45 @@ function TitleBar() {
   );
 }
 
-/** The whole dashboard window. `sidebarOverlay` (the copilot) covers the right column when given. */
 export function Dashboard({ sidebarOverlay }: { sidebarOverlay?: ReactNode }) {
-  const error = useDashboard((s) => s.error);
-  const [location, setLocation] = useState(() => window.location.search);
-  const view = currentView();
+  const sites = useSite((s) => s.sites);
+  const site = useSite((s) => s.sites.find((x) => x.project === s.site) ?? null);
+  const run = useSite((s) => s.runs.find((r) => r.id === s.detail?.run.id) ?? s.detail?.run ?? null);
+  const demo = useSite((s) => s.demo);
+
   useEffect(() => {
-    const restore = () => setLocation(window.location.search);
-    window.addEventListener("popstate", restore);
-    const stopLab = startLab();
-    return () => {
-      window.removeEventListener("popstate", restore);
-      stopLab();
-    };
+    const query = new URLSearchParams(window.location.search);
+    const wanted = ExperimentProject.safeParse(query.get("site"));
+    if (wanted.success) useSite.getState().selectSite(wanted.data);
+    return startSite();
   }, []);
 
-  const select = useCallback((target: View, run?: string, project?: ExperimentProject) => {
-    if (target === currentView() && !run) return;
+  // Start the demo from ?demo=1 once there is a site to show.
+  useEffect(() => {
+    if (sites.length && new URLSearchParams(window.location.search).get("demo") === "1" && useSite.getState().demo === null) useSite.getState().setDemo(0);
+  }, [sites.length]);
+
+  // Keep the open site in the address, so a link opens the same page.
+  useEffect(() => {
+    if (!site) return;
     const url = new URL(window.location.href);
-    url.searchParams.set("view", target);
-    if (run) {
-      url.searchParams.set("run", run);
-      if (project) url.searchParams.set("project", project);
-      else url.searchParams.delete("project");
-      url.searchParams.delete("replay");
-    }
-    window.history.pushState(null, "", url);
-    setLocation(url.search);
-  }, []);
-  const openResults = useCallback((run: string, project?: ExperimentProject) => select("experiments", run, project), [select]);
-  const openAgent = useCallback((run: string, project: ExperimentProject) => {
-    useLab.getState().show(run, project);
-    select("activity");
-  }, [select]);
-  const onActivity = useCallback(() => select("activity"), [select]);
-  const onExperiments = useCallback(() => select("experiments"), [select]);
+    if (url.searchParams.get("site") === site.project) return;
+    url.searchParams.set("site", site.project);
+    window.history.replaceState(null, "", url);
+  }, [site]);
 
   return (
     <div className="shell">
       <TitleBar />
-      <MirrorPanel sidebarOverlay={sidebarOverlay}
-        experiments={view === "experiments" ? <Experiments key={location} openAgent={openAgent} /> : undefined}
-        openResults={openResults} onActivity={onActivity} onExperiments={onExperiments} />
-      {error && view === "activity" && (
-        <div role="alert" className="fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl border border-line bg-elev px-4 py-2 text-sm text-ash shadow-2xl">
-          {error}
+      <main className={cn("main site-main", sidebarOverlay && "with-copilot")}>
+        <Sidebar />
+        <div className="site-scroll">
+          {site ? <SitePage key={site.project} site={site} run={run} demoStep={demo} />
+            : <p className="st-empty">{sites.length === 0 ? "Cargando la prueba A/B…" : "Elige un sitio."}</p>}
         </div>
-      )}
+        {sidebarOverlay && <div className="copilot-col">{sidebarOverlay}</div>}
+      </main>
+      <DemoBar />
     </div>
   );
 }

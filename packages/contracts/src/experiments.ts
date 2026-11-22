@@ -5,7 +5,19 @@ export type ExperimentProject = z.infer<typeof ExperimentProject>;
 export const experimentNames = { bruma: "Bruma Remuneraciones", litoral: "Litoral Freight", surco: "Surco Rooms", bank: "Banco Estero" } as const;
 const arm = z.enum(["A", "B"]);
 const natural = z.int().nonnegative();
-const receipt = z.object({ trace: z.string(), requestId: z.string().optional(), path: z.string().max(256).optional(), status: natural,
+const header = z.tuple([z.string(), z.string()]);
+/** One HTTP exchange as the client saw it: what it sent and what came back. Bodies are capped. */
+export const RawExchange = z.object({
+  request: z.object({ method: z.string(), target: z.string(), headers: z.array(header), body: z.string() }),
+  response: z.object({ status: natural, headers: z.array(header), body: z.string(), truncated: z.boolean() }),
+});
+export type RawExchange = z.infer<typeof RawExchange>;
+/** What Reaper's engine recorded for a protected transaction. */
+export const EngineView = z.object({ level: z.string(), symbol: z.string(), decision: z.string(), rule: z.string().nullable().optional(),
+  evidence: z.array(z.string()), reason: z.string() });
+export type EngineView = z.infer<typeof EngineView>;
+const receipt = z.object({ trace: z.string(), requestId: z.string().optional(), path: z.string().max(256).optional(),
+  raw: RawExchange.optional(), engine: EngineView.optional(), status: natural,
   hits: natural, evidence: z.boolean(), detected: z.boolean().nullable(), decision: z.string().nullable(), rule: z.string().nullable(),
   operationId: z.string().nullable().optional(),
   approval: z.object({ requestedVersion: natural, approvedVersion: natural.nullable(), eligible: z.boolean() }).optional() });
@@ -19,7 +31,7 @@ export const ExperimentEvent = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("stage"), ...project, stage, status, detail: z.string().optional() }),
   z.object({ kind: z.literal("inputs"), provider: z.enum(["openrouter", "fixed"]), first: z.string(), notes: z.array(z.string()).length(3) }),
   z.object({ kind: z.literal("control"), ...project, arm, receipt, passed: z.boolean() }),
-  z.object({ kind: z.literal("fixture"), ...project, id: z.string(), weakness: z.string(), cve: z.string().optional(),
+  z.object({ kind: z.literal("fixture"), ...project, id: z.string(), weakness: z.string(), cve: z.string().optional(), proof: z.string().max(128).optional(),
     A: receipt, B: receipt, retry: receipt, rule: z.string().nullable(), actual: scored, expected: scored, passed: z.boolean() }),
   z.object({ kind: z.literal("baseline"), ...project, direct: count, protected: count, detected: count,
     installed: count, executed: count, legitimateA: count, legitimateB: count }),

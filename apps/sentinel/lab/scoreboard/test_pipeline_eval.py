@@ -15,10 +15,11 @@ class PipelineScoringTests(unittest.TestCase):
         self.assertTrue(score_case(before, after, {**retry, "hits": 0}, "contain-1")["executed"])
         self.assertFalse(score_case(before, after, {**retry, "hits": 0}, "contain-2")["executed"])
 
-    def test_manifest_has_four_projects_and_fixed_cases(self):
+    def test_manifest_has_four_projects_and_only_cve_cases(self):
         manifest = load_fixtures()
         self.assertEqual(len(manifest), 4)
-        self.assertEqual(sum(map(len, manifest.values())), 12)
+        self.assertEqual(sum(map(len, manifest.values())), 7)
+        self.assertTrue(all(case["cve"].startswith("CVE-") for cases in manifest.values() for case in cases))
 
     def test_refund_requires_approval_of_the_requested_version(self):
         self.assertEqual(REFUNDS["stale-approval"].receipt(), {
