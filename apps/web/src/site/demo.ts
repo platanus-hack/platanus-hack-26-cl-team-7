@@ -6,7 +6,7 @@
 import type { LabAgent } from "../experiments/labTrack";
 import type { TrafficFocus } from "./Traffic";
 
-export type SectionId = "header" | "result" | "replay" | "traffic" | "cve";
+export type SectionId = "header" | "result" | "replay" | "traffic" | "cve" | "patch";
 
 export interface DemoStep {
   section: SectionId;

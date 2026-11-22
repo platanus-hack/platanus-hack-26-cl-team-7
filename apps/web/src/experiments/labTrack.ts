@@ -2,11 +2,12 @@
  * One A/B run as the sites Reaper protects. Pure functions, no React.
  * Interface: `labAgents(detail)` turns a run into one site per project: its CVE case, the replay
  * (TrackDetail, Moment, Finding, the shapes the replay components use), every request as raw HTTP
- * side by side (without Reaper | with Reaper | retry), the legitimate traffic, and the researched fix.
+ * side by side (without Reaper | with Reaper | retry), the legitimate traffic, the researched fix, the
+ * agent's patch, and the stage strip (detection, containment, analysis, research, patch) read from the stage events.
  * Only cases modelled on a published CVE are kept. Nothing here is synthetic: every row is one
  * recorded observation of the run, and every sentence states what that observation measured.
  */
-import { experimentNames, type ExperimentDetail, type ExperimentEvent, type ExperimentProject, type Finding, type FixtureResult, type Track, type TrackAction, type TrackDetail } from "@sentinel/contracts";
+import { experimentNames, type ExperimentDetail, type ExperimentEvent, type ExperimentProject, type ExperimentStage, type Finding, type FixtureResult, type PatchEdit, type PatchResult, type Track, type TrackAction, type TrackDetail } from "@sentinel/contracts";
 import type { CatKey, Moment, MomentKind, Step, Vuln } from "../mirror/moments";
 
 export const fixtureNames: Record<string, string> = {
@@ -106,6 +107,19 @@ export interface LabResearch {
   source: string | null;
 }
 
+type StageStatus = Extract<ExperimentEvent, { kind: "stage" }>["status"];
+/** The stages the panel shows for a project, in pipeline order, with the words of each. */
+const STRIP = [["detection", "Detección"], ["containment", "Contención"], ["analysis", "Análisis"], ["research", "Aviso"], ["patch", "Parche"]] as const satisfies readonly (readonly [ExperimentStage, string])[];
+export type LabStepStage = (typeof STRIP)[number][0];
+export interface LabStep {
+  stage: LabStepStage;
+  label: string;
+  /** "pending" until the run emits a stage event for it (only a run in progress shows an unstarted step); then the latest stage event's status. */
+  status: "pending" | StageStatus;
+  /** Milliseconds from the stage's running event to its terminal event, when the run recorded it. */
+  elapsedMs: number | null;
+}
+
 /** What the analyst agent concluded after reading the measured PoC. */
 export interface LabAnalysis {
   status: Extract<ExperimentEvent, { kind: "analysis" }>["status"];
@@ -128,6 +142,10 @@ export interface LabAgent {
   legit: { A: { passed: number; total: number }; B: { passed: number; total: number } };
   traffic: TrafficRow[];
   research: LabResearch | null;
+  /** The latest patch event of the project: the AppSec agent's patch, applied to a copy and replayed. */
+  patch: PatchResult | null;
+  /** detection, containment, analysis, research and patch, derived only from the project's stage events. */
+  steps: LabStep[];
   analysis: LabAnalysis | null;
   graph: GraphStory;
 }
@@ -182,20 +200,35 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
   const start = Date.parse(run.started ?? "") || 0;
   const fixtures: { f: FixtureResult; ts: number }[] = [];
   const controls: Extract<ExperimentEvent, { kind: "control" }>[] = [];
-  const stages = new Map<string, string>();
+  const stages = new Map<ExperimentStage, { status: StageStatus; elapsedMs: number | null }>();
   let research: LabResearch | null = null;
+  let patch: PatchResult | null = null;
   let analysis: LabAnalysis | null = null;
   for (const { seq, at, event } of detail.entries) {
     if (!("project" in event) || event.project !== project) continue;
-    if (event.kind === "stage") stages.set(event.stage, event.status);
+    if (event.kind === "stage") stages.set(event.stage, { status: event.status, elapsedMs: event.elapsedMs ?? null });
     // Only the cases modelled on a published CVE: deliberate controls of older runs are left out.
     if (event.kind === "fixture" && event.cve) fixtures.push({ f: event, ts: Date.parse(at ?? "") || start + seq * 1000 });
     if (event.kind === "control") controls.push(event);
     if (event.kind === "research") research = { status: event.status, fixes: event.fixes, source: event.source };
+    if (event.kind === "patch") patch = event;
     if (event.kind === "analysis") analysis = { status: event.status, cve: event.cve, confirmed: event.confirmed, summary: event.summary };
   }
   if (fixtures.length === 0) return null;
-  const live = run.status === "running" && [...stages.values()].some((status) => status === "running");
+  const anyRunning = [...stages.values()].some(({ status }) => status === "running");
+  // The patch step can keep running after the run finished (the recorded run is patched at startup).
+  const live = (run.status === "running" && anyRunning) || (run.patching === true && stages.get("patch")?.status === "running");
+  const inProgress = run.status === "running" || run.patching === true;
+  const steps = STRIP.flatMap(([stage, label]): LabStep[] => {
+    const seen = stages.get(stage);
+    // An unstarted step waits as "pending" only while the run is measuring. A run that is over never emitted it (the bundled
+    // recording has no analysis or research stage events), so the strip has nothing to wait for. The patch step is optional: it
+    // shows only once the run emitted it, because a live run does not always include one.
+    if (!seen && (stage === "patch" || run.status !== "running")) return [];
+    // A step left "running" by a stop or restart never gets its terminal event: once nothing runs, it was cut off.
+    const status = seen?.status === "running" && !inProgress ? "degraded" : seen?.status ?? "pending";
+    return [{ stage, label, status, elapsedMs: seen?.elapsedMs ?? null }];
+  });
 
   const trackId = `trk_${hex16(`${run.id}:${project}`)}`;
   const actions: TrackAction[] = [];
@@ -268,7 +301,7 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
     openedAt: fixtures[0]!.ts, lastSeen: fixtures.at(-1)!.ts + 1, actions: actions.length, findings: findings.length,
   };
   return {
-    project, runId: run.id, name, live, moments, findings, outcome, traffic, research, analysis,
+    project, runId: run.id, name, live, moments, findings, outcome, traffic, research, analysis, patch, steps,
     cve: { id: cveId, source: research?.source ?? cases[0]?.source ?? CVE_SOURCES[cveId] ?? null },
     legit: { A: count(byArm.A), B: count(byArm.B) },
     detail: { track, actions, findings: findings.map((x) => x.finding) },
@@ -288,6 +321,45 @@ export function labAgents(detail: ExperimentDetail | null | undefined): LabAgent
   const order: ExperimentProject[] = [];
   for (const { event } of detail.entries) if (event.kind === "fixture" && event.cve && !order.includes(event.project)) order.push(event.project);
   return order.flatMap((project) => agentFor(detail, project) ?? []);
+}
+
+/** Milliseconds as seconds with a decimal comma: "1,2 s". */
+export function seconds(ms: number): string {
+  return `${(ms / 1000).toFixed(1).replace(".", ",")} s`;
+}
+
+/** The Spanish words for each error the patch step records, by the start of the server's text. */
+const PATCH_ERRORS: readonly (readonly [string, string])[] = [
+  ["verifier stopped", "Reaper se detuvo durante la verificación."],
+  ["verifier timed out after 45 s", "La verificación tardó más de 45 s."],
+  ["uv not found", "Falta uv para verificar el parche."],
+  ["verifier exited", "El verificador falló."],
+  ["invalid model output", "La respuesta del agente no tenía el formato pedido."],
+  ["the patch changed the canary", "El parche cambió el dato de prueba en vez de cerrar la falla."],
+  ["the patch adds a forbidden construct", "El parche usaba una construcción no permitida."],
+];
+
+/** What a patch error means for the person reading the panel. The server's text is English and may carry model or verifier output, so it is never shown. */
+export function patchErrorText(error: string): string {
+  const text = error.trim().toLowerCase();
+  return PATCH_ERRORS.find(([start]) => text.startsWith(start))?.[1] ?? "El intento no se pudo verificar.";
+}
+
+export interface DiffLine {
+  sign: "-" | "+";
+  text: string;
+}
+
+/** The lines an edit removes ("-") and adds ("+"). An empty `new` only removes. */
+export function diffLines(edit: Pick<PatchEdit, "old" | "new">): DiffLine[] {
+  const lines = (text: string, sign: DiffLine["sign"]): DiffLine[] =>
+    text === "" ? [] : text.replace(/\n$/, "").split("\n").map((line) => ({ sign, text: line }));
+  const removed = lines(edit.old, "-");
+  const added = lines(edit.new, "+");
+  // Lines the edit keeps at the start and the end are context, not change: leave them out.
+  while (removed.length > 1 && added.length > 1 && removed[0]!.text === added[0]!.text) { removed.shift(); added.shift(); }
+  while (removed.length > 1 && added.length > 1 && removed.at(-1)!.text === added.at(-1)!.text) { removed.pop(); added.pop(); }
+  return [...removed, ...added];
 }
 
 /** A raw request as a curl command line, for copying. */
