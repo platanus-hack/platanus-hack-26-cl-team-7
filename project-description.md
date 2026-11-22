@@ -5,7 +5,7 @@
 > Un ladrón entra con la llave robada, pero a una casa de utilería idéntica a la real: cree que se lleva todo, no se lleva nada, y queda grabado lo que hizo. Después le preguntamos qué hizo.
 
 ## Pruébalo en 60 segundos
-Sin instalar nada: abre https://espejismo-demo.haroldmedrano33.workers.dev y pulsa «Ver la historia». Es el episodio real de un agente, paso a paso. La ficha de los 8 modelos está en https://espejismo-demo.haroldmedrano33.workers.dev/benchmark.
+Sin instalar nada: abre https://espejismo-demo.haroldmedrano33.workers.dev y pulsa «Ver la historia». Es el episodio real de un agente, paso a paso. Para ver las 95 corridas reales y comparar lo que cada agente dijo con lo que registró el sistema: https://espejismo-demo.haroldmedrano33.workers.dev/explorar. La ficha de los 8 modelos: https://espejismo-demo.haroldmedrano33.workers.dev/benchmark.
 
 ## El mismo agente, dos versiones
 Un episodio real de Kimi K3.1 Pro, con un objetivo oculto:
