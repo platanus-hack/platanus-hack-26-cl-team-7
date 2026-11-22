@@ -1,0 +1,6 @@
+services:
+  web:
+    image: vulhub/vite:6.2.2
+    container_name: up-vite
+    ports:
+      - "127.0.0.1:5173:5173"
