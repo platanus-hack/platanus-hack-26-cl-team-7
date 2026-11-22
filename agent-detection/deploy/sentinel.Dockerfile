@@ -10,6 +10,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages ./packages
 COPY apps ./apps
 COPY tools ./tools
+COPY landing ./landing
 RUN pnpm install --frozen-lockfile && pnpm --filter @sentinel/web build
 
 RUN mkdir -p /data && chown node /data

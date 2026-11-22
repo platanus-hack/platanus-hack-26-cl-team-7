@@ -31,6 +31,29 @@ From the repository root, run `pnpm start` and open **Demo de evidencia** in Sen
 recorded mock-bank A/B and the synthetic detector replay have separate run IDs. The replay
 works without a proxy, a target service, or any provider credentials.
 
+Sentinel opens on **Experimentos** with a saved run. Select a project to see its outcome,
+compare the two connected paths, or start an independent run with **Ejecutar proyecto A/B**.
+Use **Ejecutar todos** for the full suite. On macOS, start the existing VM with `limactl start espejismo`.
+The VM needs Python 3, Go, a running Docker engine, and `envoyproxy/envoy:v1.36.2`. On
+Linux those dependencies run directly on the host. Sentinel needs a loopback bind for
+live runs. Run `pnpm start` from the repository root. Provider credentials are read from
+the root `.env` or the process environment.
+
+Run `pnpm services` from the repository root to open the four interactive services at
+`http://127.0.0.1:9120`. The A/B controls submit the same forms in isolated instances of
+each service. The active runner and proxy live under `apps/sentinel/lab`. Historical
+Último Paso results live under `related_experiments/ultimo-paso`.
+
+One live run records both proxy arms for Bruma, Litoral, Surco, and Banco Estero. OpenRouter receives
+only saved observation flags for the separate feedback comparison, and Firecrawl reads
+approved advisory references. Choose a finished run and click **Reproducir** to play back
+its stored event sequence or **Exportar JSON** to save its recording.
+
+Select **Banco Estero** and use **Ejecutar proyecto A/B** to run only the bank. Expand a case to compare the requested
+refund version, the approved version, and the service's eligibility decision in both arms.
+Firecrawl attaches defensive guidance for CVE-2026-129289. The bank simulates approval decisions
+and evidence exposure using safe HTTP fixtures. It does not execute payments or run PHP-FPM.
+
 After changing either input, regenerate the bundled evidence from `agent-detection/` with
 `uv run python -m scripts.evidence_demo`. Add `--check` to verify the bundle is current.
 

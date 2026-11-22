@@ -11,6 +11,10 @@ import { createApp } from "./app.ts";
 import { Bus } from "./bus.ts";
 import { DeceptionStore } from "./deception.ts";
 import { createEvidenceEvaluator } from "./evidence-demo/evaluate.ts";
+import { createExperimentProviders } from "./experiments/providers.ts";
+import { createExperimentService } from "./experiments/service.ts";
+import { ExperimentStore } from "./experiments/store.ts";
+import { createWorker } from "./experiments/worker.ts";
 import { GeoResolver } from "./enrich.ts";
 import { FixProposer } from "./fixes.ts";
 import { createMastraReportModel } from "./reports/mastra.ts";
@@ -59,16 +63,24 @@ const reports = reportModel
   ? new ReportService({ store, db, model: reportModel, sources: { sen: sentinelSource(store), acc: accessLogSource(accessLogPath), eng: engineSource(verdictsDbPath) } })
   : null;
 
-const evaluateEvidence = ["127.0.0.1", "localhost", "::1"].includes(host) ? createEvidenceEvaluator(repoRoot, {
+const localOnly = ["127.0.0.1", "localhost", "::1"].includes(host);
+const providers = {
   openrouter: setting("OPENROUTER_API_KEY"), model: setting("ULTIMO_PASO_PROBE_MODEL"), firecrawl: setting("FIRECRAWL_API_KEY"),
-}) : undefined;
-const app = createApp({ store, bus, ai, deception, webRoot, allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence });
+};
+const evaluateEvidence = localOnly ? createEvidenceEvaluator(repoRoot, providers) : undefined;
+const experimentStore = new ExperimentStore(db);
+const experimentLab = resolve(here, "../lab");
+const experimentService = createExperimentService(experimentStore, localOnly ? createWorker(experimentLab, setting("ULTIMO_PASO_LIMA_VM") || "espejismo") : undefined,
+  createExperimentProviders(experimentLab, providers));
+const app = createApp({ store, bus, ai, deception, webRoot, presentationRoot: resolve(repoRoot, "landing"), allowedOrigins, allowedHosts, ingestToken, reports, evaluateEvidence,
+  experiments: [experimentStore, experimentService] });
 const server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
   const web = existsSync(resolve(webRoot, "index.html")) ? `http://${host}:${info.port}/` : "not built (pnpm build)";
   console.log(`[sentinel] api http://${host}:${info.port}/v1  web ${web}  ai=${ai.enabled ? "on" : "off (set ANTHROPIC_API_KEY)"}  reports=${reports ? "on" : "off (set ANTHROPIC_API_KEY)"}`);
 });
 
 function shutdown() {
+  experimentService.stop();
   ai.stop();
   fixes.stop();
   bus.stop();

@@ -62,6 +62,18 @@ const STEPS: Step[] = [
     version: 4,
     sql: "ALTER TABLE findings ADD COLUMN proposal_failed_at INTEGER;",
   },
+  {
+    version: 5,
+    sql: `CREATE TABLE IF NOT EXISTS experiment_runs (
+        id TEXT PRIMARY KEY, mode TEXT NOT NULL, status TEXT NOT NULL, started TEXT,
+        finished TEXT, source TEXT, error TEXT
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS experiment_single_live_run ON experiment_runs(status) WHERE status='running';
+      CREATE TABLE IF NOT EXISTS experiment_entries (
+        run_id TEXT NOT NULL REFERENCES experiment_runs(id), seq INTEGER NOT NULL, at TEXT,
+        event TEXT NOT NULL, PRIMARY KEY(run_id, seq)
+      );`,
+  },
 ];
 
 export const SCHEMA_VERSION = STEPS[STEPS.length - 1]!.version;
