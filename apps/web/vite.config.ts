@@ -7,7 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 const SENTINEL = process.env.SENTINEL_URL ?? "http://127.0.0.1:8787";
 
-/** Writes .br and .gz next to each text asset so Sentinel can serve them without compressing per request. */
+/** Writes .br and .gz next to each text asset so Reaper can serve them without compressing per request. */
 function precompress(): Plugin {
   let outDir = "dist";
   const walk = (dir: string): string[] =>
@@ -32,8 +32,8 @@ function precompress(): Plugin {
 export default defineConfig({
   plugins: [react(), tailwindcss(), precompress()],
   clearScreen: false,
-  // Same origin in development too: the browser talks to Vite, and Vite forwards /v1 to Sentinel.
-  // The Host header is kept (changeOrigin: false) so Sentinel sees Origin and Host match.
+  // Same origin in development too: the browser talks to Vite, and Vite forwards /v1 to Reaper.
+  // The Host header is kept (changeOrigin: false) so Reaper sees Origin and Host match.
   server: { port: 5173, strictPort: true, proxy: { "/v1": { target: SENTINEL, changeOrigin: false }, "/presentacion": { target: SENTINEL, changeOrigin: false } } },
   build: {
     target: "es2022",

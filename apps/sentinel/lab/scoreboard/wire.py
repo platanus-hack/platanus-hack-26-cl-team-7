@@ -1,4 +1,4 @@
-"""HTTP observations and Envoy lifecycle for Sentinel's local fixture runner."""
+"""HTTP observations and Envoy lifecycle for Reaper's local fixture runner."""
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from http.client import HTTPConnection

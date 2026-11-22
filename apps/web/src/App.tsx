@@ -19,7 +19,7 @@ function CopilotFallback() {
   );
 }
 
-/** App lifecycle: connect to Sentinel, keep the chart clock and health fresh, ⌘K / Esc for the copilot. */
+/** App lifecycle: connect to Reaper, keep the chart clock and health fresh, ⌘K / Esc for the copilot. */
 export function App() {
   return <SentinelApp />;
 }

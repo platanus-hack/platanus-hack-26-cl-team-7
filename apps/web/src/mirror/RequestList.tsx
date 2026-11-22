@@ -1,5 +1,5 @@
 /**
- * Every request of a caught agent that Sentinel sends, newest first, in a fixed-height box that
+ * Every request of a caught agent that Reaper sends, newest first, in a fixed-height box that
  * scrolls smoothly. Only the visible rows are in the page (virtualized), so 200 rows cost the same as 10.
  * Interface: `<RequestList actions={detail.actions} />`.
  * Paths, queries and bodies are attacker controlled; React renders them as text only.

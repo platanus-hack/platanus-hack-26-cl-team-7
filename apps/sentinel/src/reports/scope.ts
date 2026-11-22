@@ -2,7 +2,7 @@ import { LOG_STORES, REPORT_LIMITS, type EvidenceId, type LogStore, type ReportS
 import type { Store } from "../store.ts";
 import { byTime, inWindow, StoreDownError, type LogSources } from "./sources.ts";
 
-/** The attacker's first and last request, padded. Null when Sentinel has not seen the IP. */
+/** The attacker's first and last request, padded. Null when Reaper has not seen the IP. */
 export function buildScope(store: Store, ip: string): ReportScope | null {
   const a = store.attacker(ip);
   if (!a) return null;

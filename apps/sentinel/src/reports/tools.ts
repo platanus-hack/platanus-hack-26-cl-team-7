@@ -17,7 +17,7 @@ import { inWindow, StoreDownError, type LogSources } from "./sources.ts";
 
 /** No `ip` field in any input: the scope comes from code, never from the model. */
 export const QueryEventsInput = z.object({
-  store: z.union([LogStore, z.literal("all")]).describe("sen = Sentinel events, acc = access log, eng = engine verdicts, all = the three together"),
+  store: z.union([LogStore, z.literal("all")]).describe("sen = Reaper events, acc = access log, eng = engine verdicts, all = the three together"),
   attack_type: AttackType.optional(),
   http_status: z.number().int().optional().describe("Only the access log has a status"),
   path_contains: z.string().max(100).optional().describe("Case-insensitive text inside the request path"),
