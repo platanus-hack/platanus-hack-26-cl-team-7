@@ -8,9 +8,9 @@ import pytest
 from test_twin_support import POLICY_FILE, make_shop
 
 from demo import db, fake
+from demo.db import SQL
 from demo.mask import CANARIES_VERSION, main, mask
 from demo.masking import PUBLIC, Masked, Policy, load_policy
-from demo.tables import SQL
 from demo.web import Shop
 
 Dump = dict[str, list[dict[str, object]]]
@@ -65,7 +65,9 @@ def test_public_columns_copy_and_unlisted_ones_are_empty(real: Dump, twin: Dump)
         assert twin[table] == real[table]
     for theirs, ours in zip(real["users"], twin["users"], strict=True):
         assert (ours["id"], ours["role"], ours["created_at"]) == (
-            theirs["id"], theirs["role"], theirs["created_at"],
+            theirs["id"],
+            theirs["role"],
+            theirs["created_at"],
         )
         assert ours["password_hash"] is None and ours["avatar_url"] is None
 

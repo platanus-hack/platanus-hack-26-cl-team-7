@@ -18,6 +18,7 @@ from pathlib import Path
 from demo import db, fake
 from demo.auth import password_hash
 from demo.catalog import CATALOGUE
+from demo.db import SQL
 
 DEFAULT_DB = Path("run/real.db")
 ADMIN_ID, DEMO_ID = 1, 2
@@ -33,11 +34,6 @@ STOCK_SPAN = 120
 # (status, days after the order the step happens at the earliest, extra days it may take)
 STEPS = (("paid", 0, 0), ("shipped", 1, 2), ("delivered", 3, 4))
 PASSWORD_SPAN = 1 << 64
-INSERTS = {
-    "orders": "INSERT INTO orders VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    "order_items": "INSERT INTO order_items VALUES (?, ?, ?, ?, ?)",
-    "order_events": "INSERT INTO order_events VALUES (?, ?, ?, ?)",
-}
 
 
 @dataclass(frozen=True)
@@ -151,17 +147,17 @@ def order_rows(
 def fill(plan: Plan, conn: sqlite3.Connection) -> None:
     start, stock = stamp(plan.anchor - timedelta(days=HISTORY_DAYS)), fake.Draw(plan.seed, "stock")
     conn.executemany(
-        "INSERT INTO products VALUES (?, ?, ?, ?, ?, ?)",
+        SQL["products"].insert,
         [
             (n, *item, stock.number(str(n), STOCK_SPAN), start)
             for n, item in enumerate(CATALOGUE, start=1)
         ],
     )
     users = user_rows(plan)
-    conn.executemany("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", users)
+    conn.executemany(SQL["users"].insert, users)
     customers = [u for u in users if u[6] == "customer"]
     for table, row in order_rows(plan, customers):
-        conn.execute(INSERTS[table], row)
+        conn.execute(SQL[table].insert, row)
 
 
 def seed(path: Path, plan: Plan) -> None:

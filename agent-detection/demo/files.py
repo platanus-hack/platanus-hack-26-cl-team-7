@@ -44,14 +44,19 @@ STATIC_FILES = {
 }
 
 
+def write_atomic(path: Path, text: str) -> None:
+    """Write `text` to `path` (creating its folder) through a .part file and one rename, so a
+    reader sees the old file or the new one, never half of either."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    partial = path.with_name(path.name + ".part")
+    partial.write_text(text, encoding="utf-8")
+    partial.replace(path)
+
+
 def prepare(folder: Path) -> None:
     """Write the static files, the same on every instance. Each write is atomic."""
     for name, text in STATIC_FILES.items():
-        target = folder / name
-        target.parent.mkdir(parents=True, exist_ok=True)
-        partial = target.with_name(target.name + ".part")
-        partial.write_text(text, encoding="utf-8")
-        partial.replace(target)
+        write_atomic(folder / name, text)
     (folder / INVOICE_DIR).mkdir(parents=True, exist_ok=True)
 
 

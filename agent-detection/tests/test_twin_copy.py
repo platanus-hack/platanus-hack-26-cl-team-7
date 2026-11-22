@@ -10,9 +10,7 @@ from test_twin_support import POLICY_FILE, make_shop, make_twin
 from test_twin_sync import account_rows, execute, login, place, rows, signed_in
 
 from demo import auth, db
-from demo.mask import project
-from demo.masking import load_policy
-from demo.own import own_rows
+from demo.masking import load_policy, project
 from demo.replica import Syncer
 from demo.web import Shop
 
@@ -128,19 +126,19 @@ def test_copying_the_same_session_twice_changes_nothing(shops: Shops) -> None:
     assert syncer.push() == {"inserted": 0, "updated": 0, "deleted": 0}
 
 
-def test_own_rows_follow_the_tables_the_policy_lists(shops: Shops, tmp_path: Path) -> None:
+def test_account_rows_follow_the_tables_the_policy_lists(shops: Shops, tmp_path: Path) -> None:
     real, twin, syncer = shops
-    full = own_rows(project(real.db, syncer.policy), 2)
+    full = project(real.db, syncer.policy).account(2)
     assert set(full) == {"users", "orders", "order_items", "order_events"}
     assert set(full["users"]) == {2} and full["orders"] and full["order_items"]
     users_only = tmp_path / "users-only.yaml"
     users_only.write_text(
         "key: k\ntables:\n  users:\n    id: public\n    role: public\n    username: public\n"
     )
-    narrow = own_rows(project(real.db, load_policy(users_only)), 2)
+    narrow = project(real.db, load_policy(users_only)).account(2)
     assert set(narrow) == {"users"} and set(narrow["users"]) == {2}
-    assert own_rows(project(real.db, syncer.policy), 999)["users"] == {}
+    assert project(real.db, syncer.policy).account(999)["users"] == {}
     products_only = tmp_path / "products-only.yaml"
     products_only.write_text("key: k\ntables:\n  products:\n    id: public\n    name: public\n")
-    assert own_rows(project(real.db, load_policy(products_only)), 2) == {}
+    assert project(real.db, load_policy(products_only)).account(2) == {}
     assert Syncer(real.db, twin.db, load_policy(products_only)).copy(login(real)) is None

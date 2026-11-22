@@ -120,10 +120,10 @@ def test_bad_real_values_requests_are_refused(sock: Path, body: bytes) -> None:
 def test_a_database_error_while_checking_real_values_is_a_503(
     sock: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def broken(real: Path, values: list[str]) -> list[str]:
+    def broken(self: Syncer, values: list[str]) -> list[str]:
         raise sqlite3.OperationalError("database is locked")
 
-    monkeypatch.setattr(sync, "real_values", broken)
+    monkeypatch.setattr(Syncer, "real_values", broken)
     answer = call(sock, "POST", "/real-values", b'{"values": ["alice"]}')
     assert answer.status == 503 and "database is locked" in answer.json()["error"]
     assert real_values(sock, ["alice"]) is None
@@ -141,9 +141,7 @@ def test_other_paths_and_methods_are_not_found(sock: Path) -> None:
         conn.close()
 
 
-def test_a_database_error_during_copy_is_a_503(
-    sock: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_a_database_error_during_copy_is_a_503(sock: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     def broken(self: Syncer, cookie: str) -> Copied | None:
         raise sqlite3.OperationalError("database is locked")
 
@@ -196,8 +194,16 @@ def test_main_serves_copy_until_interrupted_then_removes_its_socket(
         path = folder / "sync.sock"
         sync.main(
             [
-                "--socket", str(path), "--real", str(syncer.real), "--twin", str(syncer.twin),
-                "--allow", str(POLICY_FILE), "--every", "0.5",
+                "--socket",
+                str(path),
+                "--real",
+                str(syncer.real),
+                "--twin",
+                str(syncer.twin),
+                "--allow",
+                str(POLICY_FILE),
+                "--every",
+                "0.5",
             ]
         )
         assert seen == [404] and not path.exists()

@@ -9,8 +9,7 @@ from typing import Any
 from demo import account, store
 from demo.api import API_HANDLERS
 from demo.assets import ASSETS, FAVICON, ROBOTS
-from demo.layout import page
-from demo.web import TEXT, Call, Reply, as_json
+from demo.web import TEXT, Call, Reply, as_json, page
 
 FEATURED = 8
 

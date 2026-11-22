@@ -9,8 +9,8 @@ from test_twin_support import ANCHOR, SMALL
 
 from demo import db, fake
 from demo.auth import password_hash
+from demo.db import SQL
 from demo.seed import DEMO_LOGIN, HISTORY_DAYS, STAMP, Plan, main, seed
-from demo.tables import SQL
 
 STATUSES = {"placed", "paid", "shipped", "delivered", "cancelled"}
 
