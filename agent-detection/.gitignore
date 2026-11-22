@@ -1,12 +1,2 @@
-.venv/
-__pycache__/
-*.pyc
-.coverage
-coverage.xml
-htmlcov/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-eval/report.json
-run/
-*.db
+/eval/report.json
+/run/

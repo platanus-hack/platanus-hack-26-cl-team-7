@@ -1,1 +1,0 @@
-{"model": "mistralai/mistral-large-4-0", "ataque": "es_pe", "defensa": "none", "utilidad": "88% (21/24, IC95 69%–96%)", "ASR": "0% (0/24, IC95 0%–14%)"}

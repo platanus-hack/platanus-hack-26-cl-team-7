@@ -17,10 +17,9 @@ fails, **[review]** means only a reviewer catches it.
 | `tools/simulator` | Demo traffic generator (typecheck only, no tests) | Product |
 | `agent-detection/` | Detection engine, mirror lane (router, twin, tap, relay), demo shop, eval. Has its own `CONSTRAINTS.md` | Product |
 | `apps/sentinel/src/reports/skills/` | AppSec playbooks the report agent loads. A change here changes model behavior | Product, prompt |
-| `.agents/skills/` | Skills for coding agents (vendored `mastra`). The product never loads them | Tooling |
-| `evidencia-agentes/`, `ultimo-paso/` | Recorded evidence and benchmark data | Data, read-only |
-| `related_experiments/` | Archived research, including `demo-david/`. Published numbers come from it | Archive, read-only |
-| `landing/`, `landing-video/`, `reports/`, `research_notes/` | Web, pitch and notes | Content |
+| `evidencia-agentes/`, `experiments/` | Recorded evidence and benchmark data | Data, read-only |
+| `related_experiments/` | Retained Espejismo and Ultimo Paso research and evidence demo inputs | Archive, read-only |
+| `landing/`, `media/`, `reports/` | Web, pitch video and research (notes in `reports/notes/`) | Content |
 
 The product is **Reaper**. In code it is still `sentinel` (`@sentinel/*`, `apps/sentinel`, `SENTINEL_*`).
 Do not rename packages, env variables or routes for branding.
@@ -45,7 +44,7 @@ identifiers, log lines, commit messages, PR text and this file are English. [rev
    (`mirror/canaries.py`, the engine's `--canary`, demo targets) are fake, useless outside the twin or the
    target, and live only there. Do not delete or "clean up" bait. New bait must not use a real provider's
    live-key format (the existing AKIA-format lab canary is listed in section 9). [review]
-6. **Archives and data are read-only:** `related_experiments/`, `evidencia-agentes/`, `ultimo-paso/`. [review]
+6. **Archives and data are read-only:** `related_experiments/`, `evidencia-agentes/`, `experiments/`. [review]
 7. **Never hand-edit a generated file.** Rerun its generator in the same PR as the input change and paste the check:
 
    | File | Generator / check |

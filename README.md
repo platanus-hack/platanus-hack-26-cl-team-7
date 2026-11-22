@@ -23,9 +23,9 @@ El panel muestra un sitio protegido por página (hoy Next.js y Vite, con fallas 
 | [`apps/`](apps/), [`packages/`](packages/), [`tools/`](tools/) | **El producto.** El panel (`apps/web`), el servidor y el laboratorio con el proxy y los servicios de prueba (`apps/sentinel`), los contratos compartidos y el simulador de tráfico |
 | [`agent-detection/`](agent-detection/) | **La detección.** El motor de reglas, la tienda de demostración con su copia falsa y la evaluación |
 | [`evidencia-agentes/`](evidencia-agentes/RESULTADOS.md) | **Evidencia.** 3 modelos de IA atacando a través de Reaper: 30 de 30 marcados y desviados, 0 de 30 agentes legítimos marcados |
-| [`ultimo-paso/`](ultimo-paso/) | **Evidencia.** Datos crudos de los benchmarks (sin defensa, Cloudflare por defecto, brazos de control) y la medición de latencia |
-| [`landing/`](landing/), [`landing-video/`](landing-video/) | La web, el pitch y el video explicativo |
-| [`reports/`](reports/), [`research_notes/`](research_notes/) | Estado del arte: defensa contra agentes en el proxy y antecedentes en WAF |
+| [`experiments/`](experiments/) | **Evidencia.** Datos crudos de los benchmarks (sin defensa, Cloudflare por defecto, brazos de control) y la medición de latencia |
+| [`landing/`](landing/), [`media/`](media/) | La web, el pitch y el video explicativo |
+| [`reports/`](reports/), [`reports/notes/`](reports/notes/) | Estado del arte: defensa contra agentes en el proxy y antecedentes en WAF |
 | [`related_experiments/`](related_experiments/README.md) | **Cicatrices del pivoteo.** Lo que probamos antes de llegar aquí; no hace falta para correr Reaper |
 
 ## Sobre los nombres

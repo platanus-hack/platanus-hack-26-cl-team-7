@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Error · Bruma Consola</title>
+<meta name="description" content="No pudimos completar la solicitud.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%230B5A5A%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M8.5%206.5V18%22%2F%3E%3Cpath%20d%3D%22M8.5%206.5h4.5a2.75%202.75%200%200%201%200%205.5H8.5%22%2F%3E%3Cpath%20d%3D%22M8.5%2012h5.5a3%203%200%200%201%200%206H8.5%22%20opacity%3D%22.55%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<style type="text/tailwindcss">
+@theme static {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --color-canvas: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-sunken: #eceff2;
+  --color-line: #e3e6ea;
+  --color-line-strong: #cdd2d9;
+  --color-ink: #11161c;
+  --color-ink-2: #343d48;
+  --color-ink-3: #5e6a77;
+  --color-ink-4: #8a95a1;
+
+  --color-accent-50: #eaf4f3;
+  --color-accent-100: #cfe7e4;
+  --color-accent-200: #a8d3ce;
+  --color-accent-300: #7dbab4;
+  --color-accent-500: #1b8a84;
+  --color-accent-600: #0f716e;
+  --color-accent-700: #0b5a5a;
+  --color-accent-800: #0a4547;
+  --color-accent-900: #072f30;
+
+  --color-warn-50: #fdf5e4;
+  --color-warn-200: #f0d9a4;
+  --color-warn-500: #d98b1a;
+  --color-warn-800: #7a4a07;
+  --color-danger-50: #fdecea;
+  --color-danger-500: #c23a2b;
+  --color-danger-700: #9a2418;
+
+  --text-2xs: 11px;
+  --text-2xs--line-height: 16px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 14px;
+  --text-base--line-height: 22px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 34px;
+  --text-3xl: 36px;
+  --text-3xl--line-height: 42px;
+
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+@layer base {
+  html { font-family: var(--font-sans); -webkit-text-size-adjust: 100%; }
+  body { background: var(--color-canvas); color: var(--color-ink); font-size: 14px; line-height: 22px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  ::selection { background: var(--color-accent-100); }
+  :focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 2px; }
+  button { cursor: pointer; font: inherit; }
+  table { border-collapse: collapse; }
+}
+</style>
+</head>
+<body class="min-h-dvh bg-surface">
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs><symbol id="logo" viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="currentColor"/><g fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 6.5V18"/><path d="M8.5 6.5h4.5a2.75 2.75 0 0 1 0 5.5H8.5"/><path d="M8.5 12h5.5a3 3 0 0 1 0 6H8.5" opacity=".55"/></g></symbol><symbol id="i-copy" viewBox="0 0 24 24"><path d="M19.4 20H9.6C9.26863 20 9 19.7314 9 19.4V9.6C9 9.26863 9.26863 9 9.6 9H19.4C19.7314 9 20 9.26863 20 9.6V19.4C20 19.7314 19.7314 20 19.4 20Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 9V4.6C15 4.26863 14.7314 4 14.4 4H4.6C4.26863 4 4 4.26863 4 4.6V14.4C4 14.7314 4.26863 15 4.6 15H9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-refresh-double" viewBox="0 0 24 24"><path d="M21.1679 8C19.6247 4.46819 16.1006 2 11.9999 2C6.81459 2 2.55104 5.94668 2.04932 11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17 8H21.4C21.7314 8 22 7.73137 22 7.4V3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M2.88146 16C4.42458 19.5318 7.94874 22 12.0494 22C17.2347 22 21.4983 18.0533 22 13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.04932 16H2.64932C2.31795 16 2.04932 16.2686 2.04932 16.6V21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol></defs></svg>
+<div class="flex min-h-dvh flex-col">
+  <header class="flex h-14 items-center gap-2.5 border-b border-line px-4 sm:px-6">
+    <svg class="size-6 shrink-0 text-accent-700" viewBox="0 0 24 24" role="img" aria-label="Bruma"><use href="#logo"/></svg><span class="text-base font-semibold tracking-tight">Bruma</span><span class="font-mono text-2xs uppercase tracking-[0.08em] text-ink-3">Consola</span>
+  </header>
+  <main class="relative flex flex-1 items-center justify-center overflow-hidden px-6 py-16">
+    <div class="pointer-events-none absolute inset-0 opacity-[0.5] [background-image:linear-gradient(to_right,var(--color-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-line)_1px,transparent_1px)] [background-size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,#000,transparent_70%)]"></div>
+    <div class="relative w-full max-w-[460px]">
+      <p class="font-mono text-xs uppercase tracking-[0.1em] text-ink-4">Error 500</p>
+      <h1 class="mt-3 text-balance text-2xl font-semibold tracking-tight sm:text-3xl">No pudimos completar la solicitud.</h1>
+      <p class="mt-3 text-lg text-ink-3">Intenta nuevamente en unos minutos.</p>
+      <div class="mt-6"><button type="button" class="inline-flex h-8 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 text-sm font-medium bg-accent-700 text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.14)] hover:bg-accent-800 !h-9"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><use href="#i-refresh-double"/></svg>Reintentar</button></div>
+      <div class="mt-8 flex items-center justify-between gap-3 rounded-md border border-line bg-canvas px-3 py-2">
+        <span class="text-xs text-ink-3">ID</span>
+        <span class="flex items-center gap-2 font-mono text-sm text-ink-2">req_7f3a91c2<button type="button" class="grid size-6 place-items-center rounded-sm text-ink-3 hover:bg-sunken" aria-label="Copiar"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><use href="#i-copy"/></svg></button></span>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
