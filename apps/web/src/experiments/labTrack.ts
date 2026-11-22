@@ -218,7 +218,9 @@ function agentFor(detail: ExperimentDetail, project: ExperimentProject): LabAgen
   const steps = STRIP.flatMap(([stage, label]): LabStep[] => {
     const seen = stages.get(stage);
     if (!seen && stage === "patch" && !inProgress) return [];
-    return [{ stage, label, status: seen?.status ?? "pending", elapsedMs: seen?.elapsedMs ?? null }];
+    // A step left "running" by a stop or restart never gets its terminal event: once nothing runs, it was cut off.
+    const status = seen?.status === "running" && !inProgress ? "degraded" : seen?.status ?? "pending";
+    return [{ stage, label, status, elapsedMs: seen?.elapsedMs ?? null }];
   });
 
   const trackId = `trk_${hex16(`${run.id}:${project}`)}`;
@@ -328,7 +330,12 @@ export interface DiffLine {
 export function diffLines(edit: Pick<PatchEdit, "old" | "new">): DiffLine[] {
   const lines = (text: string, sign: DiffLine["sign"]): DiffLine[] =>
     text === "" ? [] : text.replace(/\n$/, "").split("\n").map((line) => ({ sign, text: line }));
-  return [...lines(edit.old, "-"), ...lines(edit.new, "+")];
+  const removed = lines(edit.old, "-");
+  const added = lines(edit.new, "+");
+  // Lines the edit keeps at the start and the end are context, not change: leave them out.
+  while (removed.length > 1 && added.length > 1 && removed[0]!.text === added[0]!.text) { removed.shift(); added.shift(); }
+  while (removed.length > 1 && added.length > 1 && removed.at(-1)!.text === added.at(-1)!.text) { removed.pop(); added.pop(); }
+  return [...removed, ...added];
 }
 
 /** A raw request as a curl command line, for copying. */

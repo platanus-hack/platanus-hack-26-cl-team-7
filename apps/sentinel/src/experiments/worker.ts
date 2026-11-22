@@ -28,7 +28,7 @@ function labEnv() {
  * Replays a patch on a throwaway copy of the lab services (scoreboard.patch_verify). It runs on the host, not in the VM:
  * the verifier only talks to loopback and never touches Docker. Any crash, timeout or missing result throws.
  */
-export function createVerifier(root: string): Verify {
+function createVerifier(root: string): Verify {
   return async (project, edits, signal) => {
     const directory = await mkdtemp(join(tmpdir(), "reaper-patch-"));
     try {

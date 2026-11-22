@@ -103,11 +103,25 @@ describe("patch text helpers", () => {
     expect([0, 1234, 1250, 59_999, 150_000].map(seconds)).toEqual(["0,0 s", "1,2 s", "1,3 s", "60,0 s", "150,0 s"]);
   });
 
-  it("lists the removed lines, then the added lines", () => {
+  it("lists the removed lines, then the added lines, without the unchanged lines around them", () => {
     expect(diffLines({ old: "a = 1\nb = 2\n", new: "a = 1\nb = safe(2)\nc = 3" })).toEqual([
-      { sign: "-", text: "a = 1" }, { sign: "-", text: "b = 2" },
-      { sign: "+", text: "a = 1" }, { sign: "+", text: "b = safe(2)" }, { sign: "+", text: "c = 3" },
+      { sign: "-", text: "b = 2" }, { sign: "+", text: "b = safe(2)" }, { sign: "+", text: "c = 3" },
     ]);
+    expect(diffLines({ old: "if x:\n    return private\nend", new: "if x:\n    return public\nend" })).toEqual([
+      { sign: "-", text: "    return private" }, { sign: "+", text: "    return public" },
+    ]);
+  });
+
+  it("keeps a one-line edit whole even when it repeats", () => {
+    expect(diffLines({ old: "x = 1", new: "x = 1" })).toEqual([{ sign: "-", text: "x = 1" }, { sign: "+", text: "x = 1" }]);
+  });
+
+  it("shows a step that a stop left running as cut off once the run is over, and running while patching", () => {
+    const events = [stage("research", "passed", 10), stage("patch", "running")];
+    const patchStep = (run: Partial<ExperimentRun>) => bruma(detailWith(events, run)).steps.find((s) => s.stage === "patch")?.status;
+    expect(patchStep({ status: "completed" })).toBe("degraded");
+    expect(patchStep({ status: "completed", patching: true })).toBe("running");
+    expect(patchStep({ status: "running" })).toBe("running");
   });
 
   it("adds nothing when an edit only removes", () => {

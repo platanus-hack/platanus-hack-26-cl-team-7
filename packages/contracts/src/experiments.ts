@@ -28,7 +28,7 @@ const count = z.object({ yes: natural, total: natural });
 const project = { project: ExperimentProject };
 export const PATCH_LIMITS = { attempts: 2, edits: 3, editChars: 2000, explanation: 600 } as const;
 /** One exact text replacement in one lab target file. `old` must occur exactly once in that file. */
-const PatchEditSchema = z.object({ file: z.string().regex(/^targets\/businesses\/[a-z_]+\.py$/),
+export const PatchEdit = z.object({ file: z.string().regex(/^targets\/businesses\/[a-z_]+\.py$/),
   old: z.string().min(1).max(PATCH_LIMITS.editChars), new: z.string().max(PATCH_LIMITS.editChars) });
 const scored = z.object({ detected: z.boolean(), contained: z.boolean(), executed: z.boolean(), directEvidence: z.boolean(), proxyEvidence: z.boolean() });
 
@@ -51,7 +51,7 @@ export const ExperimentEvent = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("patch"), ...project,
     status: z.enum(["verified", "failed", "unconfigured", "unavailable", "no_finding"]),
     model: z.string().nullable(), attempts: z.int().min(0).max(PATCH_LIMITS.attempts),
-    edits: z.array(PatchEditSchema).max(PATCH_LIMITS.edits), explanation: z.string().max(PATCH_LIMITS.explanation), cwe: z.string().nullable(),
+    edits: z.array(PatchEdit).max(PATCH_LIMITS.edits), explanation: z.string().max(PATCH_LIMITS.explanation), cwe: z.string().nullable(),
     /** attacks.yes: replayed attacks whose response still carried the proof. legit.yes: legitimate requests that passed. */
     replay: z.object({ attacks: count, legit: count }).nullable(),
     timings: z.object({ agentMs: natural, verifyMs: natural }),
@@ -66,7 +66,6 @@ export const ExperimentEvent = z.discriminatedUnion("kind", [
 export type ExperimentEvent = z.infer<typeof ExperimentEvent>;
 export type FixtureResult = Extract<ExperimentEvent, { kind: "fixture" }>;
 
-export const PatchEdit = PatchEditSchema;
 export type PatchEdit = z.infer<typeof PatchEdit>;
 export type PatchResult = Extract<ExperimentEvent, { kind: "patch" }>;
 

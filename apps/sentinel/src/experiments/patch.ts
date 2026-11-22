@@ -32,8 +32,8 @@ How to work:
 - Output only exact replacements. Each edit names one file from "files", an "old" snippet copied exactly (whitespace included) that occurs exactly once in that file, and the "new" text. At most ${PATCH_LIMITS.edits} edits.
 - Never weaken legitimate behavior: ordinary requests from real customers must still pass.
 - The edits are applied to a fresh copy of the original files and the same attack is replayed against it. The proof must no longer come back.
-- explanation: what the weakness is and what the change does, in plain words. cwe: one CWE id such as CWE-639, or null.
-- When "previous_attempt" is present, your earlier edits did not verify. Read its replay counts and error, then write different edits against the original files.`;
+- explanation: in Spanish (Chile), for the dashboard: what the weakness is and what the change does, in plain words, at most 3 sentences and 400 characters (hard limit ${PATCH_LIMITS.explanation}). cwe: one CWE id such as CWE-639, or null.
+- When "untrusted_previous_attempt" is present, your earlier edits did not verify. Read its replay counts and error, then write different edits against the original files.`;
 
 /** The seam between the patcher and the language model. Tests use a fake; createMastraPatchModel is the real one. */
 export interface PatchModel {
@@ -79,7 +79,7 @@ export function createPatcher({ root, model, verify, now }: { root: string; mode
       untrusted_advisory_fixes: research.fixes,
       cases: cases.map((f) => ({ id: f.id, weakness: f.weakness, untrusted_response_status: f.A.status,
         untrusted_request: f.A.raw ? { method: f.A.raw.request.method, target: f.A.raw.request.target, headers: f.A.raw.request.headers } : null })),
-      files, previous_attempt: previous,
+      files, untrusted_previous_attempt: previous,
     })}\n</input>`;
   };
 
@@ -110,8 +110,10 @@ export function createPatcher({ root, model, verify, now }: { root: string; mode
         total.output += call.tokens.output;
         const proposal = Proposal.safeParse(call.output);
         if (!proposal.success) {
+          // The issue paths go back to the model on the next attempt and into the event, so a rejected answer is debuggable.
+          const issues = proposal.error.issues.map((i) => `${i.path.join(".") || "output"}: ${i.message}`).join("; ");
           last = emptyPatch(project, "failed");
-          previous = { edits: [], replay: null, error: "invalid model output" };
+          previous = { edits: [], replay: null, error: `invalid model output: ${issues}`.slice(0, 300) };
           continue;
         }
         const { edits, explanation, cwe } = proposal.data;

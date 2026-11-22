@@ -143,11 +143,11 @@ describe("patcher", () => {
     expect(result).toMatchObject({ status: "verified", attempts: 2, edits: GOOD.edits, timings: { agentMs: 500, verifyMs: 80 }, tokens: { input: 200, output: 40 } });
     expect(verify).toHaveBeenCalledTimes(2);
     const second = promptInput(prompts[1]!);
-    expect(second).toHaveProperty("previous_attempt");
-    const previous = JSON.stringify(second.previous_attempt);
+    expect(second).toHaveProperty("untrusted_previous_attempt");
+    const previous = JSON.stringify(second.untrusted_previous_attempt);
     expect(previous).toContain("ready-attempt-one");
     expect(previous).toMatch(/"yes":2/);
-    expect(promptInput(prompts[0]!).previous_attempt ?? null).toBeNull();
+    expect(promptInput(prompts[0]!).untrusted_previous_attempt ?? null).toBeNull();
   });
 
   it("stops after two model calls and reports the last attempt as failed", async () => {
@@ -187,7 +187,7 @@ describe("patcher", () => {
     const result = await patcher.patch("bruma", cases(), researched("bruma", cases()), signal());
     expect(verify).not.toHaveBeenCalled();
     expect(propose).toHaveBeenCalledTimes(2);
-    expect(result).toMatchObject({ status: "failed", attempts: 2, error: "invalid model output" });
+    expect(result).toMatchObject({ status: "failed", attempts: 2, error: expect.stringMatching(/^invalid model output: /) });
     expect(ExperimentEvent.safeParse(result).success).toBe(true);
   });
 
@@ -196,7 +196,7 @@ describe("patcher", () => {
     const result = await patcher.patch("bruma", cases(), researched("bruma", cases()), signal());
     expect(verify).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({ status: "verified", attempts: 2, edits: GOOD.edits });
-    expect(JSON.stringify(promptInput(prompts[1]!).previous_attempt)).toContain("invalid model output");
+    expect(JSON.stringify(promptInput(prompts[1]!).untrusted_previous_attempt)).toContain("invalid model output");
   });
 
   it.each([
